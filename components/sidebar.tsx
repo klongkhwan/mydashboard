@@ -44,11 +44,6 @@ const menuItems = [
     href: "/dashboard/crypto",
   },
   {
-    title: "Trading Dashboard",
-    icon: Activity,
-    href: "/dashboard/trading",
-  },
-  {
     title: "โปรแกรม",
     icon: Monitor,
     href: "/dashboard/programs",

@@ -64,13 +64,13 @@ export function TradingDashboard() {
       title: "Buy Volume",
       value: `$${(currentData.takerBuy / 1000000).toFixed(3)} M`,
       icon: ArrowUpRight,
-      color: "text-teal-600",
+      color: "text-emerald-600",
     },
     {
       title: "Sell Volume",
       value: `$${(currentData.takerSell / 1000000).toFixed(3)} M`,
       icon: ArrowDownRight,
-      color: "text-orange-600",
+      color: "text-rose-600",
     },
     {
       title: "Total Accounts",
@@ -109,7 +109,7 @@ export function TradingDashboard() {
     <div className="min-h-screen bg-background p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Trading Dashboard</h1>
+        <h1 className="text-3xl font-bold text-foreground">Trading Trend</h1>
         <p className="text-muted-foreground mt-2">Real-time market analysis and trading insights</p>
       </div>
 

@@ -43,7 +43,7 @@ export default function CryptoPage() {
           </TabsTrigger>
           <TabsTrigger value="trading" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <BarChart3 className="w-4 h-4" />
-            Trading Info
+            Trading Trend
           </TabsTrigger>
         </TabsList>
 

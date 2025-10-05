@@ -73,8 +73,9 @@ export function TakerVolumeChart({ data, period }: TakerVolumeChartProps) {
               <span className="text-sm text-muted-foreground">Total:</span>
               <span className="font-medium">{formatValue(total)}</span>
             </div>
-            <div className="text-xs text-gray-500 pt-1 border-t">
-              {buyRatio}% Buy / {sellRatio}% Sell
+            <div className="text-xs pt-1 border-t flex gap-2">
+              <span className="text-emerald-500">{buyRatio}% Buy</span>
+              <span className="text-rose-500">{sellRatio}% Sell</span>
             </div>
           </div>
         </div>
