@@ -2,9 +2,9 @@
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Newspaper, DollarSign, Search, BarChart3 } from "lucide-react"
-import { NewsTab } from "@/components/crypto/NewsTab"
-import { PriceTab } from "@/components/crypto/PriceTab"
-import { ScannerTab } from "@/components/crypto/ScannerTab"
+import { Calendar } from "@/components/crypto/calendartab"
+import NewsFlowPanel from "@/components/crypto/NewsTab"
+import BinanceThCampaigns from "@/components/crypto/HomeTab"
 import { TradingTab } from "@/components/crypto/TradingTab"
 import { ScannerFilters } from "@/types/crypto"
 
@@ -27,19 +27,19 @@ export default function CryptoPage() {
         <p className="text-muted-foreground mt-2">ติดตามข่าวสาร ราคา และวิเคราะห์ตลาด Cryptocurrency</p>
       </div>
 
-      <Tabs defaultValue="news" className="w-full">
+      <Tabs defaultValue="BinanceThCampaigns" className="w-full">
         <TabsList className="grid w-full grid-cols-4 bg-card border border-border">
-          <TabsTrigger value="news" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Newspaper className="w-4 h-4" />
-            News
-          </TabsTrigger>
-          <TabsTrigger value="price" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <DollarSign className="w-4 h-4" />
-            Price
-          </TabsTrigger>
-          <TabsTrigger value="scanner" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="BinanceThCampaigns" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Search className="w-4 h-4" />
-            Scanner
+            Home
+          </TabsTrigger>
+          <TabsTrigger value="Calendar" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Newspaper className="w-4 h-4" />
+            Calendar
+          </TabsTrigger>
+          <TabsTrigger value="NewsFlowPanel" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <DollarSign className="w-4 h-4" />
+            News
           </TabsTrigger>
           <TabsTrigger value="trading" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <BarChart3 className="w-4 h-4" />
@@ -47,23 +47,18 @@ export default function CryptoPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="news" className="mt-6">
-          <NewsTab />
+        <TabsContent value="Calendar" className="mt-6">
+          <Calendar />
         </TabsContent>
 
-        <TabsContent value="price" className="mt-6">
-          <PriceTab
-            selectedCoins={selectedCoins}
-            setSelectedCoins={setSelectedCoins}
-          />
+        <TabsContent value="NewsFlowPanel" className="mt-6">
+          <NewsFlowPanel />
         </TabsContent>
 
-        <TabsContent value="scanner" className="mt-6">
-          <ScannerTab
-            filters={scannerFilters}
-            setFilters={setScannerFilters}
-          />
+        <TabsContent value="BinanceThCampaigns" className="mt-6">
+          <BinanceThCampaigns />
         </TabsContent>
+
 
         <TabsContent value="trading" className="mt-6">
           <TradingTab
