@@ -20,10 +20,10 @@ export function TakerVolumeChart({ data, period }: TakerVolumeChartProps) {
   const chartData = data || []
 
   // Debug: Log data to check values
-  console.log('TakerVolume data:', chartData)
-  console.log('Data length:', chartData.length)
-  console.log('Data type:', typeof chartData)
-  console.log('Is array:', Array.isArray(chartData))
+  // console.log('TakerVolume data:', chartData)
+  // console.log('Data length:', chartData.length)
+  // console.log('Data type:', typeof chartData)
+  // console.log('Is array:', Array.isArray(chartData))
 
   // Handle empty or invalid data by providing fallback data
   const displayData = chartData && chartData.length > 0 ? chartData : Array.from({ length: 30 }, (_, i) => {
@@ -83,6 +83,13 @@ export function TakerVolumeChart({ data, period }: TakerVolumeChartProps) {
     return null
   }
 
+  // Calculate dynamic padding based on max volume difference
+  const maxVolume = Math.max(...displayData.map((item: any) => Math.max(item.takerBuy || 0, item.takerSell || 0)))
+  const minVolume = Math.min(...displayData.map((item: any) => Math.min(item.takerBuy || 0, item.takerSell || 0)))
+  const volumeRange = maxVolume - minVolume
+  const dynamicPadding = volumeRange * 0.1
+  const yAxisDomain = [minVolume - dynamicPadding, maxVolume + dynamicPadding]
+
   const enhancedData = displayData.map((item: any) => ({
     ...item,
     buySellRatio: (item.takerBuy || 0) / ((item.takerBuy || 0) + (item.takerSell || 0)),
@@ -94,7 +101,7 @@ export function TakerVolumeChart({ data, period }: TakerVolumeChartProps) {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
         data={enhancedData}
-        margin={{ top: 20, right: 60, left: 60, bottom: 20 }}
+        margin={{ top: 20, right: 60, left: 40, bottom: 20 }}
       >
         {/* Only 2-3 horizontal grid lines, no vertical grid */}
         <CartesianGrid
@@ -111,7 +118,7 @@ export function TakerVolumeChart({ data, period }: TakerVolumeChartProps) {
           stroke="#6b7280"
           fontSize={10}
           tickLine={false}
-          interval={Math.ceil(displayData.length / 6)} // Show about 6 ticks
+          interval={Math.ceil(displayData.length / 12)} // Show about 6 ticks
         />
 
         {/* Y-axis with proper formatting */}
@@ -120,6 +127,7 @@ export function TakerVolumeChart({ data, period }: TakerVolumeChartProps) {
           fontSize={10}
           tickLine={false}
           tickCount={3}
+          domain={yAxisDomain}
           tickFormatter={formatValue}
         />
 

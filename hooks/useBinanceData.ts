@@ -28,176 +28,228 @@ export const useBinanceData = (symbol: string, period: string) => {
     takerRatio: any,
     basis: any,
   ): TradingDataPoint[] => {
-    // Check if the response is directly an array (fallback case)
-    if (Array.isArray(longShortAccount.data)) {
-      console.log('API returned direct array format, processing as array')
+
+    const num = (v: any) => convertPercentageToNumber(v ?? 0)
+
+    // 1) กรณี API ส่ง array ตรง ๆ
+    if (Array.isArray(longShortAccount?.data)) {
       return longShortAccount.data.map((item: any, index: number) => {
-        const thaiTime = new Date(item.timestamp || Date.now() - (30 - index) * 5 * 60000).toLocaleTimeString('th-TH', {
-          hour12: false,
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'Asia/Bangkok'
+        const ts = item.timestamp || Date.now() - (30 - index) * 5 * 60000
+        const thaiTime = new Date(ts).toLocaleTimeString('th-TH', {
+          hour12: false, hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok'
         })
+
+        // --- Accounts ---
+        const accRatio =
+          num(item.longShortAccounts ?? item.longShortRatio ?? item.long_short_ratio ?? item.ratio)
+
+        let longAcc = num(item.longAccount ?? item.long_account ?? item.long)
+        let shortAcc = num(item.shortAccount ?? item.short_account ?? item.short)
+
+        if (!longAcc && !shortAcc && accRatio > 0) {
+          shortAcc = 100 / (1 + accRatio)
+          longAcc = 100 - shortAcc
+        }
+
+        // --- Positions (แยกจาก Accounts) ---
+        const posRatio =
+          num(item.longShortPositions ?? item.long_short_positions ?? item.positionsRatio ?? item.pos_ratio)
+
+        let longPos = num(item.longPosition ?? item.long_pos)
+        let shortPos = num(item.shortPosition ?? item.short_pos)
+
+        if (!longPos && !shortPos && posRatio > 0) {
+          shortPos = 100 / (1 + posRatio)
+          longPos = 100 - shortPos
+        }
+
+        // --- Global (แยกจาก Accounts)---
+        const globalRatio =
+          num(item.longShortRatio ?? item.globalRatio ?? item.global_long_short_ratio)
+
+        let globalLong = num(item.globalLongAccount ?? item.globalLong ?? item.global_long)
+        let globalShort = num(item.globalShortAccount ?? item.globalShort ?? item.global_short)
+
+        if (!globalLong && !globalShort && globalRatio > 0) {
+          globalShort = 100 / (1 + globalRatio)
+          globalLong = 100 - globalShort
+        }
+
+        // --- Taker ---
+        const takerBuy  = num(item.takerBuy ?? item.buyVol ?? item.taker_buy)
+        const takerSell = num(item.takerSell ?? item.sellVol ?? item.taker_sell)
+        const takerBuySellRatio =
+          num(item.takerBuySellRatio ?? item.buySellRatio) || (takerSell ? (takerBuy || 0) / takerSell : 0)
+
+        // --- Prices & Basis ---
+        const futuresPrice = num(item.futuresPrice ?? item.futures ?? item.markPrice)
+        const priceIndex   = num(item.priceIndex ?? item.index ?? item.indexPrice)
+        const basisVal     =
+          (item.basis != null ? num(item.basis) : (futuresPrice && priceIndex ? futuresPrice - priceIndex : 0))
 
         return {
           time: thaiTime,
-          timestamp: item.timestamp || Date.now() - (30 - index) * 5 * 60000,
-          longShortAccounts: convertPercentageToNumber(item.longShortRatio || item.long_short_ratio || item.ratio || 2.3),
-          longAccount: convertPercentageToNumber(item.longAccount || item.long_account || item.long),
-          shortAccount: convertPercentageToNumber(item.shortAccount || item.short_account || item.short),
-          openInterest: convertPercentageToNumber(item.openInterest) || 0,
-          notionalValue: convertPercentageToNumber(item.notionalValue) || 0,
-          longShortPositions: convertPercentageToNumber(item.longShortPositions) || 3.8,
-          longShortRatio: convertPercentageToNumber(item.longShortRatio) || 2.3,
-          takerBuy: convertPercentageToNumber(item.takerBuy) || 7000000000,
-          takerSell: convertPercentageToNumber(item.takerSell) || 7000000000,
-          futuresPrice: convertPercentageToNumber(item.futuresPrice) || 0.255,
-          priceIndex: convertPercentageToNumber(item.priceIndex) || 0.254,
-          basis: convertPercentageToNumber(item.basis) || 0.001,
+          timestamp: ts,
+
+          // OI
+          openInterest: num(item.openInterest),
+          notionalValue: num(item.notionalValue),
+
+          // Accounts
+          longShortAccounts: accRatio || 0,
+          longAccount: longAcc || 0,
+          shortAccount: shortAcc || 0,
+
+          // Positions
+          longShortPositions: posRatio || 0,
+          longPosition: longPos || 0,
+          shortPosition: shortPos || 0,
+
+          // Global
+          longShortRatio: globalRatio || 0,
+          globalLongAccount: globalLong || 0,
+          globalShortAccount: globalShort || 0,
+
+          // Taker
+          takerBuy: takerBuy || 0,
+          takerSell: takerSell || 0,
+          takerBuySellRatio,
+
+          // Prices & Basis
+          futuresPrice: futuresPrice || 0,
+          priceIndex: priceIndex || 0,
+          basis: basisVal || 0,
         }
       })
     }
 
-    // Handle the new API response structure: { xAxis: [], series: [{ data: [], name: "" }] }
-    const openInterestData = openInterest.data || {}
-    const xAxis = openInterestData.xAxis || []
-    const openInterestSeries = openInterestData.series || []
+    // 2) โครงสร้าง { data: { xAxis, series[] } }
+    const pickSeries = (series: any[], names: string[]) =>
+      (series.find((s: any) => names.includes(String(s?.name)))?.data) ?? []
 
-    // Extract the actual data arrays
-    const openInterestValues = openInterestSeries.find((s: any) => s.name === "sum_open_interest")?.data || []
-    const notionalValueValues = openInterestSeries.find((s: any) => s.name === "sum_open_interest_value")?.data || []
+    // Open Interest
+    const oiData = openInterest?.data ?? {}
+    const xAxis: number[] = oiData.xAxis ?? []
+    const oiSeries = oiData.series ?? []
+    const openInterestValues   = pickSeries(oiSeries, ['sum_open_interest', 'open_interest', 'Open Interest'])
+    const notionalValueValues  = pickSeries(oiSeries, ['sum_open_interest_value', 'open_interest_value', 'Notional Value'])
 
-    // Extract Long/Short Account Ratio data - try multiple possible field names
-    const longShortAccountData = longShortAccount.data || {}
-    const longShortAccountSeries = longShortAccountData.series || []
+    // Accounts
+    const lsaSeries = longShortAccount?.data?.series ?? []
+    const longShortAccountValues = pickSeries(lsaSeries, ['Long/Short Ratio'])
+    const longAccountValues      = pickSeries(lsaSeries, ['Long Account'])
+    const shortAccountValues     = pickSeries(lsaSeries, ['Short Account'])
 
-    // Try different possible series names for the ratio based on Binance API patterns
-    let longShortAccountValues =
-      longShortAccountSeries.find((s: any) => s.name === "Long/Short Ratio")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "longShortRatio")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "long_short_ratio")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "account_ratio")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "ratio")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "long")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "short")?.data ||
-      []
+    // Positions (ใหม่)
+    const lspSeries = longShortPosition?.data?.series ?? []
+    const longShortPositionValues = pickSeries(lspSeries, ['Long/Short Ratio'])
+    const longPositionValues      = pickSeries(lspSeries, ['Long Account',])
+    const shortPositionValues     = pickSeries(lspSeries, ['Short Account'])
 
-    // Extract individual account percentages if available (try different field name patterns)
-    let longAccountValues =
-      longShortAccountSeries.find((s: any) => s.name === "Long Account")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "longAccount")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "long_account")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "long_pct")?.data ||
-      []
+    // Global (ใหม่)
+    const glsSeries = globalLongShort?.data?.series ?? []
+    const globalLongShortValues = pickSeries(glsSeries, ['Long/Short Ratio'])
+    const globallongValues      = pickSeries(glsSeries, ['Long Account'])
+    const globalshortValues     = pickSeries(glsSeries, ['Short Account'])
 
-    let shortAccountValues =
-      longShortAccountSeries.find((s: any) => s.name === "Short Account")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "shortAccount")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "short_account")?.data ||
-      // longShortAccountSeries.find((s: any) => s.name === "short_pct")?.data ||
-      []
+    // Taker
+    const trSeries = takerRatio?.data?.series ?? []
+    const takerBuyValues        = pickSeries(trSeries, ['Buy Vol'])
+    const takerSellValues       = pickSeries(trSeries, ['Sell Vol'])
+    const takerBSRatioValues    = pickSeries(trSeries, ['Buy/Sell Ratio'])
 
-    // Extract Long/Short Position Ratio data - try multiple possible field names
-    const longShortPositionData = longShortPosition.data || {}
-    const longShortPositionSeries = longShortPositionData.series || []
+    // Basis
+    const bsSeries = basis?.data?.series ?? []
+    const futuresPriceValues    = pickSeries(bsSeries, ['futures', 'futuresPrice', 'markPrice', 'Futures'])
+    const priceIndexValues      = pickSeries(bsSeries, ['index', 'priceIndex', 'indexPrice', 'Index'])
+    const basisValues           = pickSeries(bsSeries, ['basis', 'Basis'])
 
-    let longShortPositionValues =
-      longShortPositionSeries.find((s: any) => s.name === "Long/Short Ratio")?.data ||
-      // longShortPositionSeries.find((s: any) => s.name === "long_short_ratio")?.data ||
-      // longShortPositionSeries.find((s: any) => s.name === "longShortRatio")?.data ||
-      // longShortPositionSeries.find((s: any) => s.name === "position_ratio")?.data ||
-      // longShortPositionSeries.find((s: any) => s.name === "ratio")?.data ||
-      []
+    // รองรับกรณี endpoint ส่ง array ตรง ๆ
+    const ensureArrayOr = (obj: any, fallback: any[]) =>
+      (Array.isArray(obj?.data) ? obj.data : fallback)
 
-    // Extract Global Long/Short Ratio data - try multiple possible field names
-    const globalLongShortData = globalLongShort.data || {}
-    const globalLongShortSeries = globalLongShortData.series || []
+    const lsaRatio = longShortAccountValues.length ? longShortAccountValues : ensureArrayOr(longShortAccount, [])
+    const lspRatio = longShortPositionValues.length ? longShortPositionValues : ensureArrayOr(longShortPosition, [])
+    const glsRatio = globalLongShortValues.length ? globalLongShortValues : ensureArrayOr(globalLongShort, [])
 
-    let globalLongShortValues =
-      globalLongShortSeries.find((s: any) => s.name === "long_short_ratio")?.data ||
-      globalLongShortSeries.find((s: any) => s.name === "longShortRatio")?.data ||
-      globalLongShortSeries.find((s: any) => s.name === "global_ratio")?.data ||
-      globalLongShortSeries.find((s: any) => s.name === "ratio")?.data ||
-      []
-
-    // Also try direct data arrays if series structure doesn't exist
-    if (longShortAccountValues.length === 0 && longShortAccount.data && Array.isArray(longShortAccount.data)) {
-      longShortAccountValues = longShortAccount.data
-    }
-    if (longShortPositionValues.length === 0 && longShortPosition.data && Array.isArray(longShortPosition.data)) {
-      longShortPositionValues = longShortPosition.data
-    }
-    if (globalLongShortValues.length === 0 && globalLongShort.data && Array.isArray(globalLongShort.data)) {
-      globalLongShortValues = globalLongShort.data
-    }
-
-    console.log('API Data Debug:', {
-      longShortAccount: {
-        availableSeries: longShortAccountSeries.map((s: any) => s.name),
-        dataLength: longShortAccountValues.length,
-        firstValues: longShortAccountValues.slice(0, 3),
-        longAccountData: longAccountValues.slice(0, 3),
-        shortAccountData: shortAccountValues.slice(0, 3)
-      },
-      longShortPosition: {
-        availableSeries: longShortPositionSeries.map((s: any) => s.name),
-        dataLength: longShortPositionValues.length,
-        firstValues: longShortPositionValues.slice(0, 3)
-      },
-      globalLongShort: {
-        availableSeries: globalLongShortSeries.map((s: any) => s.name),
-        dataLength: globalLongShortValues.length,
-        firstValues: globalLongShortValues.slice(0, 3)
-      }
-    })
-
-    return xAxis.map((timestamp: number, index: number) => {
-      // Convert Unix timestamp (ms) to Thai time format for display
+    return xAxis.map((timestamp: number, i: number) => {
       const thaiTime = new Date(timestamp).toLocaleTimeString('th-TH', {
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Bangkok'
+        hour12: false, hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok'
       })
 
-      // Use actual API data if available, otherwise fallback to calculated mock data
-      const accountRatio = longShortAccountValues[index] || 0
-      const positionRatio = longShortPositionValues[index] || 0
-      const globalRatio = globalLongShortValues[index] || 0
-
-      // Extract individual account percentages and convert from strings if needed
-      let longAccount = convertPercentageToNumber(longAccountValues[index])
-      let shortAccount = convertPercentageToNumber(shortAccountValues[index])
-
-      // If individual account data is not available, calculate from ratio
-      if (longAccount === 0 && shortAccount === 0 && accountRatio > 0) {
-        // Calculate percentages from ratio (ratio = long/short)
-        shortAccount = 100 / (1 + accountRatio)
-        longAccount = 100 * accountRatio / (1 + accountRatio)
+      // Accounts
+      const accRatio = num(lsaRatio[i])
+      let longAcc = num(longAccountValues[i])
+      let shortAcc = num(shortAccountValues[i])
+      if (!longAcc && !shortAcc && accRatio > 0) {
+        shortAcc = 100 / (1 + accRatio)
+        longAcc = 100 - shortAcc
       }
 
-      // Create more realistic mock data that varies over time
-      const trend = (index / xAxis.length) * 0.5 - 0.25 // Gradual trend
-      const randomVariation = (Math.random() - 0.5) * 0.3
+      // Positions
+      const posRatio = num(lspRatio[i])
+      let longPos = num(longPositionValues[i])
+      let shortPos = num(shortPositionValues[i])
+      if (!longPos && !shortPos && posRatio > 0) {
+        shortPos = 100 / (1 + posRatio)
+        longPos = 100 - shortPos
+      }
+
+      // Global
+      const globalRatio = num(glsRatio[i])
+      let globalLong = num(globallongValues[i])
+      let globalShort = num(globalshortValues[i])
+      if (!globalLong && !globalShort && globalRatio > 0) {
+        globalShort = 100 / (1 + globalRatio)
+        globalLong = 100 - globalShort
+      }
+
+      // Taker
+      const tBuy = num(takerBuyValues[i])
+      const tSell = num(takerSellValues[i])
+      const tBS = num(takerBSRatioValues[i]) || (tSell ? (tBuy || 0) / tSell : 0)
+
+      // Prices & Basis
+      const fut = num(futuresPriceValues[i])
+      const idx = num(priceIndexValues[i])
+      const bVal = (basisValues[i] != null ? num(basisValues[i]) : (fut && idx ? fut - idx : 0))
 
       return {
         time: thaiTime,
         timestamp,
-        openInterest: openInterestValues[index] || 0,
-        notionalValue: notionalValueValues[index] || 0,
-        longShortAccounts: accountRatio > 0 ? Math.max(1.5, Math.min(3.5, accountRatio)) : Math.max(1.5, Math.min(3.5, 2.3 + trend + randomVariation)),
-        longAccount: longAccount > 0 ? longAccount : (30 + Math.random() * 25),
-        shortAccount: shortAccount > 0 ? shortAccount : (30 + Math.random() * 25),
-        longShortPositions: positionRatio > 0 ? Math.max(2.5, Math.min(5.0, positionRatio)) : Math.max(2.5, Math.min(5.0, 3.8 + trend * 1.5 + randomVariation)),
-        longShortRatio: globalRatio > 0 ? Math.max(1.0, Math.min(3.0, globalRatio)) : Math.max(1.0, Math.min(3.0, 2.3 + trend * 0.8 + randomVariation)),
-        takerBuy: Math.max(5000000000, 7000000000 + (index * 100000000) + (Math.random() - 0.5) * 2000000000),
-        takerSell: Math.max(5000000000, 7000000000 - (index * 80000000) + (Math.random() - 0.5) * 2000000000),
-        futuresPrice: 0.255 * (1 + trend * 0.1 + (Math.random() - 0.5) * 0.02),
-        priceIndex: 0.255 * (1 + trend * 0.1 + (Math.random() - 0.5) * 0.02 - 0.001),
-        basis: 0.255 * 0.001 * (1 + trend * 0.5), // Varying basis
+
+        // OI
+        openInterest: num(openInterestValues[i]),
+        notionalValue: num(notionalValueValues[i]),
+
+        // Accounts
+        longShortAccounts: accRatio || 0,
+        longAccount: longAcc || 0,
+        shortAccount: shortAcc || 0,
+
+        // Positions
+        longShortPositions: posRatio || 0,
+        longPosition: longPos || 0,
+        shortPosition: shortPos || 0,
+
+        // Global
+        longShortRatio: globalRatio || 0,
+        globalLongAccount: globalLong || 0,
+        globalShortAccount: globalShort || 0,
+
+        // Taker
+        takerBuy: tBuy || 0,
+        takerSell: tSell || 0,
+        takerBuySellRatio: tBS || 0,
+
+        // Prices & Basis
+        futuresPrice: fut || 0,
+        priceIndex: idx || 0,
+        basis: bVal || 0,
       }
     })
   }
+
 
   const fetchData = async () => {
     // Prevent duplicate API calls
