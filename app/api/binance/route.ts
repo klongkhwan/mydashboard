@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const runtime = "nodejs"               // อย่าใช้ 'edge'
+export const preferredRegion = ["iad1", "sfo1"]  // pin region ที่ US
+
+export async function GET(req: NextRequest) {
+  return NextResponse.json({ ok: true })
+}
 
 const BASE_URL = 'https://www.binance.com'
 
