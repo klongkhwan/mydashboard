@@ -5,9 +5,12 @@ import { Analytics } from '@vercel/analytics/next'
 import '../styles/globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'AllBoard - Your Dashboard',
+  description: 'Complete dashboard for all your needs',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
