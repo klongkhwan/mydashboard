@@ -97,14 +97,35 @@ export default function ApiSchedulerPage() {
 
   const handleEditSchedule = (schedule: ApiSchedule) => {
     setEditingSchedule(schedule)
+
+    // Convert headers to JSON string if it's an object
+    let headersString = ""
+    if (schedule.headers) {
+      if (typeof schedule.headers === 'string') {
+        headersString = schedule.headers
+      } else {
+        headersString = JSON.stringify(schedule.headers, null, 2)
+      }
+    }
+
+    // Convert body to JSON string if it's an object
+    let bodyString = ""
+    if (schedule.body) {
+      if (typeof schedule.body === 'string') {
+        bodyString = schedule.body
+      } else {
+        bodyString = JSON.stringify(schedule.body, null, 2)
+      }
+    }
+
     setFormData({
       apiName: schedule.api_name,
       url: schedule.url,
       method: schedule.method,
       time: schedule.time,
       frequency: schedule.frequency,
-      headers: schedule.headers || "",
-      body: schedule.body || "",
+      headers: headersString,
+      body: bodyString,
     })
     setIsModalOpen(true)
   }
