@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+export async function GET(request: NextRequest) {
+  return NextResponse.json({
+    message: 'Cron run-schedules endpoint - use POST method',
+    usage: {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer YOUR_CRON_SECRET (optional)'
+      },
+      note: 'This endpoint runs schedules that match the current time'
+    },
+    test_command: 'curl -X POST https://your-domain.vercel.app/api/cron/run-schedules -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_CRON_SECRET"'
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Verify cron job secret (optional security)

@@ -78,7 +78,11 @@ console.log('📅 Scheduled jobs:');
 console.log('  - Daily at 8:00 AM: /api/cron/daily');
 console.log('  - Every 6 hours: /api/cron/run-schedules');
 console.log('\n💡 To test manually, run:');
+console.log(`   node ${__filename} --run-now`);
 console.log(`   node ${__filename}`);
+console.log('\n🌐 To test via browser:');
+console.log(`   ${BASE_URL}/api/cron/daily (shows usage info)`);
+console.log(`   ${BASE_URL}/api/cron/run-schedules (shows usage info)`);
 console.log('\n🛑 Press Ctrl+C to stop');
 
 // Keep the process running
