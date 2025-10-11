@@ -1,11 +1,12 @@
 "use client"
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Newspaper, DollarSign, Search, BarChart3 } from "lucide-react"
+import { Newspaper, DollarSign, Search, BarChart3, TrendingUp } from "lucide-react"
 import { Calendar } from "@/components/crypto/calendartab"
 import NewsFlowPanel from "@/components/crypto/NewsTab"
 import BinanceThCampaigns from "@/components/crypto/HomeTab"
 import { TradingTab } from "@/components/crypto/TradingTab"
+import TradingViewWidget from "@/components/crypto/TradingViewWidget"
 import { ScannerFilters } from "@/types/crypto"
 
 export default function CryptoPage() {
@@ -28,7 +29,7 @@ export default function CryptoPage() {
       </div>
 
       <Tabs defaultValue="BinanceThCampaigns" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-card border border-border">
+        <TabsList className="grid w-full grid-cols-5 bg-card border border-border">
           <TabsTrigger value="BinanceThCampaigns" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Search className="w-4 h-4" />
             Home
@@ -44,6 +45,10 @@ export default function CryptoPage() {
           <TabsTrigger value="trading" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <BarChart3 className="w-4 h-4" />
             Trading Trend
+          </TabsTrigger>
+          <TabsTrigger value="chart" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TrendingUp className="w-4 h-4" />
+            Chart
           </TabsTrigger>
         </TabsList>
 
@@ -67,6 +72,12 @@ export default function CryptoPage() {
             onSymbolChange={setTradingSymbol}
             onPeriodChange={setTradingPeriod}
           />
+        </TabsContent>
+
+        <TabsContent value="chart" className="mt-6">
+          <div className="h-[600px] w-full">
+            <TradingViewWidget />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

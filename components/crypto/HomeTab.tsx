@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, Clock, BookOpen, ExternalLink } from "lucide-react"
+import { RefreshCw, Clock, BookOpen, ExternalLink, TrendingUp, BarChart3, Activity } from "lucide-react"
+import TradingViewTechnicalWidget from "./TradingViewTechnicalWidget"
 
 type Campaign = {
   id: number
@@ -46,6 +47,34 @@ const statusBadge = (status: ReturnType<typeof getStatus>) => {
   }
 }
 
+// Menu items configuration
+const menuItems = [
+  {
+    title: "บทความ / ข่าว",
+    url: "https://www.binance.com/en/square/trending",
+    icon: BookOpen,
+    tooltip: "บทความยอดนิยม (Binance Square Trending)"
+  },
+  {
+    title: "coinglass",
+    url: "https://www.https://www.coinglass.com/.com/en/markets",
+    icon: Activity,
+    tooltip: "ข้อมูลตลาด"
+  },
+  {
+    title: "hyperdash dex",
+    url: "https://hyperdash.info",
+    icon: BarChart3,
+    tooltip: "ข้อมูลการเทรด"
+  },
+  {
+    title: "Heatmap",
+    url: "https://www.coinglass.com/pro/futures/LiquidationHeatMap",
+    icon: TrendingUp,
+    tooltip: "Heatmap"
+  }
+]
+
 export default function BinanceThCampaigns() {
   const [rows, setRows] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(false)
@@ -73,112 +102,123 @@ export default function BinanceThCampaigns() {
   useEffect(() => { fetchData() }, [refetchTick])
 
   return (
-    <div className="space-y-4">
-      {/* ── การ์ดเมนูลัดด้านบน ─────────────────────────────────────── */}
-      <Card>
-        <CardHeader className="py-2">
-          <CardTitle className="text-sm text-muted-foreground">เมนูลัด</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-1 grid grid-cols-6 gap-2">
-            {/* ปุ่ม: บทความ (Binance Square Trending) */}
-            <Button asChild variant="default" className="justify-between bg-yellow-500 hover:bg-yellow-600 text-black h-8 text-xs">
-              <a
-                href="https://www.binance.com/en/square/trending"
-                target="_blank"
-                rel="noreferrer"
-                title="บทความยอดนิยม (Binance Square Trending)"
-                className="w-full"
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Left side - Binance campaigns */}
+      <div className="lg:col-span-2 space-y-4">
+        {/* ── การ์ดเมนูลัดด้านบน ─────────────────────────────────────── */}
+        <Card>
+          <CardHeader className="py-1">
+            <CardTitle className="text-xs text-muted-foreground">เมนูลัด</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-4 gap-2">
+              {menuItems.map((item, index) => {
+                const Icon = item.icon
+                return (
+                  <Button
+                    key={index}
+                    asChild
+                    variant="default"
+                    className="justify-between bg-yellow-500 hover:bg-yellow-600 text-black h-7 text-xs"
+                  >
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={item.tooltip}
+                      className="w-full"
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        <Icon className="w-3 h-3" />
+                        {item.title}
+                      </span>
+                      <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+                    </a>
+                  </Button>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── การ์ดรายการกิจกรรม (fixed height + scroll ภายใน) ─────── */}
+        <Card>
+          <CardHeader
+            className="px-3 py-1"
+            style={{ height: HEADER_H }}
+          >
+            <div className="h-full flex items-center justify-between">
+              <CardTitle className="text-xs text-muted-foreground">
+                กิจกรรม Binance TH
+              </CardTitle>
+              <button
+                onClick={() => setRefetchTick(x => x + 1)}
+                disabled={loading}
+                className={`px-2 py-1 rounded border text-[11px] flex items-center gap-1.5 ${
+                  loading ? "border-border text-muted-foreground" : "border-border hover:border-primary"
+                }`}
+                title="Refresh"
               >
-                <span className="inline-flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5" />
-                  บทความ / ข่าว
-                </span>
-                <ExternalLink className="w-3 h-3 opacity-70" />
-              </a>
-            </Button>
-            <Button asChild variant="default" className="justify-between bg-yellow-500 hover:bg-yellow-600 text-black h-8 text-xs">
-              <a
-                href="https://www.binance.com/en/square/trending"
-                target="_blank"
-                rel="noreferrer"
-                title="บทความยอดนิยม (Binance Square Trending)"
-                className="w-full"
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5" />
-                  บทความ / ข่าว
-                </span>
-                <ExternalLink className="w-3 h-3 opacity-70" />
-              </a>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                Refresh
+              </button>
+            </div>
+          </CardHeader>
 
-      {/* ── การ์ดรายการกิจกรรม (fixed height + scroll ภายใน) ─────── */}
-      <Card>
-        <CardHeader
-          className="px-3 py-1"
-          style={{ height: HEADER_H }}
-        >
-          <div className="h-full flex items-center justify-between">
-            <CardTitle className="text-xs text-muted-foreground">
-              กิจกรรม Binance TH
-            </CardTitle>
-            <button
-              onClick={() => setRefetchTick(x => x + 1)}
-              disabled={loading}
-              className={`px-2 py-1 rounded border text-[11px] flex items-center gap-1.5 ${
-                loading ? "border-border text-muted-foreground" : "border-border hover:border-primary"
-              }`}
-              title="Refresh"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              Refresh
-            </button>
-          </div>
-        </CardHeader>
+          {/* 🔒 ล็อกความสูง และเลื่อนเฉพาะด้านใน */}
+          <CardContent
+            className="p-0 overscroll-contain"
+            style={{ height: CONTENT_H }}
+          >
+            <div className="divide-y divide-border overflow-y-auto h-full">
+              {loading && <div className="p-3 text-foreground text-sm">กำลังโหลด…</div>}
+              {error && <div className="p-3 text-destructive text-sm">เกิดข้อผิดพลาด: {error}</div>}
+              {!loading && !error && topRows.length === 0 && (
+                <div className="p-3 text-muted-foreground text-sm">ไม่มีข้อมูลกิจกรรม</div>
+              )}
 
-        {/* 🔒 ล็อกความสูง และเลื่อนเฉพาะด้านใน */}
-        <CardContent
-          className="p-0 overscroll-contain"
-          style={{ height: CONTENT_H }}
-        >
-          <div className="divide-y divide-border overflow-y-auto h-full">
-            {loading && <div className="p-3 text-foreground text-sm">กำลังโหลด…</div>}
-            {error && <div className="p-3 text-destructive text-sm">เกิดข้อผิดพลาด: {error}</div>}
-            {!loading && !error && topRows.length === 0 && (
-              <div className="p-3 text-muted-foreground text-sm">ไม่มีข้อมูลกิจกรรม</div>
-            )}
-
-            {!loading && !error && topRows.map((c) => {
-              const status = getStatus(c.startTime, c.endTime)
-              return (
-                <div key={c.id} className="p-2">
-                  <div className="flex items-start gap-2">
-                    {/* ไม่มีรูป -> เบา/ลื่น */}
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[13px] font-medium text-card-foreground leading-tight">
-                          {c.title}
-                        </span>
-                        {statusBadge(status)}
-                      </div>
-                      <div className="mt-0.5 text-[11px] text-muted-foreground flex items-center gap-1.5">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {fmtDate(c.startTime)} — {fmtDate(c.endTime)}
-                        </span>
+              {!loading && !error && topRows.map((c) => {
+                const status = getStatus(c.startTime, c.endTime)
+                return (
+                  <div key={c.id} className="p-2">
+                    <div className="flex items-start gap-2">
+                      {/* ไม่มีรูป -> เบา/ลื่น */}
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[13px] font-medium text-card-foreground leading-tight">
+                            {c.title}
+                          </span>
+                          {statusBadge(status)}
+                        </div>
+                        <div className="mt-0.5 text-[11px] text-muted-foreground flex items-center gap-1.5">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {fmtDate(c.startTime)} — {fmtDate(c.endTime)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Right side - TradingView Technical Analysis */}
+      <div className="lg:col-span-1">
+        <Card>
+          <CardHeader className="py-1">
+            <CardTitle className="text-xs text-muted-foreground">Technical Analysis</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 p-2">
+            <div className="w-full h-[450px] flex justify-center items-center">
+              <TradingViewTechnicalWidget />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
