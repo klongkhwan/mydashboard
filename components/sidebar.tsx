@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Clock,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { logout } from "@/app/actions/auth"
@@ -42,6 +43,11 @@ const menuItems = [
     title: "Crypto",
     icon: Bitcoin,
     href: "/dashboard/crypto",
+  },
+  {
+    title: "API Scheduler",
+    icon: Clock,
+    href: "/dashboard/api-scheduler",
   },
   {
     title: "โปรแกรม",

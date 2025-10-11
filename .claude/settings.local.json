@@ -5,7 +5,12 @@
       "Bash(npm run dev:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(npm install:*)",
+      "Bash(git rm:*)",
+      "Bash(rm:*)",
+      "Bash(git add:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []
