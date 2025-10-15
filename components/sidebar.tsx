@@ -13,6 +13,7 @@ import {
   ChevronRight,
   LogOut,
   Clock,
+  TrendingUp,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { logout } from "@/app/actions/auth"
@@ -28,6 +29,11 @@ const menuItems = [
     title: "Dashboard",
     icon: LayoutDashboard,
     href: "/dashboard",
+  },
+  {
+    title: "My Trade",
+    icon: TrendingUp,
+    href: "/dashboard/my-trade",
   },
   {
     title: "Users",
