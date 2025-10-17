@@ -73,6 +73,13 @@ const menuItems = [
     icon: TrendingUp,
     tooltip: "Heatmap"
   }
+  ,
+  {
+    title: "Binance Alpha",
+    url: "https://alpha123.uk/stability/",
+    icon: TrendingUp,
+    tooltip: "Binance Alpha"
+  }
 ]
 
 export default function BinanceThCampaigns() {

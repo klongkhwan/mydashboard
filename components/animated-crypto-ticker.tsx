@@ -2,6 +2,7 @@
 
 import { useCryptoPricesPolling } from '@/hooks/use-crypto-prices-polling'
 import { useAnimatedPrice } from '@/hooks/use-animated-price'
+import { useSettings } from '@/hooks/use-settings'
 import { useEffect, useState } from 'react'
 
 interface CryptoPriceItem {
@@ -53,22 +54,56 @@ function PriceDisplay({ symbol, price, previousPrice }: { symbol: string; price:
 
 export function AnimatedCryptoTicker() {
   const { prices, isLoading } = useCryptoPricesPolling()
+  const { settings, isLoading: settingsLoading, getTitleBarCoin } = useSettings()
   const [previousPrices, setPreviousPrices] = useState<{ [key: string]: number }>({})
   const [scrollPosition, setScrollPosition] = useState(0)
 
-  // Update DOGE title
+  // Update title bar based on settings
   useEffect(() => {
-    const dogePrice = prices['DOGEUSDT']
-    if (dogePrice && !isNaN(dogePrice.price)) {
-      const price = dogePrice.price
-      const changePercent = dogePrice.priceChangePercent ?? 0
-      const arrow = changePercent >= 0 ? '▲' : '▼'
-      document.title = `$${price.toFixed(6)} ${arrow} ${Math.abs(changePercent).toFixed(1)}% | AllBoard`
-    }
-  }, [prices])
+    if (settingsLoading) return
 
-  const symbols = ['BTCUSDT', 'ETHUSDT', 'DOGEUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT', 'AVAXUSDT']
-  const allSymbols = [...symbols, ...symbols] // Duplicate for seamless scrolling
+    const titleBarCoin = getTitleBarCoin()
+    if (titleBarCoin && titleBarCoin.price > 0) {
+      // Use settings title bar coin - always use price format only
+      const changePercent = titleBarCoin.change
+      const arrow = changePercent >= 0 ? '▲' : '▼'
+      const titleText = `$${titleBarCoin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+      document.title = `${titleText} | Superlboard`
+    } else {
+      // Fallback to BTCUSDT if no settings
+      const btcPrice = prices['BTCUSDT']
+      if (btcPrice && !isNaN(btcPrice.price)) {
+        const price = btcPrice.price
+        document.title = `$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Superlboard`
+      } else {
+        document.title = 'Superlboard'
+      }
+    }
+  }, [prices, settings, settingsLoading, getTitleBarCoin])
+
+  // Get symbols from localStorage settings, fallback to BTCUSDT only
+  const getTickerSymbols = () => {
+    if (settingsLoading) return ['BTCUSDT']
+
+    // Use new coinDisplays format
+    if (settings.coinDisplays && settings.coinDisplays.length > 0) {
+      const selectedCoins = settings.coinDisplays
+        .filter(coinDisplay => coinDisplay.show)
+        .map(coinDisplay => `${coinDisplay.symbol}USDT`)
+
+      if (selectedCoins.length > 0) {
+        return selectedCoins
+      }
+    }
+
+    // Default to BTCUSDT if no settings
+    return ['BTCUSDT']
+  }
+
+  const symbols = getTickerSymbols()
+  // Create more copies for seamless scrolling
+  const allSymbols = [...symbols, ...symbols, ...symbols, ...symbols] // 4 copies for continuous scrolling
 
   // Update previous prices for animation
   useEffect(() => {
@@ -88,8 +123,19 @@ export function AnimatedCryptoTicker() {
   // Auto-scroll animation
   useEffect(() => {
     const interval = setInterval(() => {
-      setScrollPosition((prev) => (prev + 0.15) % 100)
-    }, 100)
+      setScrollPosition((prev) => {
+        // Calculate how far we can scroll before needing to reset
+        const maxScroll = 75 // Scroll 75% before reset (since we have 4 copies)
+        const newPosition = prev + 0.05 // Slower speed (reduced from 0.15 to 0.05)
+
+        // Reset to 0 when we reach the max scroll point
+        if (newPosition >= maxScroll) {
+          return 0
+        }
+
+        return newPosition
+      })
+    }, 150) // Slower interval (increased from 100ms to 150ms)
 
     return () => clearInterval(interval)
   }, [])

@@ -2,10 +2,23 @@ import { NextResponse } from 'next/server'
 
 export const runtime = "edge"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Fetch multiple crypto prices from Binance API
-    const symbols = ['BTCUSDT', 'ETHUSDT', 'DOGEUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT', 'AVAXUSDT']
+    // Get symbols from query parameters or use defaults
+    const { searchParams } = new URL(request.url)
+    const symbolsParam = searchParams.get('symbols')
+
+    let symbols: string[]
+
+    if (symbolsParam) {
+      // Use symbols from query parameters (split by comma)
+      symbols = symbolsParam.split(',').map(s => s.trim().toUpperCase() + 'USDT')
+    } else {
+      // Use default symbols: BTC, ETH, BNB
+      symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT']
+    }
+
+    console.log('Fetching prices for symbols:', symbols)
     const prices = []
 
     // Use Promise.all for parallel fetching

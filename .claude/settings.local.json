@@ -14,7 +14,10 @@
       "Bash(curl:*)",
       "mcp__ide__getDiagnostics",
       "Bash(supabase:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(echo:*)",
+      "Bash(claude:*)",
+      "Bash(logout:*)"
     ],
     "deny": [],
     "ask": []
