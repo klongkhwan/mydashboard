@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { TradeFormNew } from "@/components/trading/trade-form-new"
 import { TradeList } from "@/components/trading/trade-list"
 import { TradeStats } from "@/components/trading/trade-stats"
-import { PlusCircle, TrendingUp, ListTodo, BarChart3 } from "lucide-react"
+import { TradingCalculator } from "@/components/trading/trading-calculator"
+import { PlusCircle, TrendingUp, ListTodo, BarChart3, Calculator } from "lucide-react"
 import { Trade, TradeFilters } from "@/types/trading"
 import { getTrades, calculateTradeStatistics } from "@/lib/trading"
 
@@ -19,6 +20,7 @@ export default function MyTradePage() {
   const [showNewTradeModal, setShowNewTradeModal] = useState(false)
   const [editingTradeId, setEditingTradeId] = useState<string | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showCalculatorModal, setShowCalculatorModal] = useState(false)
 
   const fetchTrades = async () => {
     try {
@@ -74,14 +76,25 @@ export default function MyTradePage() {
             บันทึกและติดตามการเทรดของคุณ
           </p>
         </div>
-        <Button
-          onClick={() => setShowNewTradeModal(true)}
-          size="lg"
-          className="flex items-center gap-2 h-12 px-6 text-base"
-        >
-          <PlusCircle className="w-5 h-5" />
-          บันทึกการเทรดใหม่
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setShowCalculatorModal(true)}
+            variant="outline"
+            size="lg"
+            className="flex items-center gap-2 h-12 px-6 text-base"
+          >
+            <Calculator className="w-5 h-5" />
+            Calculate
+          </Button>
+          <Button
+            onClick={() => setShowNewTradeModal(true)}
+            size="lg"
+            className="flex items-center gap-2 h-12 px-6 text-base"
+          >
+            <PlusCircle className="w-5 h-5" />
+            บันทึกการเทรดใหม่
+          </Button>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -214,6 +227,12 @@ export default function MyTradePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Trading Calculator Modal */}
+      <TradingCalculator
+        isOpen={showCalculatorModal}
+        onClose={() => setShowCalculatorModal(false)}
+      />
     </div>
   )
 }
