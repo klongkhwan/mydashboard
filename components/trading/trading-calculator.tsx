@@ -106,12 +106,12 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
       if (side === 'long') {
         // P_liq (Long) = ((P_entry * Q) - B) / (Q * (1 - MMR))
         const numerator = positionValue - balance
-        const denominator = actualQty * (1 - mmRate)
+        const denominator = actualQty * (1 + mmRate)
         liquidationPrice = numerator / denominator
       } else if (side === 'short') {
         // P_liq (Short) = ((P_entry * Q) + B) / (Q * (1 + MMR))
         const numerator = positionValue + balance
-        const denominator = actualQty * (1 + mmRate)
+        const denominator = actualQty * (1 - mmRate)
         liquidationPrice = numerator / denominator
       }
     }

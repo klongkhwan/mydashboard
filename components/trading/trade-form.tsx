@@ -258,7 +258,7 @@ export function TradeForm({ onTradeCreated }: TradeFormProps) {
               <span className="text-white text-2xl">📈</span>
             </div>
             <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text">
-              บันทึกการเทรดใหม่
+              บันทึกการเทรด
             </h2>
           </div>
           <p className="text-gray-400">บันทึกรายละเอียดการเทรดของคุณเพื่อติดตามผลงาน</p>

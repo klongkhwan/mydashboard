@@ -92,7 +92,7 @@ export default function MyTradePage() {
             className="flex items-center gap-2 h-12 px-6 text-base"
           >
             <PlusCircle className="w-5 h-5" />
-            บันทึกการเทรดใหม่
+            บันทึกการเทรด
           </Button>
         </div>
       </div>
@@ -194,7 +194,7 @@ export default function MyTradePage() {
         <DialogContent className="w-[90vw] max-w-4xl max-h-[85vh] overflow-y-auto bg-gray-900 text-gray-100 border-2 border-gray-700 rounded-lg p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-800">
             <DialogTitle className="text-2xl font-bold text-white">
-              บันทึกการเทรดใหม่
+              บันทึกการเทรด
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               บันทึกรายละเอียดการเทรดของคุณเพื่อติดตามผลงาน
