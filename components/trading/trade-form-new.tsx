@@ -305,24 +305,33 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, tradeId }: TradeF
 
         if (watchMarket === "futures" || watchMarket === "margin") {
           const positionSize = parseFloat(values.position_size || "1")
-          profitLoss = (exitPrice - entryPrice) * positionSize
+
+          // Calculate profit/loss based on direction
+          if (values.direction === "buy") {
+            // Long position: profit when price goes up
+            profitLoss = (exitPrice - entryPrice) * positionSize
+          } else {
+            // Short position: profit when price goes down
+            profitLoss = (entryPrice - exitPrice) * positionSize
+          }
           profitLossPercent = (profitLoss / capitalAmount) * 100
         } else {
           // For spot trading
           const quantity = capitalAmount / entryPrice
-          profitLoss = (exitPrice - entryPrice) * quantity
+          if (values.direction === "buy") {
+            profitLoss = (exitPrice - entryPrice) * quantity
+          } else {
+            profitLoss = (entryPrice - exitPrice) * quantity
+          }
           profitLossPercent = (profitLoss / capitalAmount) * 100
-        }
-
-        // Adjust profit/loss based on direction
-        if (values.direction === "sell") {
-          profitLoss = -profitLoss
-          profitLossPercent = -profitLossPercent
         }
       }
 
       const tradeData: ITradeForm = {
         ...values,
+        // Add calculated profit/loss values
+        profit_loss: profitLoss,
+        profit_loss_percent: profitLossPercent,
         // Convert datetime fields to proper ISO format
         entry_date: convertToISOString(values.entry_date) || values.entry_date,
         exit_date: values.exit_date ? (convertToISOString(values.exit_date) || values.exit_date) : undefined,

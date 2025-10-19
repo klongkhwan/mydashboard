@@ -51,6 +51,8 @@ export interface TradeForm {
   exit_emotion?: EmotionType
   exit_reason?: string
   learning_note?: string
+  profit_loss?: number
+  profit_loss_percent?: number
   status: TradeStatus
   account_name?: string
   account_type?: AccountType

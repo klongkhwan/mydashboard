@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { TrendingUp, TrendingDown, DollarSign, Target, AlertTriangle, Award, Brain, Heart } from "lucide-react"
-import { Trade, Market } from "@/types/trading"
+import { Trade, Market, EmotionType } from "@/types/trading"
 
 interface TradeStatsProps {
   trades: Trade[]
@@ -69,7 +69,7 @@ export function TradeStats({ trades }: TradeStatsProps) {
       if (!acc[trade.market]) {
         acc[trade.market] = { profit: 0, count: 0 }
       }
-      acc[trade.market].profit += trade.profit_loss
+      acc[trade.market].profit += trade.profit_loss || 0
       acc[trade.market].count += 1
     }
     return acc
@@ -97,6 +97,20 @@ export function TradeStats({ trades }: TradeStatsProps) {
     if (profit > 0) return "text-green-600"
     if (profit < 0) return "text-red-600"
     return "text-gray-600"
+  }
+
+  const getEmotionLabel = (emotion: EmotionType) => {
+    const emotionConfig = {
+      greedy: "โลภ",
+      fearful: "กลัว",
+      confident: "มั่นใจ",
+      anxious: "กังวล",
+      neutral: "เป็นกลาง",
+      excited: "ตื่นเต้น",
+      disappointed: "ผิดหวัง",
+      calm: "สงบ"
+    }
+    return emotionConfig[emotion] || emotion
   }
 
   return (
@@ -276,7 +290,7 @@ export function TradeStats({ trades }: TradeStatsProps) {
                   }, {} as Record<string, number>)
                 ).map(([emotion, count]) => (
                   <Badge key={emotion} variant="outline" className="text-xs">
-                    {emotion} ({count})
+                    {getEmotionLabel(emotion as EmotionType)} ({count})
                   </Badge>
                 ))}
               </div>
@@ -293,7 +307,7 @@ export function TradeStats({ trades }: TradeStatsProps) {
                   }, {} as Record<string, number>)
                 ).map(([emotion, count]) => (
                   <Badge key={emotion} variant="outline" className="text-xs">
-                    {emotion} ({count})
+                    {getEmotionLabel(emotion as EmotionType)} ({count})
                   </Badge>
                 ))}
               </div>

@@ -232,8 +232,8 @@ export function TradeList({
   }
 
   const getProfitLossClass = (profitLoss?: number) => {
-    if (!profitLoss) return ""
-    return profitLoss > 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"
+    if (profitLoss === null || profitLoss === undefined) return ""
+    return profitLoss > 0 ? "text-green-600 font-semibold" : profitLoss < 0 ? "text-red-600 font-semibold" : ""
   }
 
   const filteredTrades = trades.filter(trade => {
@@ -409,7 +409,7 @@ export function TradeList({
                     <TableCell className="text-right text-xs">
                       {trade.exit_price ? formatPrice(trade.exit_price) : "-"}
                     </TableCell>
-                    <TableCell className={`text-right text-xs font-medium ${getProfitLossClass(trade.profit_loss || undefined)}`}>
+                    <TableCell className={`text-right text-xs font-medium ${getProfitLossClass(trade.profit_loss)}`}>
                       {trade.profit_loss !== null && trade.profit_loss !== undefined ? formatCurrency(trade.profit_loss) : "-"}
                     </TableCell>
                     <TableCell>
