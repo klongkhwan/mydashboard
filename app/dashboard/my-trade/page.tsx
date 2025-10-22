@@ -9,7 +9,8 @@ import { TradeFormNew } from "@/components/trading/trade-form-new"
 import { TradeList } from "@/components/trading/trade-list"
 import { TradeStats } from "@/components/trading/trade-stats"
 import { TradingCalculator } from "@/components/trading/trading-calculator"
-import { PlusCircle, TrendingUp, ListTodo, BarChart3, Calculator } from "lucide-react"
+import { DualInvestmentTab } from "@/components/dual-investment/DualInvestmentTab"
+import { PlusCircle, TrendingUp, ListTodo, BarChart3, Calculator, Target } from "lucide-react"
 import { Trade, TradeFilters } from "@/types/trading"
 import { getTrades, calculateTradeStatistics } from "@/lib/trading"
 
@@ -99,7 +100,7 @@ export default function MyTradePage() {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 bg-card border border-border">
+        <TabsList className="grid w-full grid-cols-3 bg-card border border-border">
           <TabsTrigger
             value="overview"
             className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -113,6 +114,13 @@ export default function MyTradePage() {
           >
             <ListTodo className="w-4 h-4" />
             รายการทั้งหมด
+          </TabsTrigger>
+          <TabsTrigger
+            value="dual-investment"
+            className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <Target className="w-4 h-4" />
+            Dual Investment
           </TabsTrigger>
         </TabsList>
 
@@ -185,6 +193,10 @@ export default function MyTradePage() {
             onRefresh={fetchTrades}
             onEditTrade={handleEditTrade}
           />
+        </TabsContent>
+
+        <TabsContent value="dual-investment" className="space-y-6">
+          <DualInvestmentTab />
         </TabsContent>
 
               </Tabs>

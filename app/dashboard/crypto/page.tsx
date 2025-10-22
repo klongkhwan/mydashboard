@@ -50,7 +50,7 @@ export default function CryptoPage() {
             <TrendingUp className="w-4 h-4" />
             Chart
           </TabsTrigger>
-        </TabsList>
+          </TabsList>
 
         <TabsContent value="Calendar" className="mt-6">
           <Calendar />
@@ -79,7 +79,8 @@ export default function CryptoPage() {
             <TradingViewWidget />
           </div>
         </TabsContent>
-      </Tabs>
+
+        </Tabs>
     </div>
   )
 }
