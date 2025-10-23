@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { TrendingUp, TrendingDown, Calendar, DollarSign, Filter } from "lucide-react"
 import { fetchDualInvestmentProjects, DualInvestmentProject, DualInvestmentFilters } from "@/lib/dual-investment"
+import { DualInvestmentCalculator } from "./DualInvestmentCalculator"
 
 const COINS = ["ETH", "BTC", "BNB", "SOL"]
 const DURATION_OPTIONS = [
@@ -20,7 +21,8 @@ const DURATION_OPTIONS = [
   { value: "1", label: "1 Day" },
   { value: "3", label: "< 3 Days" },
   { value: "7", label: "< 7 Days" },
-  { value: "7-30", label: "7-30 Days" },
+  { value: "15", label: "15 Days" },
+  { value: "15-30", label: "15-30 Days" },
   { value: "30-60", label: "30-60 Days" },
   { value: "60+", label: "> 60 Days" },
 ]
@@ -29,6 +31,8 @@ export function DualInvestmentTab() {
   const [projects, setProjects] = useState<DualInvestmentProject[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
+  const [showCalculator, setShowCalculator] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<DualInvestmentProject | null>(null)
   const [filters, setFilters] = useState<DualInvestmentFilters>({
     coins: ["ETH"],
     projectType: "DOWN",
@@ -89,11 +93,30 @@ export function DualInvestmentTab() {
 
   const totalPages = Math.ceil(total / filters.pageSize)
 
+  const handleTypeClick = (project: DualInvestmentProject) => {
+    setSelectedProject(project)
+    setShowCalculator(true)
+  }
+
+  const closeCalculator = () => {
+    setShowCalculator(false)
+    setSelectedProject(null)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Dual Investment</h2>
+        <Button
+          onClick={() => window.open('https://www.binance.com/en/dual-investment', '_blank')}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <TrendingUp className="w-4 h-4" />
+          Binance Dual Investment
+        </Button>
       </div>
 
       {/* Filters */}
@@ -191,15 +214,15 @@ export function DualInvestmentTab() {
           ) : (
             <div className="flex-1 overflow-hidden flex flex-col">
               <div className="flex-1 overflow-auto -mt-2 -mb-1">
-                <Table className="border-separate border-spacing-0">
+                <Table className="border-separate border-spacing-y-1">
                   <TableHeader className="sticky top-0 bg-background z-10">
                     <TableRow>
-                      <TableHead className="py-1">Target Asset</TableHead>
-                      <TableHead className="py-1">Strike Price</TableHead>
-                      <TableHead className="py-1">APR</TableHead>
-                      <TableHead className="py-1">Duration</TableHead>
-                      <TableHead className="py-1">Settlement Date</TableHead>
-                      <TableHead className="py-1">Type</TableHead>
+                      <TableHead className="py-2">Target Asset</TableHead>
+                      <TableHead className="py-2">Strike Price</TableHead>
+                      <TableHead className="py-2">APR</TableHead>
+                      <TableHead className="py-2">Duration</TableHead>
+                      <TableHead className="py-2">Settlement Date</TableHead>
+                      <TableHead className="py-2">Type</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -240,14 +263,15 @@ export function DualInvestmentTab() {
                             {new Date(parseInt(project.settleTime)).toLocaleDateString('en-GB')}
                           </span>
                         </TableCell>
-                        <TableCell className="py-1">
+                        <TableCell className="py-1.5">
                           <Badge
                             variant="secondary"
-                            className={`flex items-center gap-1 w-fit ${
+                            className={`flex items-center gap-1 w-fit cursor-pointer hover:opacity-80 ${
                               project.type === "UP"
                                 ? "bg-red-100 text-red-800 border-red-200"
                                 : "bg-green-100 text-green-800 border-green-200"
                             }`}
+                            onClick={() => handleTypeClick(project)}
                           >
                             {project.type === "UP" ? (
                               <TrendingUp className="w-3 h-3" />
@@ -312,6 +336,13 @@ export function DualInvestmentTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Calculator Modal */}
+      <DualInvestmentCalculator
+        isOpen={showCalculator}
+        onClose={closeCalculator}
+        project={selectedProject}
+      />
     </div>
   )
 }
