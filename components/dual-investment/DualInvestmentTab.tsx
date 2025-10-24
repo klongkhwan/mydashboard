@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
-import { TrendingUp, TrendingDown, Calendar, DollarSign, Filter } from "lucide-react"
+import { TrendingUp, TrendingDown, Calendar, DollarSign, Filter, RefreshCw } from "lucide-react"
 import { fetchDualInvestmentProjects, DualInvestmentProject, DualInvestmentFilters } from "@/lib/dual-investment"
 import { DualInvestmentCalculator } from "./DualInvestmentCalculator"
 
@@ -103,20 +103,45 @@ export function DualInvestmentTab() {
     setSelectedProject(null)
   }
 
+  const handleRefresh = () => {
+    fetchProjects()
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Dual Investment</h2>
-        <Button
-          onClick={() => window.open('https://www.binance.com/en/dual-investment', '_blank')}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <TrendingUp className="w-4 h-4" />
-          Binance Dual Investment
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button
+            onClick={() => window.open('https://www.binance.com/en/dual-investment', '_blank')}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <TrendingUp className="w-4 h-4" />
+            Binance
+          </Button>
+          <Button
+            onClick={() => window.open('https://www.bybit.com/en/earn/dual-asset-mining', '_blank')}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <TrendingUp className="w-4 h-4" />
+            Bybit
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

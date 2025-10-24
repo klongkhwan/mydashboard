@@ -37,7 +37,7 @@ export interface DualInvestmentResponse {
 export interface DualInvestmentFilters {
   coins: string[];
   projectType: "UP" | "DOWN" | "ALL";
-  duration: "ALL" | "1" | "3" | "7" | "7-30" | "30-60" | "60+";
+  duration: "ALL" | "1" | "3" | "7" | "15" | "15-30" | "30-60" | "60+";
   pageIndex: number;
   pageSize: number;
 }
@@ -90,8 +90,11 @@ export async function fetchDualInvestmentProjects(
       case '7':
         params.append('endDuration', '7');
         break;
-      case '7-30':
-        params.append('beginDuration', '7');
+      case '15':
+        params.append('endDuration', '15');
+        break;  
+      case '15-30':
+        params.append('beginDuration', '15');
         params.append('endDuration', '30');
         break;
       case '30-60':
