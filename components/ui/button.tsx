@@ -5,23 +5,23 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-[#39FF14]/30 focus-visible:ring-[3px]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-primary/30 focus-visible:ring-[3px]",
   {
     variants: {
       variant: {
         default:
-          'bg-gradient-to-r from-[#39FF14] to-[#10B981] text-[#0D0F0D] font-semibold shadow-lg shadow-[#39FF14]/25 hover:shadow-[#39FF14]/40 hover:scale-[1.02]',
+          'bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02]',
         destructive:
-          'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-500/25 hover:from-red-500 hover:to-rose-500',
+          'bg-gradient-to-r from-destructive to-destructive/90 text-destructive-foreground shadow-lg shadow-destructive/25 hover:opacity-90',
         outline:
-          'border border-[#39FF14]/30 bg-transparent shadow-xs hover:bg-[#39FF14]/10 hover:border-[#39FF14]/50 text-[#E5E5E5]',
+          'border border-primary/30 bg-transparent shadow-xs hover:bg-primary/10 hover:border-primary/50 text-foreground',
         secondary:
-          'bg-[#1A1C1A] text-[#E5E5E5] shadow-xs hover:bg-[#262826] border border-[#262826]',
+          'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 border border-border',
         ghost:
-          'hover:bg-[#1A1C1A] text-[#8C8C8C] hover:text-[#E5E5E5]',
-        link: 'text-[#39FF14] underline-offset-4 hover:underline hover:text-[#10B981]',
+          'hover:bg-secondary text-muted-foreground hover:text-foreground',
+        link: 'text-primary underline-offset-4 hover:underline hover:text-accent',
         glass:
-          'bg-[#1A1C1A]/80 backdrop-blur-md border border-[#39FF14]/20 text-[#E5E5E5] shadow-lg hover:bg-[#1A1C1A] hover:shadow-[#39FF14]/20',
+          'bg-card/80 backdrop-blur-md border border-primary/20 text-foreground shadow-lg hover:bg-card hover:shadow-primary/20',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',
