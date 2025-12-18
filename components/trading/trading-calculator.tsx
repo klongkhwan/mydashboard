@@ -1,19 +1,24 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { Calculator, TrendingUp, TrendingDown } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Calculator, TrendingUp, TrendingDown, Crosshair, DollarSign, Percent, AlertTriangle, Target } from "lucide-react"
 
 interface TradingCalculatorProps {
   isOpen: boolean
   onClose: () => void
 }
+
+/* -------------------------------------------------------------------------- */
+/*                           TRADING CALCULATOR LOGIC                         */
+/* -------------------------------------------------------------------------- */
 
 interface CalculatorValues {
   side: 'long' | 'short'
@@ -23,7 +28,7 @@ interface CalculatorValues {
   exitPrice: number
   qty: number
   roiTarget: number
-  mmRate: number // Maintenance Margin Rate (MMR)
+  mmRate: number
 }
 
 interface CalculatorResults {
@@ -36,8 +41,34 @@ interface CalculatorResults {
   maxOpenCoin: number
 }
 
+/* -------------------------------------------------------------------------- */
+/*                           POSITION SIZING LOGIC                            */
+/* -------------------------------------------------------------------------- */
+
+interface PositionValues {
+  side: 'long' | 'short' // NEW: Direction logic
+  balance: number
+  riskPercent: number
+  entryPrice: number
+  stopLossPrice: number
+  takeProfitPrice: number // NEW: Take Profit
+}
+
+interface PositionResults {
+  riskAmount: number
+  positionSizeCoins: number
+  positionValueUsd: number
+  leverageRequired: number
+  rewardAmount: number // NEW: Reward $
+  riskRewardRatio: number // NEW: R:R ratio
+  isValid: boolean
+  error?: string
+}
+
+
 export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
-  const [values, setValues] = useState<CalculatorValues>({
+  // ------------------------- STATE: TRADING CALCULATOR ------------------------
+  const [calcValues, setCalcValues] = useState<CalculatorValues>({
     side: 'long',
     leverage: 10,
     balance: 0,
@@ -45,10 +76,10 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
     exitPrice: 0,
     qty: 0,
     roiTarget: 0,
-    mmRate: 0.0045 // Fixed 0.45% maintenance margin rate
+    mmRate: 0.0045
   })
 
-  const [results, setResults] = useState<CalculatorResults>({
+  const [calcResults, setCalcResults] = useState<CalculatorResults>({
     marginInitial: 0,
     pnl: 0,
     roi: 0,
@@ -58,18 +89,55 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
     maxOpenCoin: 0
   })
 
-  // Calculate results whenever input values change
+  // ------------------------- STATE: POSITION SIZING ---------------------------
+  const [posValues, setPosValues] = useState<PositionValues>({
+    side: 'long',
+    balance: 0,
+    riskPercent: 1.0,
+    entryPrice: 0,
+    stopLossPrice: 0,
+    takeProfitPrice: 0
+  })
+
+  const [posResults, setPosResults] = useState<PositionResults>({
+    riskAmount: 0,
+    positionSizeCoins: 0,
+    positionValueUsd: 0,
+    leverageRequired: 0,
+    rewardAmount: 0,
+    riskRewardRatio: 0,
+    isValid: true
+  })
+
+  const [activeTab, setActiveTab] = useState("trading")
+
+
+  // ------------------------- EFFECT: RESET ON OPEN -------------------------
   useEffect(() => {
-    calculateResults()
-  }, [values])
+    if (isOpen) {
+      setPosValues({
+        side: 'long',
+        balance: 0,
+        riskPercent: 1.0,
+        entryPrice: 0,
+        stopLossPrice: 0,
+        takeProfitPrice: 0
+      })
+    }
+  }, [isOpen])
 
-  const calculateResults = () => {
-    const { side, leverage, balance, entryPrice, exitPrice, qty, roiTarget } = values
+  // ------------------------- EFFECT: TRADING CALCULATOR -----------------------
+  useEffect(() => {
+    calculateTradingResults()
+  }, [calcValues])
 
-    // Calculate Margin Initial
-    const marginInitial = entryPrice * qty / leverage
+  const calculateTradingResults = () => {
+    const { side, leverage, balance, entryPrice, exitPrice, qty, roiTarget, mmRate } = calcValues
 
-    // Calculate PNL
+    // Margin Initial
+    const marginInitial = (entryPrice * qty) / leverage
+
+    // PNL
     let pnl = 0
     if (side === 'long') {
       pnl = (exitPrice - entryPrice) * qty
@@ -77,14 +145,12 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
       pnl = (entryPrice - exitPrice) * qty
     }
 
-    // Calculate ROI
+    // ROI
     const roi = marginInitial > 0 ? (pnl / marginInitial) * 100 : 0
 
-    // Calculate Target Price based on ROI target with leverage consideration
+    // Target Price
     let targetPrice = 0
     if (roiTarget !== 0 && entryPrice > 0 && leverage > 0) {
-      // Formula with leverage: Target Price = Entry Price × (1 + (ROI Target / Leverage))
-      // ROI Target on actual capital, not leveraged position
       const effectiveRoiTarget = roiTarget / leverage
       if (side === 'long') {
         targetPrice = entryPrice * (1 + effectiveRoiTarget / 100)
@@ -93,333 +159,474 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
       }
     }
 
-    // Calculate Liquidation Price (cross liquidation formula with MMR)
+    // Liquidation Price
     let liquidationPrice = 0
-    const { mmRate } = values
-
-    // Use the actual quantity if provided, otherwise calculate from margin and leverage
     const actualQty = qty > 0 ? qty : (marginInitial * leverage) / entryPrice
-
     if (actualQty > 0 && leverage > 1) {
       const positionValue = entryPrice * actualQty
-
       if (side === 'long') {
-        // P_liq (Long) = ((P_entry * Q) - B) / (Q * (1 - MMR))
         const numerator = positionValue - balance
         const denominator = actualQty * (1 + mmRate)
         liquidationPrice = numerator / denominator
-      } else if (side === 'short') {
-        // P_liq (Short) = ((P_entry * Q) + B) / (Q * (1 + MMR))
+      } else {
         const numerator = positionValue + balance
         const denominator = actualQty * (1 - mmRate)
         liquidationPrice = numerator / denominator
       }
     }
 
-    // Calculate Max Open (USD)
+    // Max Open
     const maxOpen = balance * leverage
-
-    // Calculate Max Open Coin (maximum quantity based on entry price)
     let maxOpenCoin = 0
     if (entryPrice > 0 && maxOpen > 0) {
       maxOpenCoin = maxOpen / entryPrice
     }
 
-    setResults({
+    setCalcResults({
       marginInitial,
       pnl,
       roi,
       targetPrice,
-      liquidationPrice,
+      liquidationPrice: liquidationPrice > 0 ? liquidationPrice : 0,
       maxOpen,
       maxOpenCoin
     })
   }
 
-  const handleInputChange = (field: keyof CalculatorValues, value: string | number | boolean) => {
-    setValues(prev => ({
+  // ------------------------- EFFECT: POSITION SIZING --------------------------
+  useEffect(() => {
+    calculatePositionSize()
+  }, [posValues])
+
+  const calculatePositionSize = () => {
+    const { side, balance, riskPercent, entryPrice, stopLossPrice, takeProfitPrice } = posValues
+
+    if (balance <= 0 || entryPrice <= 0 || stopLossPrice <= 0) {
+      setPosResults({
+        riskAmount: 0, positionSizeCoins: 0, positionValueUsd: 0, leverageRequired: 0, rewardAmount: 0, riskRewardRatio: 0, isValid: true
+      })
+      return
+    }
+
+    // Validation: Check SL Direction
+    if (side === 'long' && stopLossPrice >= entryPrice) {
+      setPosResults({ riskAmount: 0, positionSizeCoins: 0, positionValueUsd: 0, leverageRequired: 0, rewardAmount: 0, riskRewardRatio: 0, isValid: false, error: "For LONG, Stop Loss must be LOWER than Entry" })
+      return
+    }
+    if (side === 'short' && stopLossPrice <= entryPrice) {
+      setPosResults({ riskAmount: 0, positionSizeCoins: 0, positionValueUsd: 0, leverageRequired: 0, rewardAmount: 0, riskRewardRatio: 0, isValid: false, error: "For SHORT, Stop Loss must be HIGHER than Entry" })
+      return
+    }
+
+    // Risk Amount ($)
+    const riskAmount = balance * (riskPercent / 100)
+
+    // Stop Loss Distance (per unit)
+    const slDistance = Math.abs(entryPrice - stopLossPrice)
+
+    // Position Size (Coins) = Risk Amount / SL Distance
+    const positionSizeCoins = riskAmount / slDistance
+
+    // Position Value (USD) = Coins * Entry Price
+    const positionValueUsd = positionSizeCoins * entryPrice
+
+    // Leverage Required
+    const leverageRequired = positionValueUsd / balance
+
+    // Reward & R:R
+    let rewardAmount = 0
+    let riskRewardRatio = 0
+    if (takeProfitPrice > 0) {
+      const tpDistance = Math.abs(takeProfitPrice - entryPrice)
+      rewardAmount = positionSizeCoins * tpDistance
+      if (riskAmount > 0) {
+        riskRewardRatio = rewardAmount / riskAmount
+      }
+    }
+
+    setPosResults({
+      riskAmount,
+      positionSizeCoins,
+      positionValueUsd,
+      leverageRequired,
+      rewardAmount,
+      riskRewardRatio,
+      isValid: true
+    })
+  }
+
+  // ------------------------- HANDLERS ---------------------------------------
+  const handleCalcChange = (field: keyof CalculatorValues, value: string | number | boolean) => {
+    setCalcValues(prev => ({
+      ...prev,
+      [field]: field === 'side' ? value : Number(value)
+    }))
+  }
+
+  const handlePosChange = (field: keyof PositionValues, value: string | number | boolean) => {
+    setPosValues(prev => ({
       ...prev,
       [field]: field === 'side' ? value : Number(value)
     }))
   }
 
   const handleUseTargetPrice = () => {
-    if (results.targetPrice > 0) {
-      setValues(prev => ({
-        ...prev,
-        exitPrice: results.targetPrice
-      }))
+    if (calcResults.targetPrice > 0) {
+      setCalcValues(prev => ({ ...prev, exitPrice: calcResults.targetPrice }))
     }
   }
 
+  // ------------------------- HELPERS -----------------------------------------
+  const formatCurrency = (num: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2
+    }).format(num)
+  }
   const formatNumber = (num: number, decimals: number = 2) => {
     return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals
+      minimumFractionDigits: decimals, maximumFractionDigits: decimals
     }).format(num)
   }
 
-  const formatCurrency = (num: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(num)
+  // Leverage Color Helper
+  const getLeverageColor = (lev: number) => {
+    if (lev <= 3) return 'bg-[#39FF14]' // Safe (Green)
+    if (lev <= 10) return 'bg-yellow-500' // Medium
+    return 'bg-red-500' // High Risk
   }
+  const getLeverageLabel = (lev: number) => {
+    if (lev <= 3) return 'Safe'
+    if (lev <= 10) return 'Medium'
+    return 'High Risk'
+  }
+  const getLeverageTextColor = (lev: number) => {
+    if (lev <= 3) return 'text-[#39FF14]'
+    if (lev <= 10) return 'text-yellow-500'
+    return 'text-red-500'
+  }
+
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 text-gray-100 border-2 border-gray-700 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-        <div className="px-6 pt-6 pb-4 border-b border-gray-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Calculator className="w-6 h-6 text-blue-500" />
-              <h2 className="text-2xl font-bold text-white">
-                Trading Calculator
-              </h2>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+      <div className="bg-[#09090b] text-gray-100 border border-gray-800 rounded-xl w-full max-w-5xl h-[75vh] overflow-hidden flex flex-col shadow-2xl">
+
+        {/* HEADER */}
+        <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-zinc-900/50">
+          <div className="flex items-center gap-3">
+
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">Calculator</h2>
+              <p className="text-xs text-muted-foreground">คำนวณกำไรและขนาด Position</p>
             </div>
-            <Button variant="ghost" onClick={onClose} className="text-gray-400 hover:text-white">
-              ✕
-            </Button>
           </div>
+          <Button variant="ghost" onClick={onClose} className="h-8 w-8 p-0 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+            ✕
+          </Button>
         </div>
 
-        <div className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Entry Side */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Badge variant="outline" className="text-blue-500 border-blue-500 bg-blue-500/10">
-                    Entry
-                  </Badge>
-                  ข้อมูลการเทรด
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Long/Short Toggle Button */}
-                <div className="space-y-2">
-                  <ToggleGroup
-                    type="single"
-                    value={values.side}
-                    onValueChange={(value) => value && handleInputChange('side', value)}
-                    className="w-full"
-                  >
-                    <ToggleGroupItem
-                      value="long"
-                      className="flex-1 data-[state=on]:bg-green-500 data-[state=on]:text-white data-[state=on]:border-green-500 border-gray-600 text-gray-300 hover:bg-green-500/20"
-                    >
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      Long
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value="short"
-                      className="flex-1 data-[state=on]:bg-red-500 data-[state=on]:text-white data-[state=on]:border-red-500 border-gray-600 text-gray-300 hover:bg-red-500/20"
-                    >
-                      <TrendingDown className="w-4 h-4 mr-2" />
-                      Short
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
+        {/* CONTENT (SCROLLABLE) */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+          <Tabs defaultValue="trading" className="w-full space-y-6" onValueChange={setActiveTab}>
 
-                {/* Leverage */}
-                <div className="space-y-2">
-                  <Label htmlFor="leverage" className="text-gray-300">
-                    ค่า Leverage: <span className="text-blue-500 font-bold">{values.leverage}x</span>
-                  </Label>
-                  <Slider
-                    id="leverage"
-                    min={1}
-                    max={100}
-                    step={1}
-                    value={[values.leverage]}
-                    onValueChange={(value) => handleInputChange('leverage', value[0])}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>1x</span>
-                    <span>25x</span>
-                    <span>50x</span>
-                    <span>75x</span>
-                    <span>100x</span>
-                  </div>
-                </div>
+            {/* TABS LIST */}
+            <TabsList className="grid w-full grid-cols-2 bg-zinc-800/50 p-1 rounded-lg">
+              <TabsTrigger
+                value="trading"
+                className="data-[state=active]:bg-[#39FF14] data-[state=active]:text-black font-semibold transition-all"
+              >
+                Trading Calculator
+              </TabsTrigger>
+              <TabsTrigger
+                value="positionsize"
+                className="data-[state=active]:bg-[#39FF14] data-[state=active]:text-black font-semibold transition-all"
+              >
+                Position Sizing
+              </TabsTrigger>
+            </TabsList>
 
-                {/* Balance */}
-                <div className="space-y-2">
-                  <Label htmlFor="balance" className="text-gray-300">Balance (USD)</Label>
-                  <Input
-                    id="balance"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={values.balance}
-                    onChange={(e) => handleInputChange('balance', e.target.value)}
-                    placeholder="0.00"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                  />
-                </div>
+            {/* TAB 1: TRADING CALCULATOR */}
+            <TabsContent value="trading" className="space-y-6 focus-visible:outline-none">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* ... (Existing Trading Calculator Layout - same as before) ... */}
+                {/* LEFT: INPUTS */}
+                <Card className="bg-zinc-900/50 border-zinc-800 shadow-inner">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" /> Parameters
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
 
-                {/* Entry Price */}
-                <div className="space-y-2">
-                  <Label htmlFor="entryPrice" className="text-gray-300">Entry Price</Label>
-                  <Input
-                    id="entryPrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={values.entryPrice}
-                    onChange={(e) => handleInputChange('entryPrice', e.target.value)}
-                    placeholder="0.00"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                  />
-                </div>
+                    {/* Direction */}
+                    <div className="space-y-3">
+                      <Label className="text-xs text-muted-foreground">Direction</Label>
+                      <ToggleGroup type="single" value={calcValues.side} onValueChange={(v) => v && handleCalcChange('side', v)} className="w-full justify-start gap-2">
+                        <ToggleGroupItem value="long" className="flex-1 data-[state=on]:bg-green-500/20 data-[state=on]:text-green-500 data-[state=on]:border-green-500 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-all">
+                          Long
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="short" className="flex-1 data-[state=on]:bg-red-500/20 data-[state=on]:text-red-500 data-[state=on]:border-red-500 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-all">
+                          Short
+                        </ToggleGroupItem>
+                      </ToggleGroup>
+                    </div>
 
-                {/* Exit Price */}
-                <div className="space-y-2">
-                  <Label htmlFor="exitPrice" className="text-gray-300">Exit Price</Label>
-                  <Input
-                    id="exitPrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={values.exitPrice}
-                    onChange={(e) => handleInputChange('exitPrice', e.target.value)}
-                    placeholder="0.00"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                  />
-                </div>
+                    {/* Leverage */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between">
+                        <Label className="text-xs text-muted-foreground">Leverage</Label>
+                        <span className="text-sm font-bold text-blue-400">{calcValues.leverage}x</span>
+                      </div>
+                      <Slider
+                        min={1} max={100} step={1}
+                        value={[calcValues.leverage]}
+                        onValueChange={(v) => handleCalcChange('leverage', v[0])}
+                        className="py-1 cursor-pointer"
+                      />
+                    </div>
 
-                {/* Quantity */}
-                <div className="space-y-2">
-                  <Label htmlFor="qty" className="text-gray-300">Quantity</Label>
-                  <Input
-                    id="qty"
-                    type="number"
-                    min="0"
-                    step="0.001"
-                    value={values.qty}
-                    onChange={(e) => handleInputChange('qty', e.target.value)}
-                    placeholder="0.000"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                  />
-                </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="balance" className="text-xs text-muted-foreground">Balance (USD)</Label>
+                        <Input id="balance" type="number" value={calcValues.balance || ''} onChange={(e) => handleCalcChange('balance', e.target.value)}
+                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14] transition-colors" placeholder="0.00" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="qty" className="text-xs text-muted-foreground">Quantity</Label>
+                        <Input id="qty" type="number" value={calcValues.qty || ''} onChange={(e) => handleCalcChange('qty', e.target.value)}
+                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14] transition-colors" placeholder="0.00" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="entry" className="text-xs text-muted-foreground">Entry Price</Label>
+                        <Input id="entry" type="number" value={calcValues.entryPrice || ''} onChange={(e) => handleCalcChange('entryPrice', e.target.value)}
+                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14] transition-colors" placeholder="0.00" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="exit" className="text-xs text-muted-foreground">Exit Price</Label>
+                        <Input id="exit" type="number" value={calcValues.exitPrice || ''} onChange={(e) => handleCalcChange('exitPrice', e.target.value)}
+                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14] transition-colors" placeholder="0.00" />
+                      </div>
+                    </div>
 
-                {/* ROI Target */}
-                <div className="space-y-2">
-                  <Label htmlFor="roiTarget" className="text-gray-300">ROI Target (%)</Label>
-                  <Input
-                    id="roiTarget"
-                    type="number"
-                    step="0.1"
-                    value={values.roiTarget}
-                    onChange={(e) => handleInputChange('roiTarget', e.target.value)}
-                    placeholder="0.0"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                    <div className="space-y-2 pt-2 border-t border-zinc-800">
+                      <Label htmlFor="roiTarget" className="text-xs text-muted-foreground">Values Target (%)</Label>
+                      <div className="flex gap-2">
+                        <Input id="roiTarget" type="number" value={calcValues.roiTarget || ''} onChange={(e) => handleCalcChange('roiTarget', e.target.value)}
+                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14] transition-colors" placeholder="e.g. 50" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {/* Result Side */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Badge variant="outline" className="text-green-500 border-green-500 bg-green-500/10">
-                    Result
-                  </Badge>
-                  ผลการคำนวณ
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Margin Initial */}
-                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-300">Margin Initial</span>
-                  <span className="text-lg font-bold text-blue-500">
-                    {formatCurrency(results.marginInitial)}
-                  </span>
-                </div>
+                {/* RIGHT: RESULTS */}
+                <Card className="bg-zinc-900/80 border-zinc-800 h-full flex flex-col">
+                  <CardHeader className="pb-4 border-b border-zinc-800/50">
+                    <CardTitle className="text-sm font-medium uppercase tracking-wider text-[#39FF14] flex items-center gap-2">
+                      <Calculator className="w-4 h-4" /> Results
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0 flex-1 flex flex-col">
 
-                {/* PNL */}
-                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-300">PNL</span>
-                  <div className="flex items-center gap-2">
-                    {results.pnl > 0 ? (
-                      <TrendingUp className="w-4 h-4 text-green-500" />
-                    ) : results.pnl < 0 ? (
-                      <TrendingDown className="w-4 h-4 text-red-500" />
-                    ) : null}
-                    <span className={`text-lg font-bold ${
-                      results.pnl > 0 ? 'text-green-500' :
-                      results.pnl < 0 ? 'text-red-500' :
-                      'text-gray-400'
-                    }`}>
-                      {formatCurrency(results.pnl)}
-                    </span>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 divide-y divide-zinc-800/50">
+                      {/* PNL Block */}
+                      <div className="p-5 flex items-center justify-between hover:bg-zinc-800/30 transition-colors">
+                        <span className="text-sm text-gray-300">PNL</span>
+                        <div className="text-right">
+                          <div className={`text-2xl font-bold tabular-nums ${calcResults.pnl > 0 ? "text-[#39FF14]" : calcResults.pnl < 0 ? "text-red-500" : "text-gray-500"}`}>
+                            {calcResults.pnl > 0 ? "+" : ""}{formatCurrency(calcResults.pnl)}
+                          </div>
+                          <div className={`text-xs ${calcResults.roi > 0 ? "text-green-400" : calcResults.roi < 0 ? "text-red-400" : "text-gray-500"}`}>
+                            {calcResults.roi.toFixed(2)}% ROI
+                          </div>
+                        </div>
+                      </div>
 
-                {/* ROI */}
-                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-300">ROI</span>
-                  <span className={`text-lg font-bold ${
-                    results.roi > 0 ? 'text-green-500' :
-                    results.roi < 0 ? 'text-red-500' :
-                    'text-gray-400'
-                  }`}>
-                    {formatNumber(results.roi)}%
-                  </span>
-                </div>
+                      {/* Margin Block */}
+                      <div className="p-5 flex items-center justify-between hover:bg-zinc-800/30 transition-colors">
+                        <span className="text-sm text-gray-300">Initial Margin</span>
+                        <span className="text-lg font-semibold text-white tabular-nums">{formatCurrency(calcResults.marginInitial)}</span>
+                      </div>
 
-                {/* Liquidation Price */}
-                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-300">Liquidation Price</span>
-                  <span className="text-lg font-bold text-red-500">
-                    {results.liquidationPrice > 0 ? formatNumber(results.liquidationPrice) : '-'}
-                  </span>
-                </div>
+                      {/* Target Price */}
+                      <div className="p-5 flex items-center justify-between hover:bg-zinc-800/30 transition-colors">
+                        <span className="text-sm text-gray-300">Target Price ({calcValues.roiTarget}%)</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg font-semibold text-purple-400 tabular-nums">
+                            {calcResults.targetPrice > 0 ? formatNumber(calcResults.targetPrice) : '-'}
+                          </span>
+                          {calcResults.targetPrice > 0 && (
+                            <Button size="sm" variant="outline" onClick={handleUseTargetPrice} className="h-6 text-[10px] px-2 border-purple-500/30 text-purple-400 hover:bg-purple-500/20">
+                              Use
+                            </Button>
+                          )}
+                        </div>
+                      </div>
 
-                {/* Target Price */}
-                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-300">Target Price</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-purple-500">
-                      {results.targetPrice > 0 ? formatNumber(results.targetPrice) : '-'}
-                    </span>
-                    {results.targetPrice > 0 && (
-                      <Button
-                        onClick={handleUseTargetPrice}
-                        size="sm"
-                        variant="outline"
-                        className="h-7 px-3 text-xs bg-purple-500/10 border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white"
-                      >
-                        Use
-                      </Button>
+                      {/* Liquidation */}
+                      <div className="p-5 flex items-center justify-between hover:bg-zinc-800/30 transition-colors">
+                        <span className="text-sm text-gray-300">Liq. Price</span>
+                        <span className="text-lg font-bold text-orange-500 tabular-nums">
+                          {calcResults.liquidationPrice > 0 ? formatNumber(calcResults.liquidationPrice) : '-'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-5 mt-auto bg-zinc-950/50 border-t border-zinc-800">
+                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <span>Max Open (USD)</span>
+                        <span>{formatCurrency(calcResults.maxOpen)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Max Open (Coin)</span>
+                        <span>{formatNumber(calcResults.maxOpenCoin, 4)}</span>
+                      </div>
+                    </div>
+
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* TAB 2: POSITION SIZING (NEW ENHANCEMENTS) */}
+            <TabsContent value="positionsize" className="space-y-6 focus-visible:outline-none">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* LEFT: INPUTS */}
+                <Card className="bg-zinc-900/50 border-zinc-800 shadow-inner">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <Crosshair className="w-4 h-4" /> Risk Parameters
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+
+                    {/* NEW: Direction Toggle (Affects Validation) */}
+                    <div className="space-y-3">
+                      <Label className="text-xs text-muted-foreground">Direction</Label>
+                      <ToggleGroup type="single" value={posValues.side} onValueChange={(v) => v && handlePosChange('side', v)} className="w-full justify-start gap-2">
+                        <ToggleGroupItem value="long" className="flex-1 data-[state=on]:bg-green-500/20 data-[state=on]:text-green-500 data-[state=on]:border-green-500 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-all">
+                          Long
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="short" className="flex-1 data-[state=on]:bg-red-500/20 data-[state=on]:text-red-500 data-[state=on]:border-red-500 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-all">
+                          Short
+                        </ToggleGroupItem>
+                      </ToggleGroup>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="ps-balance" className="text-xs text-muted-foreground">Account Balance (USD)</Label>
+                      <Input id="ps-balance" type="number" value={posValues.balance || ''} onChange={(e) => handlePosChange('balance', e.target.value)}
+                        className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14]" placeholder="e.g 1000" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label htmlFor="ps-risk" className="text-xs text-muted-foreground">Risk per Trade (%)</Label>
+                        <span className="text-xs font-bold text-red-400">{posValues.riskPercent}%</span>
+                      </div>
+                      <div className="flex gap-4 items-center">
+                        <Slider min={0.1} max={10} step={0.1} value={[posValues.riskPercent]} onValueChange={(v) => handlePosChange('riskPercent', v[0].toString())} className="flex-1" />
+                        <Input type="number" value={posValues.riskPercent} onChange={(e) => handlePosChange('riskPercent', e.target.value)} className="w-20 bg-zinc-950 border-zinc-800 text-center" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-zinc-800">
+                      <div className="space-y-2">
+                        <Label htmlFor="ps-entry" className="text-xs text-muted-foreground">Entry Price</Label>
+                        <Input id="ps-entry" type="number" value={posValues.entryPrice || ''} onChange={(e) => handlePosChange('entryPrice', e.target.value)}
+                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14]" placeholder="0.00" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="ps-stoploss" className="text-xs text-muted-foreground">Stop Loss Price</Label>
+                        {/* Dynamic Border Color based on validation/direction? */}
+                        <Input id="ps-stoploss" type="number" value={posValues.stopLossPrice || ''} onChange={(e) => handlePosChange('stopLossPrice', e.target.value)}
+                          className={`bg-zinc-950 border-zinc-800 focus:border-red-500`} placeholder="0.00" />
+                      </div>
+                    </div>
+
+                    {/* NEW: Take Profit */}
+                    <div className="space-y-2">
+                      <Label htmlFor="ps-takeprofit" className="text-xs text-muted-foreground">Take Profit Price (Optional)</Label>
+                      <Input id="ps-takeprofit" type="number" value={posValues.takeProfitPrice || ''} onChange={(e) => handlePosChange('takeProfitPrice', e.target.value)}
+                        className="bg-zinc-950 border-zinc-800 focus:border-green-500" placeholder="0.00" />
+                    </div>
+
+                  </CardContent>
+                </Card>
+
+                {/* RIGHT: RESULTS */}
+                <Card className="bg-zinc-900/80 border-zinc-800 h-full flex flex-col relative overflow-hidden">
+                  <div className="absolute inset-0 bg-grid-white/[0.02] -z-0" />
+
+                  <CardHeader className="pb-4 border-b border-zinc-800/50 z-10 bg-zinc-900/80">
+                    <CardTitle className="text-sm font-medium uppercase tracking-wider text-[#39FF14] flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" /> Position Size
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent className="p-0 z-10 flex-1 flex flex-col justify-center">
+                    {!posResults.isValid && posResults.error ? (
+                      <div className="p-8 text-center text-red-500">
+                        <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p>{posResults.error}</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-zinc-800/50">
+                        <div className="p-6 text-center">
+                          <p className="text-sm text-gray-400 mb-1">Recommended Quantity</p>
+                          <div className="text-4xl font-black text-white tracking-tight tabular-nums">
+                            {formatNumber(posResults.positionSizeCoins, 4)}
+                            <span className="text-lg font-normal text-gray-500 ml-2">Coins</span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 divide-x divide-zinc-800/50">
+                          <div className="p-5 text-center hover:bg-zinc-800/20 transition-colors">
+                            <p className="text-xs text-gray-400 mb-1">Risk Amount</p>
+                            <div className="text-lg font-bold text-red-500 tabular-nums">
+                              {formatCurrency(posResults.riskAmount)}
+                            </div>
+                          </div>
+                          <div className="p-5 text-center hover:bg-zinc-800/20 transition-colors">
+                            <p className="text-xs text-gray-400 mb-1">Reward ({posResults.riskRewardRatio > 0 ? `1:${posResults.riskRewardRatio.toFixed(1)}` : '-'})</p>
+                            <div className="text-lg font-bold text-green-500 tabular-nums">
+                              {posResults.rewardAmount > 0 ? formatCurrency(posResults.rewardAmount) : '-'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-5 bg-zinc-950/30">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs text-gray-400">Effective Leverage</span>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${getLeverageColor(posResults.leverageRequired)} text-black`}>
+                                {getLeverageLabel(posResults.leverageRequired)}
+                              </span>
+                              <span className={`text-sm font-bold ${getLeverageTextColor(posResults.leverageRequired)}`}>
+                                {posResults.leverageRequired.toFixed(2)}x
+                              </span>
+                            </div>
+                          </div>
+                          <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden relative">
+                            {/* Leverage Markers */}
+                            <div className="absolute top-0 bottom-0 w-px bg-gray-500 left-[3%] opacity-50" title="3x" />
+                            <div className="absolute top-0 bottom-0 w-px bg-gray-500 left-[10%] opacity-50" title="10x" />
+
+                            <div
+                              className={`h-full rounded-full ${getLeverageColor(posResults.leverageRequired)}`}
+                              style={{ width: `${Math.min(posResults.leverageRequired, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
                     )}
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
-                {/* Max Open */}
-                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-300">Max Open (USD)</span>
-                  <span className="text-lg font-bold text-orange-500">
-                    {formatCurrency(results.maxOpen)}
-                  </span>
-                </div>
-
-                {/* Max Open Coin */}
-                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-300">Max Open (Coin)</span>
-                  <span className="text-lg font-bold text-cyan-500">
-                    {results.maxOpenCoin > 0 ? formatNumber(results.maxOpenCoin, 6) : '-'}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          </Tabs>
         </div>
       </div>
     </div>

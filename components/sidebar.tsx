@@ -3,20 +3,18 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   LayoutDashboard,
-  Users,
-  BarChart3,
   Settings,
   Bitcoin,
-  Monitor,
   Activity,
   ChevronLeft,
   ChevronRight,
   LogOut,
   Clock,
   TrendingUp,
+  CreditCard,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
-import { logout } from "@/app/actions/auth"
+import { logout } from "@/app/login/actions"
 import Link from "next/link"
 
 interface SidebarProps {
@@ -24,58 +22,103 @@ interface SidebarProps {
   onToggle: () => void
 }
 
+import { createClient } from "@/utils/supabase/client"
+import { useEffect, useState } from "react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 const menuItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
     href: "/dashboard",
+    allowedRoles: ["user", "admin"],
   },
   {
     title: "My Trade",
     icon: TrendingUp,
     href: "/dashboard/my-trade",
-  },
-  {
-    title: "Users",
-    icon: Users,
-    href: "/dashboard/users",
-  },
-  {
-    title: "Analytics",
-    icon: BarChart3,
-    href: "/dashboard/analytics",
+    allowedRoles: ["user", "admin"],
   },
   {
     title: "Crypto",
     icon: Bitcoin,
     href: "/dashboard/crypto",
+    allowedRoles: ["user", "admin"],
   },
   {
     title: "API Scheduler",
     icon: Clock,
     href: "/dashboard/api-scheduler",
+    allowedRoles: ["admin"],
   },
   {
-    title: "โปรแกรม",
-    icon: Monitor,
-    href: "/dashboard/programs",
-  },
-  {
-    title: "Settings",
-    icon: Settings,
-    href: "/dashboard/settings",
+    title: "Subscription",
+    icon: CreditCard,
+    href: "/dashboard/subscriptions",
+    allowedRoles: ["user", "admin"],
   },
 ]
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [userProfile, setUserProfile] = useState<{ full_name: string | null; email: string | null; avatar_url: string | null } | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const handleLogout = async () => {
+  useEffect(() => {
+    const getUserData = async () => {
+      // Only fetch if we don't have a specific event-driven update or initial load
+      // But here we just fetch on mount and update
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, full_name, email, avatar_url")
+          .eq("id", user.id)
+          .single()
+
+        setUserRole(profile?.role || "user")
+        setUserProfile({
+          full_name: profile?.full_name || user.email?.split('@')[0] || "User",
+          email: profile?.email || user.email || "",
+          avatar_url: profile?.avatar_url
+        })
+      }
+      setLoading(false)
+    }
+
+    getUserData()
+
+    // Listen for profile updates from Settings page
+    const handleProfileUpdate = () => {
+      // Add a small delay to ensure DB propagation and effective re-fetch
+      setTimeout(() => {
+        getUserData()
+        router.refresh()
+      }, 500)
+    }
+
+    window.addEventListener('profile-updated', handleProfileUpdate)
+
+    return () => {
+      window.removeEventListener('profile-updated', handleProfileUpdate)
+    }
+  }, [])
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation() // Prevent triggering the settings link if nested
     await logout()
     router.push("/login")
     router.refresh()
   }
+
+  const filteredMenuItems = menuItems.filter(item =>
+    !item.allowedRoles || (userRole && item.allowedRoles.includes(userRole))
+  )
 
   return (
     <div
@@ -104,45 +147,86 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-2 space-y-1">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
+      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+        {loading ? (
+          <div className="p-4 space-y-2">
+            <div className="h-8 bg-sidebar-accent/50 rounded animate-pulse" />
+            <div className="h-8 bg-sidebar-accent/50 rounded animate-pulse" />
+            <div className="h-8 bg-sidebar-accent/50 rounded animate-pulse" />
+          </div>
+        ) : (
+          filteredMenuItems.map((item) => {
+            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
 
-          return (
-            <div key={item.href}>
-              <Link href={item.href}>
-                <Button
-                  variant={isActive ? "default" : "ghost"}
-                  className={cn(
-                    "w-full justify-start gap-3 h-10",
-                    isCollapsed && "justify-center px-2",
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  )}
-                >
-                  <item.icon className="w-4 h-4 flex-shrink-0" />
-                  {!isCollapsed && <span className="text-sm font-medium">{item.title}</span>}
-                </Button>
-              </Link>
-            </div>
-          )
-        })}
+            return (
+              <div key={item.href}>
+                <Link href={item.href}>
+                  <Button
+                    variant={isActive ? "default" : "ghost"}
+                    className={cn(
+                      "w-full justify-start gap-3 h-10",
+                      isCollapsed && "justify-center px-2",
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    )}
+                  >
+                    <item.icon className="w-4 h-4 flex-shrink-0" />
+                    {!isCollapsed && <span className="text-sm font-medium">{item.title}</span>}
+                  </Button>
+                </Link>
+              </div>
+            )
+          })
+        )}
       </nav>
 
-      {/* Footer */}
-      <div className="p-2 border-t border-sidebar-border">
+      {/* Footer / User Profile */}
+      <div className="p-2 border-t border-sidebar-border space-y-1">
+
+        {/* User Profile (Links to Settings) */}
+        <Link href="/dashboard/settings" className="block">
+          <Button
+            variant="ghost"
+            className={cn(
+              "w-full justify-start gap-3 h-14 hover:bg-sidebar-accent group relative",
+              isCollapsed && "justify-center h-14 px-0"
+            )}
+          >
+            <Avatar className="h-8 w-8 border border-border">
+              <AvatarImage src={userProfile?.avatar_url || ""} />
+              <AvatarFallback>{userProfile?.full_name?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
+            </Avatar>
+
+            {!isCollapsed && (
+              <div className="flex flex-col items-start text-left overflow-hidden">
+                <span className="text-sm font-medium text-sidebar-foreground truncate w-32">
+                  {userProfile?.full_name}
+                </span>
+                <span className="text-xs text-muted-foreground truncate w-32">
+                  {userProfile?.email}
+                </span>
+              </div>
+            )}
+
+            {!isCollapsed && <Settings className="ml-auto w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />}
+          </Button>
+        </Link>
+
+        {/* Logout */}
         <Button
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            "w-full justify-start gap-3 h-10 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+            "w-full justify-start gap-3 h-10 text-destructive hover:text-destructive hover:bg-destructive/10",
             isCollapsed && "justify-center px-2",
           )}
+          title="Logout"
         >
           <LogOut className="w-4 h-4 flex-shrink-0" />
           {!isCollapsed && <span className="text-sm font-medium">Logout</span>}
         </Button>
+
       </div>
     </div>
   )

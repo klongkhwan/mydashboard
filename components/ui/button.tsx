@@ -5,21 +5,23 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-[#39FF14]/30 focus-visible:ring-[3px]",
   {
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
+          'bg-gradient-to-r from-[#39FF14] to-[#10B981] text-[#0D0F0D] font-semibold shadow-lg shadow-[#39FF14]/25 hover:shadow-[#39FF14]/40 hover:scale-[1.02]',
         destructive:
-          'bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
+          'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-500/25 hover:from-red-500 hover:to-rose-500',
         outline:
-          'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
+          'border border-[#39FF14]/30 bg-transparent shadow-xs hover:bg-[#39FF14]/10 hover:border-[#39FF14]/50 text-[#E5E5E5]',
         secondary:
-          'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
+          'bg-[#1A1C1A] text-[#E5E5E5] shadow-xs hover:bg-[#262826] border border-[#262826]',
         ghost:
-          'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
-        link: 'text-primary underline-offset-4 hover:underline',
+          'hover:bg-[#1A1C1A] text-[#8C8C8C] hover:text-[#E5E5E5]',
+        link: 'text-[#39FF14] underline-offset-4 hover:underline hover:text-[#10B981]',
+        glass:
+          'bg-[#1A1C1A]/80 backdrop-blur-md border border-[#39FF14]/20 text-[#E5E5E5] shadow-lg hover:bg-[#1A1C1A] hover:shadow-[#39FF14]/20',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',

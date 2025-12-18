@@ -153,13 +153,13 @@ export function useCryptoPricesPolling() {
 
     // Add listener for updates
     const updateListener = () => {
-      setPrices({...globalPrices})
+      setPrices({ ...globalPrices })
     }
     globalListeners.push(updateListener)
 
     // Set initial prices from global state
     if (Object.keys(globalPrices).length > 0) {
-      setPrices({...globalPrices})
+      setPrices({ ...globalPrices })
       setIsLoading(false)
     }
 

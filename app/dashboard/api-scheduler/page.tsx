@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Edit, Pause, Play, Trash2, PlayCircle } from "lucide-react"
+import { Plus, Edit, Pause, Play, Trash2, PlayCircle, Clock } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { ApiSchedule, CreateScheduleRequest } from "@/types/api-scheduler"
 import {
@@ -46,6 +46,8 @@ export default function ApiSchedulerPage() {
   const [schedules, setSchedules] = useState<ApiSchedule[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [checkLoading, setCheckLoading] = useState(false)
+  const [autoCheck, setAutoCheck] = useState(false)
   const [editingSchedule, setEditingSchedule] = useState<ApiSchedule | null>(null)
   const [formData, setFormData] = useState({
     apiName: "",
@@ -56,6 +58,45 @@ export default function ApiSchedulerPage() {
     headers: "",
     body: "",
   })
+
+  // Add functionality to trigger cron check manually
+  const handleCheckSchedules = async (silent = false) => {
+    if (!silent) setCheckLoading(true)
+    try {
+      const res = await fetch('/api/scheduler/cron')
+      const data = await res.json()
+      if (res.ok) {
+        if (!silent) {
+          toast({
+            title: "Scheduler Check Complete",
+            description: `Executed: ${data.executed}, Errors: ${data.errors}`,
+          })
+        }
+        // Only reload if tasks were executed or we are in manual mode to show 'no updates'
+        if (data.executed > 0 || !silent) {
+          loadSchedules()
+        }
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error) {
+      if (!silent) toast({ title: "Error", description: "Failed to run scheduler check", variant: "destructive" })
+    } finally {
+      if (!silent) setCheckLoading(false)
+    }
+  }
+
+  // Auto-check effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (autoCheck) {
+      handleCheckSchedules(true) // Run immediately on toggle
+      interval = setInterval(() => {
+        handleCheckSchedules(true)
+      }, 60000) // Check every minute
+    }
+    return () => clearInterval(interval)
+  }, [autoCheck])
 
   useEffect(() => {
     loadSchedules()
@@ -446,14 +487,32 @@ export default function ApiSchedulerPage() {
           <h2 className="text-3xl font-bold tracking-tight text-balance">API Scheduler</h2>
           <p className="text-muted-foreground">Manage your scheduled API calls and automations</p>
         </div>
-        <Button
-          onClick={handleAddSchedule}
-          className="bg-green-600 hover:bg-green-700 text-white"
-          size="lg"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Schedule
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={autoCheck ? "secondary" : "outline"}
+            onClick={() => setAutoCheck(!autoCheck)}
+            className={autoCheck ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200" : ""}
+          >
+            {autoCheck ? "Auto Check: ON 🟢" : "Auto Check: OFF ⚪"}
+          </Button>
+          <Button
+            onClick={() => handleCheckSchedules(false)}
+            disabled={checkLoading}
+            variant="outline"
+            size="lg"
+          >
+            {checkLoading ? <span className="animate-spin mr-2">↻</span> : <Clock className="w-4 h-4 mr-2" />}
+            Check Schedules Now
+          </Button>
+          <Button
+            onClick={handleAddSchedule}
+            className="bg-green-600 hover:bg-green-700 text-white"
+            size="lg"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Schedule
+          </Button>
+        </div>
       </div>
 
       <Card className="border-border/50">
@@ -469,8 +528,9 @@ export default function ApiSchedulerPage() {
                 <TableHead>API Name</TableHead>
                 <TableHead>URL</TableHead>
                 <TableHead>Method</TableHead>
-                <TableHead>Time</TableHead>
                 <TableHead>Frequency</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Next Run</TableHead>
                 <TableHead>Last Run</TableHead>
                 <TableHead>Manual</TableHead>
                 <TableHead>Actions</TableHead>
@@ -498,8 +558,9 @@ export default function ApiSchedulerPage() {
                     <TableCell>
                       {getMethodBadge(schedule.method)}
                     </TableCell>
-                    <TableCell>{schedule.time}</TableCell>
                     <TableCell>{getFrequencyDisplay(schedule.frequency)}</TableCell>
+                    <TableCell>{schedule.time}</TableCell>
+                    <TableCell className="text-blue-600 font-medium">{formatLastRun(schedule.next_run)}</TableCell>
                     <TableCell className="text-muted-foreground">{formatLastRun(schedule.last_run)}</TableCell>
                     <TableCell>
                       <Button
@@ -693,7 +754,7 @@ export default function ApiSchedulerPage() {
               Cancel
             </Button>
             <Button onClick={handleSaveSchedule} className="bg-green-600 hover:bg-green-700">
-              Save
+              บันทึก
             </Button>
           </DialogFooter>
         </DialogContent>

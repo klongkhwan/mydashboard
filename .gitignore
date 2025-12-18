@@ -36,6 +36,15 @@ next-env.d.ts
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# AI / Tools
+.claude
+
+
+
+# Local SQL dumps
+*.sql
 
 # Logs
 logs

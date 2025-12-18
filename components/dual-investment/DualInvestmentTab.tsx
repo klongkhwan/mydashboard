@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { TrendingUp, TrendingDown, Calendar, DollarSign, Filter, RefreshCw } from "lucide-react"
+import { PageLoading } from "@/components/ui/loading"
 import { fetchDualInvestmentProjects, DualInvestmentProject, DualInvestmentFilters } from "@/lib/dual-investment"
 import { DualInvestmentCalculator } from "./DualInvestmentCalculator"
 
@@ -210,7 +210,7 @@ export function DualInvestmentTab() {
                   >
                     {option.label}
                   </ToggleGroupItem>
-                  ))}
+                ))}
               </ToggleGroup>
             </div>
           </div>
@@ -221,17 +221,7 @@ export function DualInvestmentTab() {
       <Card className="max-h-[600px] flex flex-col">
         <CardContent className="flex-1 overflow-hidden flex flex-col px-3 py-2">
           {loading ? (
-            <div className="space-y-4">
-              {[...Array(10)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
+            <PageLoading />
           ) : projects.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No projects found matching your criteria</p>
@@ -291,11 +281,10 @@ export function DualInvestmentTab() {
                         <TableCell className="py-1.5">
                           <Badge
                             variant="secondary"
-                            className={`flex items-center gap-1 w-fit cursor-pointer hover:opacity-80 ${
-                              project.type === "UP"
-                                ? "bg-red-100 text-red-800 border-red-200"
-                                : "bg-green-100 text-green-800 border-green-200"
-                            }`}
+                            className={`flex items-center gap-1 w-fit cursor-pointer hover:opacity-80 ${project.type === "UP"
+                              ? "bg-red-100 text-red-800 border-red-200"
+                              : "bg-green-100 text-green-800 border-green-200"
+                              }`}
                             onClick={() => handleTypeClick(project)}
                           >
                             {project.type === "UP" ? (

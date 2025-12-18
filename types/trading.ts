@@ -27,9 +27,6 @@ export interface Trade {
   profit_loss?: number
   profit_loss_percent?: number
   status: TradeStatus
-  account_name?: string
-  account_type?: AccountType
-  currency?: string
   created_at: string
   updated_at: string
 }
@@ -54,9 +51,6 @@ export interface TradeForm {
   profit_loss?: number
   profit_loss_percent?: number
   status: TradeStatus
-  account_name?: string
-  account_type?: AccountType
-  currency?: string
 }
 
 export interface TradeFilters {
@@ -69,12 +63,13 @@ export interface TradeFilters {
   timeframe?: string
   entry_emotion?: EmotionType
   exit_emotion?: EmotionType
-  account_name?: string
   search?: string
 }
 
 export interface TradeStatistics {
   total_trades: number
+  closed_trades: number
+  open_trades: number
   winning_trades: number
   losing_trades: number
   win_rate: number
@@ -88,13 +83,44 @@ export interface TradeStatistics {
   expectancy: number
   largest_win: number
   largest_loss: number
-  average_trade_duration?: number
+
+  // Advanced Stats
+  current_streak: number
+  max_win_streak: number
+  max_loss_streak: number
+  avg_hold_time_win: number
+  avg_hold_time_loss: number
+
+  best_trade: { symbol: string, pnl: number, date: string } | null
+  worst_trade: { symbol: string, pnl: number, date: string } | null
+
+  dominant_emotions: {
+    entry: { emotion: string, count: number }
+    exit: { emotion: string, count: number }
+  }
+
   // Market statistics
   market_performance: Record<Market, {
     trades: number
     profit_loss: number
     win_rate: number
   }>
+
+  // Visual Data
+  monthly_pnl: { name: string, value: number, status: 'profit' | 'loss' }[]
+  equity_curve: { date: string, pnl: number, rawPnl: number, entry_date: string }[]
+
+  // Open trades breakdown
+  open_trades_list: {
+    id: string
+    symbol: string
+    market: Market
+    direction: TradeDirection
+    entry_price: number
+    capital_amount: number
+    entry_date: string
+    leverage?: number
+  }[]
 }
 
 export interface MonthlyStats {

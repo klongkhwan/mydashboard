@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import {
   Search,
@@ -25,12 +26,13 @@ import {
   Heart,
   Brain
 } from "lucide-react"
+import { PageLoading } from "@/components/ui/loading"
 import { Trade, TradeFilters, Market, TradeStatus, EmotionType } from "@/types/trading"
-import { getTrades, deleteTrade, getUniqueSymbols, getUniqueTimeframes, getUniqueAccountNames } from "@/lib/trading"
+import { getTrades, deleteTrade, getUniqueSymbols, getUniqueTimeframes } from "@/lib/trading"
 import { format } from "date-fns"
 import { th } from "date-fns/locale"
 import { toZonedTime } from "date-fns-tz"
-import { TradeFormNew } from "./trade-form-new"
+import { TradeModal } from "./trade-modal"
 
 interface TradeListProps {
   trades?: Trade[]
@@ -39,6 +41,7 @@ interface TradeListProps {
   onTradeDeleted?: () => void
   onRefresh?: () => void
   onEditTrade?: (id: string) => void
+  refreshTrigger?: number
 }
 
 export function TradeList({
@@ -47,7 +50,8 @@ export function TradeList({
   onTradeUpdated,
   onTradeDeleted,
   onRefresh,
-  onEditTrade
+  onEditTrade,
+  refreshTrigger = 0
 }: TradeListProps) {
   const [trades, setTrades] = useState<Trade[]>(initialTrades || [])
   const [loading, setLoading] = useState(initialLoading || false)
@@ -55,19 +59,18 @@ export function TradeList({
   const [filters, setFilters] = useState<TradeFilters>({})
   const [uniqueSymbols, setUniqueSymbols] = useState<string[]>([])
   const [uniqueTimeframes, setUniqueTimeframes] = useState<string[]>([])
-  const [uniqueAccountNames, setUniqueAccountNames] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [editingTradeId, setEditingTradeId] = useState<string | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [activeTab, setActiveTab] = useState("all")
 
+  // Fetch on mount or when refreshTrigger changes
   useEffect(() => {
-    if (!initialTrades) {
-      fetchTrades()
-    }
+    fetchTrades()
     fetchFilterOptions()
-  }, [initialTrades])
+  }, [refreshTrigger])
 
-  // Update trades when initialTrades prop changes
+  // Update trades when initialTrades prop changes (for backward compatibility)
   useEffect(() => {
     if (initialTrades) {
       setTrades(initialTrades)
@@ -95,14 +98,12 @@ export function TradeList({
 
   const fetchFilterOptions = async () => {
     try {
-      const [symbols, timeframes, accountNames] = await Promise.all([
+      const [symbols, timeframes] = await Promise.all([
         getUniqueSymbols(),
-        getUniqueTimeframes(),
-        getUniqueAccountNames()
+        getUniqueTimeframes()
       ])
       setUniqueSymbols(symbols)
       setUniqueTimeframes(timeframes)
-      setUniqueAccountNames(accountNames)
     } catch (error) {
       console.error("Error fetching filter options:", error)
     }
@@ -236,28 +237,57 @@ export function TradeList({
     return profitLoss > 0 ? "text-green-600 font-semibold" : profitLoss < 0 ? "text-red-600 font-semibold" : ""
   }
 
+  // Quick Filter Logic
   const filteredTrades = trades.filter(trade => {
+    // 1. Filter by Quick Tabs first
+    if (activeTab === "open" && trade.status !== "open") return false
+    if (activeTab === "closed" && trade.status !== "closed") return false
+    if (activeTab === "winning" && (trade.profit_loss === undefined || trade.profit_loss <= 0)) return false
+    if (activeTab === "losing" && (trade.profit_loss === undefined || trade.profit_loss >= 0)) return false
+
+    // 2. Filter by Search Term
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase()
       return (
         trade.symbol.toLowerCase().includes(searchLower) ||
         trade.entry_reason?.toLowerCase().includes(searchLower) ||
         trade.exit_reason?.toLowerCase().includes(searchLower) ||
-        trade.learning_note?.toLowerCase().includes(searchLower) ||
-        trade.account_name?.toLowerCase().includes(searchLower)
+        trade.learning_note?.toLowerCase().includes(searchLower)
       )
     }
     return true
   })
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Quick Filter Tabs */}
+      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-muted/50 p-1 w-full sm:w-auto overflow-x-auto flex justify-start">
+          <TabsTrigger value="all" className="flex-1 sm:flex-none min-w-[80px]">ทั้งหมด</TabsTrigger>
+          <TabsTrigger value="open" className="flex-1 sm:flex-none min-w-[80px] data-[state=active]:text-blue-500">
+            <span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
+            สถานะเปิด
+          </TabsTrigger>
+          <TabsTrigger value="closed" className="flex-1 sm:flex-none min-w-[80px] data-[state=active]:text-green-500">
+            <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+            สถานะปิด
+          </TabsTrigger>
+          <TabsTrigger value="winning" className="flex-1 sm:flex-none min-w-[80px] data-[state=active]:text-green-500">
+            <TrendingUp className="w-3 h-3 mr-2 text-green-500" />
+            กำไร
+          </TabsTrigger>
+          <TabsTrigger value="losing" className="flex-1 sm:flex-none min-w-[80px] data-[state=active]:text-red-500">
+            <TrendingDown className="w-3 h-3 mr-2 text-red-500" />
+            ขาดทุน
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       {/* Compact Header and Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold">รายการการเทรด</h3>
           <p className="text-sm text-muted-foreground">
-            ทั้งหมด ({trades.length} รายการ)
+            แสดง {filteredTrades.length} จาก {trades.length} รายการ
           </p>
         </div>
         <div className="flex gap-2">
@@ -335,27 +365,14 @@ export function TradeList({
               </SelectContent>
             </Select>
 
-            <Select onValueChange={(value) => handleFilter({ ...filters, account_name: value === "all" ? undefined : value })}>
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="บัญชี" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทั้งหมด</SelectItem>
-                {uniqueAccountNames.map(accountName => (
-                  <SelectItem key={accountName} value={accountName}>{accountName}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
           </div>
         </div>
       )}
 
       {/* Trade Table */}
       {loading ? (
-        <div className="flex items-center justify-center p-8">
-          <RefreshCw className="w-5 h-5 animate-spin mr-2" />
-          <span className="text-sm">กำลังโหลด...</span>
-        </div>
+        <PageLoading />
       ) : filteredTrades.length === 0 ? (
         <div className="text-center p-6">
           <Eye className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
@@ -594,32 +611,7 @@ export function TradeList({
                               </div>
                             )}
 
-                            {/* Account Information */}
-                            {(trade.account_name || trade.account_type || trade.currency) && (
-                              <div className="mt-4 pt-4 border-t">
-                                <h4 className="font-semibold mb-3">ข้อมูลบัญชี</h4>
-                                <div className="grid grid-cols-3 gap-4 text-sm">
-                                  {trade.account_name && (
-                                    <div>
-                                      <strong>ชื่อบัญชี:</strong>
-                                      <div>{trade.account_name}</div>
-                                    </div>
-                                  )}
-                                  {trade.account_type && (
-                                    <div>
-                                      <strong>ประเภท:</strong>
-                                      <div>{trade.account_type}</div>
-                                    </div>
-                                  )}
-                                  {trade.currency && (
-                                    <div>
-                                      <strong>สกุลเงิน:</strong>
-                                      <div>{trade.currency}</div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+
                           </DialogContent>
                         </Dialog>
 
@@ -660,26 +652,15 @@ export function TradeList({
 
       {/* Edit Trade Modal - Only show if onEditTrade is not provided */}
       {!onEditTrade && (
-        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-          <DialogContent className="w-[90vw] max-w-4xl max-h-[85vh] overflow-y-auto bg-gray-900 text-gray-100 border-2 border-gray-700 rounded-lg p-0">
-            <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-800">
-              <DialogTitle className="text-2xl font-bold text-white">
-                แก้ไขการเทรด
-              </DialogTitle>
-              <DialogDescription className="text-gray-400">
-                แก้ไขรายละเอียดการเทรดของคุณ
-              </DialogDescription>
-            </DialogHeader>
-            <div className="px-6 pb-6">
-              {editingTradeId && (
-                <TradeFormNew
-                  tradeId={editingTradeId}
-                  onTradeUpdated={handleTradeUpdated}
-                />
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+        <TradeModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false)
+            setEditingTradeId(null)
+          }}
+          tradeId={editingTradeId}
+          onSuccess={handleTradeUpdated}
+        />
       )}
     </div>
   )

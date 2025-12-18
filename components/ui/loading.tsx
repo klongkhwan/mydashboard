@@ -21,7 +21,7 @@ const LoadingSpinner = ({ size = "md", className = "" }: { size?: "sm" | "md" | 
   }
 
   return (
-    <div className={cn("animate-spin", sizeClasses[size], className)}>
+    <div className={cn("animate-spin text-[#39FF14]", sizeClasses[size], className)}>
       <div className="w-full h-full border-2 border-current border-t-transparent rounded-full"></div>
     </div>
   )
@@ -122,10 +122,7 @@ export function Loading({
 // Specialized loading components
 export const PageLoading = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="text-center space-y-4">
-      <LoadingSpinner size="xl" />
-      <p className="text-muted-foreground animate-pulse">กำลังโหลด...</p>
-    </div>
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
   </div>
 )
 

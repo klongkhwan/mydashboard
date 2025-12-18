@@ -3,7 +3,7 @@
 import { useCryptoPricesPolling } from '@/hooks/use-crypto-prices-polling'
 import { useAnimatedPrice } from '@/hooks/use-animated-price'
 import { useSettings } from '@/hooks/use-settings'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 interface CryptoPriceItem {
   symbol: string
@@ -27,25 +27,26 @@ function getShortSymbol(symbol: string): string {
   return symbol.replace('USDT', '')
 }
 
-function PriceDisplay({ symbol, price, previousPrice }: { symbol: string; price: number; previousPrice: number }) {
+function PriceDisplay({ symbol, price }: { symbol: string; price: number }) {
   const { displayValue, isAnimating } = useAnimatedPrice({ value: price, duration: 1000 })
   const [direction, setDirection] = useState<'up' | 'down' | 'neutral'>('neutral')
+  const prevPriceRef = useRef(price)
 
   useEffect(() => {
-    if (price > previousPrice) {
+    if (price > prevPriceRef.current) {
       setDirection('up')
-    } else if (price < previousPrice) {
+    } else if (price < prevPriceRef.current) {
       setDirection('down')
     }
-  }, [price, previousPrice])
+    prevPriceRef.current = price
+  }, [price])
 
   return (
     <span
-      className={`text-[13px] font-mono font-semibold transition-all duration-300 ${
-        direction === 'up' ? 'text-green-400' :
+      className={`text-[13px] font-mono font-semibold transition-all duration-300 ${direction === 'up' ? 'text-green-400' :
         direction === 'down' ? 'text-red-400' :
-        'text-white'
-      } ${isAnimating ? 'scale-105' : 'scale-100'}`}
+          'text-white'
+        } ${isAnimating ? 'scale-105' : 'scale-100'}`}
     >
       {formatCryptoPrice(symbol, displayValue)}
     </span>
@@ -55,8 +56,7 @@ function PriceDisplay({ symbol, price, previousPrice }: { symbol: string; price:
 export function AnimatedCryptoTicker() {
   const { prices, isLoading } = useCryptoPricesPolling()
   const { settings, isLoading: settingsLoading, getTitleBarCoin } = useSettings()
-  const [previousPrices, setPreviousPrices] = useState<{ [key: string]: number }>({})
-  const [scrollPosition, setScrollPosition] = useState(0)
+  const lastTitleRef = useRef('')
 
   // Update title bar based on settings
   useEffect(() => {
@@ -64,20 +64,26 @@ export function AnimatedCryptoTicker() {
 
     const titleBarCoin = getTitleBarCoin()
     if (titleBarCoin && titleBarCoin.price > 0) {
-      // Use settings title bar coin - always use price format only
-      const changePercent = titleBarCoin.change
-      const arrow = changePercent >= 0 ? '▲' : '▼'
       const titleText = `$${titleBarCoin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      const newTitle = `${titleText} | Superlboard`
 
-      document.title = `${titleText} | Superlboard`
+      if (lastTitleRef.current !== newTitle) {
+        document.title = newTitle
+        lastTitleRef.current = newTitle
+      }
     } else {
-      // Fallback to BTCUSDT if no settings
       const btcPrice = prices['BTCUSDT']
       if (btcPrice && !isNaN(btcPrice.price)) {
-        const price = btcPrice.price
-        document.title = `$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Superlboard`
-      } else {
+        const titleText = `$${btcPrice.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        const newTitle = `${titleText} | Superlboard`
+
+        if (lastTitleRef.current !== newTitle) {
+          document.title = newTitle
+          lastTitleRef.current = newTitle
+        }
+      } else if (lastTitleRef.current !== 'Superlboard') {
         document.title = 'Superlboard'
+        lastTitleRef.current = 'Superlboard'
       }
     }
   }, [prices, settings, settingsLoading, getTitleBarCoin])
@@ -102,43 +108,10 @@ export function AnimatedCryptoTicker() {
   }
 
   const symbols = getTickerSymbols()
-  // Create more copies for seamless scrolling
-  const allSymbols = [...symbols, ...symbols, ...symbols, ...symbols] // 4 copies for continuous scrolling
+  // Create 6 copies for seamless scrolling on any screen size
+  const allSymbols = [...symbols, ...symbols, ...symbols, ...symbols, ...symbols, ...symbols]
 
-  // Update previous prices for animation
-  useEffect(() => {
-    const newPreviousPrices: { [key: string]: number } = {}
-
-    symbols.forEach(symbol => {
-      if (prices[symbol] && previousPrices[symbol] !== undefined) {
-        newPreviousPrices[symbol] = previousPrices[symbol]
-      } else if (prices[symbol]) {
-        newPreviousPrices[symbol] = prices[symbol]!.price
-      }
-    })
-
-    setPreviousPrices(newPreviousPrices)
-  }, [prices])
-
-  // Auto-scroll animation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setScrollPosition((prev) => {
-        // Calculate how far we can scroll before needing to reset
-        const maxScroll = 75 // Scroll 75% before reset (since we have 4 copies)
-        const newPosition = prev + 0.05 // Slower speed (reduced from 0.15 to 0.05)
-
-        // Reset to 0 when we reach the max scroll point
-        if (newPosition >= maxScroll) {
-          return 0
-        }
-
-        return newPosition
-      })
-    }, 150) // Slower interval (increased from 100ms to 150ms)
-
-    return () => clearInterval(interval)
-  }, [])
+  // Pure CSS animation doesn't need setInterval anymore
 
   return (
     <div className="relative w-full h-12 bg-black overflow-hidden border-b border-gray-800/50">
@@ -155,16 +128,14 @@ export function AnimatedCryptoTicker() {
       />
 
       <div
-        className="absolute whitespace-nowrap flex items-center h-full"
+        className="whitespace-nowrap flex items-center h-full animate-ticker-scroll"
         style={{
-          transform: `translateX(-${scrollPosition}%)`,
-          transition: 'transform 0.15s linear'
+          width: 'max-content'
         }}
       >
         {allSymbols.map((symbol, index) => {
           const priceData = prices[symbol]
           const shortSymbol = getShortSymbol(symbol)
-          const prevPrice = previousPrices[symbol] || priceData?.price || 0
 
           return (
             <div
@@ -176,11 +147,10 @@ export function AnimatedCryptoTicker() {
                 <span className="text-[10px] font-black text-white uppercase tracking-wider">
                   {shortSymbol}
                 </span>
-                <div className={`w-0.5 h-0.5 rounded-full ${
-                  (priceData?.priceChangePercent ?? 0) >= 0
-                    ? 'bg-green-400'
-                    : 'bg-red-400'
-                }`} />
+                <div className={`w-0.5 h-0.5 rounded-full ${(priceData?.priceChangePercent ?? 0) >= 0
+                  ? 'bg-green-400'
+                  : 'bg-red-400'
+                  }`} />
               </div>
 
               {priceData && !isNaN(priceData.price) ? (
@@ -188,17 +158,15 @@ export function AnimatedCryptoTicker() {
                   <PriceDisplay
                     symbol={symbol}
                     price={priceData.price}
-                    previousPrice={prevPrice}
                   />
 
                   {(priceData.priceChangePercent ?? 0) !== 0 && (
                     <div className="flex items-center gap-0.5">
                       <span
-                        className={`text-[10px] px-1 py-0.5 rounded-full font-medium ${
-                          (priceData.priceChangePercent ?? 0) >= 0
-                            ? 'bg-green-500/20 text-green-300 border border-green-500/20'
-                            : 'bg-red-500/20 text-red-300 border border-red-500/20'
-                        }`}
+                        className={`text-[10px] px-1 py-0.5 rounded-full font-medium ${(priceData.priceChangePercent ?? 0) >= 0
+                          ? 'bg-green-500/20 text-green-300 border border-green-500/20'
+                          : 'bg-red-500/20 text-red-300 border border-red-500/20'
+                          }`}
                       >
                         {(priceData.priceChangePercent ?? 0) >= 0 ? '▲' : '▼'} {Math.abs(priceData.priceChangePercent ?? 0).toFixed(1)}%
                       </span>

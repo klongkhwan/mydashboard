@@ -36,14 +36,12 @@ const tradeFormSchema = z.object({
   exit_reason: z.string().optional(),
   learning_note: z.string().optional(),
   status: z.enum(["open", "closed", "cancelled"]).default("open"),
-  account_name: z.string().optional(),
-  account_type: z.enum(["demo", "live"]).optional(),
-  currency: z.string().optional(),
 })
 
 interface TradeFormProps {
   onTradeCreated?: () => void
   onTradeUpdated?: () => void
+  onCancel?: () => void
   tradeId?: string // For edit mode
 }
 
@@ -111,9 +109,9 @@ const ThaiDateTimeDisplay = ({ value, label }: { value: string; label: string })
   )
 }
 
-export function TradeFormNew({ onTradeCreated, onTradeUpdated, tradeId }: TradeFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId }: TradeFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const isEditMode = !!tradeId
 
   const form = useForm<z.infer<typeof tradeFormSchema>>({
@@ -172,7 +170,6 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, tradeId }: TradeF
       market: "spot",
       direction: "buy",
       status: "open",
-      currency: "USD",
     },
   })
 
@@ -191,6 +188,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, tradeId }: TradeF
 
   const loadTradeData = async () => {
     try {
+      if (!tradeId) return
       setIsLoading(true)
       const trade = await getTradeById(tradeId)
 
@@ -214,9 +212,6 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, tradeId }: TradeF
         exit_reason: trade.exit_reason || "",
         learning_note: trade.learning_note || "",
         status: trade.status,
-        account_name: trade.account_name || "",
-        account_type: trade.account_type || undefined,
-        currency: trade.currency || "USD",
       }
 
       form.reset(formData)
@@ -260,10 +255,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, tradeId }: TradeF
     "1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"
   ]
 
-  const accountTypes: { value: AccountType; label: string }[] = [
-    { value: "demo", label: "Demo (ทดลอง)" },
-    { value: "live", label: "Live (จริง)" },
-  ]
+
 
   // Convert datetime-local strings to proper ISO format for database
   const convertToISOString = (dateTimeString: string) => {
@@ -373,214 +365,33 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, tradeId }: TradeF
   }
 
   return (
-    <div className="space-y-5 w-full">
+    <div className="w-full h-full">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 w-full">
-          {/* Basic Information */}
-          <div className="bg-gray-800 rounded-lg border border-gray-600 p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              ข้อมูลพื้นฐาน
-            </h3>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col gap-6">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="entry_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-300">วันเวลาเข้าเทรด</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="datetime-local"
-                        {...field}
-                        className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-              <FormField
-                control={form.control}
-                name="symbol"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-300">สัญลักษณ์</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="BTC/USD"
-                        {...field}
-                        className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Left Column: Trade Setup (Sticky on Desktop) */}
+            <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-0">
+              <div className="bg-card rounded-lg border border-border p-5 space-y-4 shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+                  <span className="w-2 h-2 rounded-full bg-[#39FF14] shadow-[0_0_8px_#39FF14]"></span>
+                  ตั้งค่าการเทรด
+                </h3>
 
-              <div className="grid grid-cols-2 gap-4 sm:col-span-2">
-                <FormField
-                  control={form.control}
-                  name="direction"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-300">ทิศทา</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 focus:ring-blue-500">
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-gray-800 border-gray-700">
-                          {directionOptions.map((direction) => (
-                            <SelectItem key={direction.value} value={direction.value} className="text-gray-100">
-                              <span className={direction.color}>{direction.label}</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="market"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-300">ตลาด</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 focus:ring-blue-500">
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-gray-800 border-gray-700">
-                          {marketOptions.map((market) => (
-                            <SelectItem key={market.value} value={market.value} className="text-gray-100">
-                              {market.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="timeframe"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-300">Timeframe</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
-                      <FormControl>
-                        <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 focus:ring-blue-500">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-gray-800 border-gray-700">
-                        <SelectItem value="none" className="text-gray-100">ไม่ระบุ</SelectItem>
-                        {timeframeOptions.map((timeframe) => (
-                          <SelectItem key={timeframe} value={timeframe} className="text-gray-100">
-                            {timeframe}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Market-specific fields */}
-            {(watchMarket === "futures" || watchMarket === "margin") && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-700">
-                <FormField
-                  control={form.control}
-                  name="position_size"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-purple-300">Position Size</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="any"
-                          placeholder="1.0"
-                          {...field}
-                          className="bg-gray-800 border-purple-600/50 text-gray-100 placeholder-gray-500 focus:border-purple-500 focus:ring-purple-500/20"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-xs text-purple-400">
-                        ขนาดตำแหน่ง (contracts/lots)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="leverage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-purple-300">Leverage</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          placeholder="10.0"
-                          {...field}
-                          className="bg-gray-800 border-purple-600/50 text-gray-100 placeholder-gray-500 focus:border-purple-500 focus:ring-purple-500/20"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-xs text-purple-400">
-                        เลเวอเรจ (เช่น 10x = 10)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Entry and Exit Details - Tabs */}
-          <div className="bg-gray-800 rounded-lg border border-gray-600 p-5">
-            <Tabs defaultValue="entry" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-gray-700 border border-gray-600">
-                <TabsTrigger value="entry" className="data-[state=active]:bg-gray-800 data-[state=active]:text-green-400 text-gray-300 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  รายละเอียดการเข้าเทรด
-                </TabsTrigger>
-                <TabsTrigger value="exit" className="data-[state=active]:bg-gray-800 data-[state=active]:text-red-400 text-gray-300 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                  รายละเอียดการปิดออเดอร์
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="entry" className="space-y-4 mt-6">
+                {/* Symbol & Date */}
                 <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="entry_price"
+                    name="symbol"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-300">ราคาเข้า (Entry)</FormLabel>
+                        <FormLabel className="text-sm font-medium text-foreground">สัญลักษณ์</FormLabel>
                         <FormControl>
                           <Input
-                            type="number"
-                            step="any"
-                            placeholder="0.00"
+                            placeholder="เช่น BTC/USD"
                             {...field}
-                            className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-green-500 focus:ring-green-500/20"
+                            className="font-semibold bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background"
                           />
                         </FormControl>
                         <FormMessage />
@@ -590,17 +401,15 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, tradeId }: TradeF
 
                   <FormField
                     control={form.control}
-                    name="capital_amount"
+                    name="entry_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-300">ขนาดทุน</FormLabel>
+                        <FormLabel className="text-sm font-medium text-foreground">วันเวลาเข้าเทรด</FormLabel>
                         <FormControl>
                           <Input
-                            type="number"
-                            step="any"
-                            placeholder="1000.00"
+                            type="datetime-local"
                             {...field}
-                            className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-green-500 focus:ring-green-500/20"
+                            className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background"
                           />
                         </FormControl>
                         <FormMessage />
@@ -609,342 +418,329 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, tradeId }: TradeF
                   />
                 </div>
 
-                <FormField
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
                     control={form.control}
-                    name="entry_emotion"
+                    name="market"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-300">อารมณ์ตอนเข้าเทรด</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">ตลาด</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-green-500 focus:ring-green-500/20">
-                              <SelectValue placeholder="เลือกอารมณ์..." />
+                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20">
+                              <SelectValue />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="bg-gray-800 border-gray-700">
-                            <SelectItem value="none" className="text-gray-100">ไม่ระบุ</SelectItem>
-                            {emotionOptions.map((emotion) => (
-                              <SelectItem key={emotion.value} value={emotion.value} className="text-gray-100">
-                                {emotion.label}
+                          <SelectContent>
+                            {marketOptions.map((m) => (
+                              <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="direction"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">ทิศทาง</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {directionOptions.map((d) => (
+                              <SelectItem key={d.value} value={d.value}>
+                                <span className={d.color}>{d.label}</span>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="entry_reason"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-300">เหตุผลที่เข้าเทรด</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="บอกเหตุผลที่คุณตัดสินใจเข้าเทรด..."
-                            className="min-h-[120px] bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-green-500 focus:ring-green-500/20 resize-none"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-              </TabsContent>
 
-              <TabsContent value="exit" className="space-y-4 mt-6">
-                <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="timeframe"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">TF</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
+                          <FormControl>
+                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">ไม่ระบุ</SelectItem>
+                            {timeframeOptions.map((t) => (
+                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-300">สถานะ</FormLabel>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">สถานะ</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-red-500 focus:ring-red-500/20">
+                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="bg-gray-800 border-gray-700">
-                            {statusOptions.map((status) => (
-                              <SelectItem key={status.value} value={status.value} className="text-gray-100">
-                                {status.label}
-                              </SelectItem>
+                          <SelectContent>
+                            {statusOptions.map((s) => (
+                              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
 
-                  {/* Exit fields - only show when status is "closed" or "cancelled" */}
-                  {(watchStatus === "closed" || watchStatus === "cancelled") && (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="exit_price"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium text-gray-300">
-                                ราคาออก (Exit) {watchStatus === "closed" && <span className="text-red-400">*</span>}
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="any"
-                                  placeholder="0.00"
-                                  {...field}
-                                  className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-red-500 focus:ring-red-500/20"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                {/* Advanced Fields (Futures) */}
+                {(watchMarket === "futures" || watchMarket === "margin") && (
+                  <div className="pt-4 border-t border-border grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="leverage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-medium text-muted-foreground">Leverage</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="1" placeholder="10" {...field} className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="position_size"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-medium text-muted-foreground">Size</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="any" placeholder="1.0" {...field} className="h-9" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
 
-                        <FormField
-                          control={form.control}
-                          name="exit_date"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium text-gray-300">
-                                วันเวลาปิดออเดอร์ {watchStatus === "closed" && <span className="text-red-400">*</span>}
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="datetime-local"
-                                  {...field}
-                                  className="bg-gray-700 border-gray-600 text-gray-100 focus:border-red-500 focus:ring-red-500/20"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
 
+            </div>
+
+            {/* Right Column: Details Tabs */}
+            <div className="lg:col-span-8 space-y-4">
+              <Tabs defaultValue="entry" className="w-full">
+                <TabsList className="w-full grid grid-cols-3 bg-muted p-1 rounded-lg">
+                  <TabsTrigger value="entry">ข้อมูลเข้าเทรด</TabsTrigger>
+                  <TabsTrigger value="exit" disabled={watchStatus === 'open'}>ปิดออเดอร์</TabsTrigger>
+                  <TabsTrigger value="note">จดบันทึก</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="entry" className="space-y-4 mt-4">
+                  <div className="bg-card border border-border rounded-lg p-5 space-y-4 shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="exit_emotion"
+                        name="entry_price"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm font-medium text-gray-300">อารมณ์ตอนขาย</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
-                              <FormControl>
-                                <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-red-500 focus:ring-red-500/20">
-                                  <SelectValue placeholder="เลือกอารมณ์..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className="bg-gray-800 border-gray-700">
-                                <SelectItem value="none" className="text-gray-100">ไม่ระบุ</SelectItem>
-                                {emotionOptions.map((emotion) => (
-                                  <SelectItem key={emotion.value} value={emotion.value} className="text-gray-100">
-                                    {emotion.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormLabel className="text-sm font-medium">ราคาเข้า</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="any" placeholder="0.00" {...field} className="font-mono bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background" />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      <FormField
+                        control={form.control}
+                        name="capital_amount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">จำนวนเงินลงทุน</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="any" placeholder="1000.00" {...field} className="font-mono bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                      {watchStatus === "closed" && (
-                        <FormField
-                          control={form.control}
-                          name="exit_reason"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium text-gray-300">
-                                เหตุผลที่ขาย <span className="text-red-400">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="บอกเหตุผลที่คุณตัดสินใจปิดออเดอร์..."
-                                  className="min-h-[120px] bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-red-500 focus:ring-red-500/20 resize-none"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                    <FormField
+                      control={form.control}
+                      name="entry_emotion"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">อารมณ์ตอนเข้า</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
+                            <FormControl>
+                              <SelectTrigger className="bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20">
+                                <SelectValue placeholder="เลือกอารมณ์..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">ไม่ระบุ</SelectItem>
+                              {emotionOptions.map((e) => (
+                                <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
                       )}
-
-                      {watchStatus === "cancelled" && (
-                        <FormField
-                          control={form.control}
-                          name="exit_reason"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium text-gray-300">เหตุผลที่ยกเลิก</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="บอกเหตุผลที่คุณตัดสินใจยกเลิกออเดอร์..."
-                                  className="min-h-[120px] bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-red-500 focus:ring-red-500/20 resize-none"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
-                    </>
-                  )}
-
-                  </div>
-              </TabsContent>
-
-              {/* Hidden validation-only form section for fields that need validation regardless of tab visibility */}
-              <div className="hidden">
-                <FormField
-                  control={form.control}
-                  name="exit_price"
-                  render={() => <></>}
-                />
-                <FormField
-                  control={form.control}
-                  name="exit_date"
-                  render={() => <></>}
-                />
-                <FormField
-                  control={form.control}
-                  name="exit_reason"
-                  render={() => <></>}
-                />
-              </div>
-            </Tabs>
-          </div>
-
-          {/* Learning Note */}
-          <div className="bg-gray-800 rounded-lg border border-gray-600 p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-              สิ่งที่ได้เรียนรู้
-            </h3>
-
-            <FormField
-              control={form.control}
-              name="learning_note"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Textarea
-                      placeholder="บันทึกสิ่งที่คุณได้เรียนรู้จากการเทรดครั้งนี้...&#10;&#10;🎯 อะไรที่ทำได้ดี?&#10;❌ อะไรที่ควรปรับปรุง?&#10;📚 บทเรียนที่ได้รับ?"
-                      className="min-h-[120px] bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-purple-500 focus:ring-purple-500/20 resize-none"
-                      {...field}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
-          {/* Account Info */}
-          <div className="bg-gray-800 rounded-lg border border-gray-600 p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
-              ข้อมูลบัญชี
-            </h3>
+                    <FormField
+                      control={form.control}
+                      name="entry_reason"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">เหตุผลการเข้าเทรด</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="วิเคราะห์กราฟ, ข่าว, หรือสัญญาณที่ทำให้ตัดสินใจเดิมพัน..."
+                              className="min-h-[150px] bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 resize-none leading-relaxed !bg-background"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="account_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-300">ชื่อบัญชี</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="บัญชีหลัก"
-                        {...field}
-                        className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-gray-500 focus:ring-gray-500/20"
+                <TabsContent value="exit" className="space-y-4 mt-4">
+                  <div className="bg-card border border-border rounded-lg p-5 space-y-4 shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="exit_price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">ราคาที่ปิด</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="any" placeholder="0.00" {...field} className="font-mono bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background" />
+                            </FormControl>
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="account_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-300">ประเภทบัญชี</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
-                      <FormControl>
-                        <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-gray-500 focus:ring-gray-500/20">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-gray-800 border-gray-700">
-                        <SelectItem value="none" className="text-gray-100">ไม่ระบุ</SelectItem>
-                        {accountTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value} className="text-gray-100">
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-300">สกุลเงิน</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="USD"
-                        {...field}
-                        className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-gray-500 focus:ring-gray-500/20"
+                      <FormField
+                        control={form.control}
+                        name="exit_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">เวลาปิด</FormLabel>
+                            <FormControl>
+                              <Input type="datetime-local" {...field} className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background" />
+                            </FormControl>
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="exit_emotion"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">อารมณ์ตอนปิด</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
+                            <FormControl>
+                              <SelectTrigger className="bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20"><SelectValue placeholder="เลือก..." /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">ไม่ระบุ</SelectItem>
+                              {emotionOptions.map((e) => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="exit_reason"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">เหตุผลการปิดออเดอร์</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="ทำไมถึงปิด? ถึงเป้า? ชน SL? หรือเปลี่ยนใจ..." className="min-h-[120px] bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 resize-none !bg-background" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="note" className="space-y-4 mt-4">
+                  {/* Learning Note */}
+                  <div className="bg-card rounded-lg border border-border p-5 space-y-4">
+                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#39FF14] shadow-[0_0_8px_#39FF14]"></span>
+                      สิ่งที่ได้เรียนรู้
+                    </h3>
+
+                    <FormField
+                      control={form.control}
+                      name="learning_note"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea
+                              placeholder="บันทึกสิ่งที่คุณได้เรียนรู้จากการเทรดครั้งนี้...&#10;&#10;🎯 อะไรที่ทำได้ดี?&#10;❌ อะไรที่ควรปรับปรุง?&#10;📚 บทเรียนที่ได้รับ?"
+                              className="min-h-[200px] bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 resize-none p-4 leading-relaxed !bg-background"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
+
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-6 border-t border-gray-700">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => form.reset()}
-              className="border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white"
-            >
-              Cancel
+          {/* Sticky Footer Actions */}
+          <div className="sticky bottom-0 left-0 right-0 mt-auto bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border p-4 flex gap-3 justify-end z-20 -mx-6 -mb-6 px-6 pb-6">
+            <Button type="button" variant="outline" onClick={onCancel || (() => form.reset())} disabled={isSubmitting} className="w-full sm:w-auto min-w-[100px]">
+              ยกเลิก
             </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white min-w-[140px] shadow-lg shadow-purple-500/25"
-            >
+            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto min-w-[100px] bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30">
               {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  {isEditMode ? "กำลังอัพเดท..." : "กำลังบันทึก..."}
-                </span>
+                <>
+                  <span className="mr-2 h-4 w-4 animate-spin">⏳</span>
+                  กำลังบันทึก...
+                </>
               ) : (
-                isEditMode ? "อัพเดทการเทรด" : "บันทึกการเทรด"
+                "บันทึก"
               )}
             </Button>
           </div>
+
         </form>
       </Form>
     </div>

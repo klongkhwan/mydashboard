@@ -28,7 +28,7 @@ export default function DashboardLayout({
       <Sidebar isCollapsed={isCollapsed} onToggle={toggle} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <main className="flex-1 overflow-auto p-4">{children}</main>
       </div>
     </div>
   )
