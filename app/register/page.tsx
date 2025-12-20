@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { UserPlus, AlertCircle, Mail, Lock, CheckCircle2 } from "lucide-react"
+import { UserPlus, AlertCircle, Mail, Lock, CheckCircle2, Eye, EyeOff } from "lucide-react"
 import { signup } from "@/app/login/actions"
 import { Loading } from "@/components/ui/loading"
 import { toast } from "sonner"
@@ -16,6 +16,8 @@ export default function RegisterPage() {
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
     const [isLoading, setIsLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
@@ -47,7 +49,7 @@ export default function RegisterPage() {
             }
             // If redirect, it's handled by server action
         } catch (err) {
-            setError("เกิดข้อผิดพลาดที่ไม่คาดคิด")
+            setError("เกิดข้อผิดพลาด")
         } finally {
             setIsLoading(false)
         }
@@ -58,12 +60,9 @@ export default function RegisterPage() {
             <div className="w-full max-w-md">
                 <Card className="border-border/50 shadow-2xl bg-card/95 backdrop-blur-sm overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-primary/80 to-primary/50" />
-                    <CardHeader className="text-center space-y-4 pb-2">
-                        <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center shadow-lg border border-primary/20">
-                            <UserPlus className="w-8 h-8 text-primary" />
-                        </div>
+                    <CardHeader className="text-center space-y-4 pb-2 pt-8">
                         <div>
-                            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                            <CardTitle className="text-3xl font-bold gradient-text">
                                 สมัครสมาชิก
                             </CardTitle>
                             <CardDescription className="text-muted-foreground mt-2 text-base">
@@ -108,12 +107,23 @@ export default function RegisterPage() {
                                         <Input
                                             id="password"
                                             name="password"
-                                            type="password"
+                                            type={showPassword ? "text" : "password"}
                                             placeholder="••••••••"
-                                            className="pl-9"
+                                            className="pl-9 pr-10"
                                             required
                                             minLength={6}
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-3 text-muted-foreground/60 hover:text-foreground transition-colors"
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="h-4 w-4" />
+                                            ) : (
+                                                <Eye className="h-4 w-4" />
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -123,12 +133,23 @@ export default function RegisterPage() {
                                         <Input
                                             id="confirmPassword"
                                             name="confirmPassword"
-                                            type="password"
+                                            type={showConfirmPassword ? "text" : "password"}
                                             placeholder="••••••••"
-                                            className="pl-9"
+                                            className="pl-9 pr-10"
                                             required
                                             minLength={6}
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3 top-3 text-muted-foreground/60 hover:text-foreground transition-colors"
+                                        >
+                                            {showConfirmPassword ? (
+                                                <EyeOff className="h-4 w-4" />
+                                            ) : (
+                                                <Eye className="h-4 w-4" />
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
 

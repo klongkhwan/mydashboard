@@ -9,13 +9,14 @@ export async function GET(req: Request) {
     // ค่าตั้งต้น (ตามที่แจ้ง)
     if (!url.searchParams.has("filter")) {
       upstream.searchParams.append("filter", "lang:en")
-      upstream.searchParams.append("filter", "market:crypto,economic,etf,index,options")
+      upstream.searchParams.append("filter", "market:crypto")
     } else {
       // forward ทุก filter ซ้ำได้หลายค่า
       url.searchParams.getAll("filter").forEach((f) => upstream.searchParams.append("filter", f))
     }
-    upstream.searchParams.set("client", url.searchParams.get("client") || "screener")
-    upstream.searchParams.set("streaming", url.searchParams.get("streaming") || "true")
+    upstream.searchParams.set("client", url.searchParams.get("client") || "overview")
+    upstream.searchParams.set("streaming", url.searchParams.get("streaming") || "false")
+    upstream.searchParams.set("user_prostatus", url.searchParams.get("user_prostatus") || "non_pro")
 
     const res = await fetch(upstream.toString(), {
       headers: { origin: "https://www.tradingview.com" },

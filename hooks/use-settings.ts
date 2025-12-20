@@ -215,7 +215,8 @@ export function useSettings() {
 
   return {
     settings,
-    isLoading: !mounted || isLoading || pricesLoading,
+    isLoading: !mounted || isLoading,
+    isPricesLoading: pricesLoading,
     updateSettings,
     updateTitleBar,
     getSelectedCoins,

@@ -42,8 +42,8 @@ const getStatus = (start: number, end: number) => {
 const statusBadge = (status: ReturnType<typeof getStatus>) => {
   switch (status) {
     case "upcoming": return <Badge className="bg-blue-600 h-5 px-2 text-[10px]">เร็ว ๆ นี้</Badge>
-    case "ongoing":  return <Badge className="bg-emerald-600 h-5 px-2 text-[10px]">กำลังจัด</Badge>
-    case "ended":    return <Badge variant="secondary" className="h-5 px-2 text-[10px]">จบแล้ว</Badge>
+    case "ongoing": return <Badge className="bg-emerald-600 h-5 px-2 text-[10px]">กำลังจัด</Badge>
+    case "ended": return <Badge variant="secondary" className="h-5 px-2 text-[10px]">จบแล้ว</Badge>
   }
 }
 
@@ -57,7 +57,7 @@ const menuItems = [
   },
   {
     title: "coinglass",
-    url: "https://www.https://www.coinglass.com/.com/en/markets",
+    url: "https://www.coinglass.com/BitcoinOpenInterest",
     icon: Activity,
     tooltip: "ข้อมูลตลาด"
   },
@@ -126,7 +126,7 @@ export default function BinanceThCampaigns() {
                     key={index}
                     asChild
                     variant="default"
-                    className="justify-between bg-yellow-500 hover:bg-yellow-600 text-black h-7 text-xs"
+                    className="justify-between bg-primary hover:bg-primary/90 text-primary-foreground h-7 text-xs"
                   >
                     <a
                       href={item.url}
@@ -161,9 +161,8 @@ export default function BinanceThCampaigns() {
               <button
                 onClick={() => setRefetchTick(x => x + 1)}
                 disabled={loading}
-                className={`px-2 py-1 rounded border text-[11px] flex items-center gap-1.5 ${
-                  loading ? "border-border text-muted-foreground" : "border-border hover:border-primary"
-                }`}
+                className={`px-2 py-1 rounded border text-[11px] flex items-center gap-1.5 ${loading ? "border-border text-muted-foreground" : "border-border hover:border-primary"
+                  }`}
                 title="Refresh"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />

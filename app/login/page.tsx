@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Shield, AlertCircle, Mail, Lock, Sparkles } from "lucide-react"
+import { Shield, AlertCircle, Mail, Lock, Sparkles, Eye, EyeOff } from "lucide-react"
 import { login } from "./actions"
 import { Loading } from "@/components/ui/loading"
 import { toast } from "sonner"
@@ -15,6 +15,7 @@ import { toast } from "sonner"
 export default function LoginPage() {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -32,29 +33,20 @@ export default function LoginPage() {
         toast.error("เข้าสู่ระบบไม่สำเร็จ", { description: result.error })
       }
     } catch (err) {
-      setError("เกิดข้อผิดพลาดที่ไม่คาดคิด")
+      setError("เกิดข้อผิดพลาด")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Decorative Gradient Orbs - More Vivid */}
-      <div className="absolute top-10 left-10 w-80 h-80 bg-primary/30 rounded-full blur-[80px] animate-pulse" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent/20 rounded-full blur-[100px] animate-pulse" />
-      <div className="absolute top-1/3 right-1/4 w-64 h-64 bg-primary/20 rounded-full blur-[90px]" />
-      <div className="absolute bottom-1/3 left-1/4 w-72 h-72 bg-accent/25 rounded-full blur-[85px]" />
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-muted/20 flex items-center justify-center p-4">
 
-      <div className="w-full max-w-md relative z-10">
-        <Card className="overflow-hidden bg-card/60 backdrop-blur-xl border-border/50">
-          {/* Gradient Top Border */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+      <div className="w-full max-w-md">
+        <Card className="border-border/50 shadow-2xl bg-card/95 backdrop-blur-sm overflow-hidden text-center">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-primary/80 to-primary/50" />
 
-          <CardHeader className="text-center space-y-4 pb-2">
-            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary/20 to-accent/10 rounded-2xl flex items-center justify-center shadow-lg border border-primary/20 backdrop-blur-sm animate-float">
-              <Shield className="w-10 h-10 text-primary" />
-            </div>
+          <CardHeader className="text-center space-y-4 pb-2 pt-8">
             <div>
               <CardTitle className="text-3xl font-bold gradient-text">
                 ยินดีต้อนรับ
@@ -66,7 +58,7 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="space-y-6 pt-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} method="POST" className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-foreground/80">อีเมล</Label>
                 <div className="relative">
@@ -93,11 +85,22 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-9"
+                    className="pl-9 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-muted-foreground/60 hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -110,17 +113,13 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 text-base font-medium bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground border-0 shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30 hover:scale-[1.02]"
+                className="w-full h-11 text-base font-medium"
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <>
-                    <Loading className="mr-2 h-4 w-4" /> กำลังเข้าสู่ระบบ...
-                  </>
+                  <Loading size="sm" />
                 ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" /> เข้าสู่ระบบ
-                  </>
+                  "เข้าสู่ระบบ"
                 )}
               </Button>
             </form>

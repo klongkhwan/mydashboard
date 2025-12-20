@@ -152,11 +152,10 @@ export default function NewsFlowPanel() {
             </CardTitle>
             <button
               onClick={() => setRefetchTick((x) => x + 1)}
-              className={`px-3 py-1 rounded-md border text-sm flex items-center gap-2 transition ${
-                loading
+              className={`px-3 py-1 rounded-md border text-sm flex items-center gap-2 transition ${loading
                   ? "border-border text-muted-foreground"
                   : "border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
-              }`}
+                }`}
               title="Refresh"
               disabled={loading}
             >
@@ -184,7 +183,7 @@ export default function NewsFlowPanel() {
                 <button
                   key={n.id}
                   onClick={() => { setSelectedId(n.id) }}
-                  className={`w-full text-left px-4 py-3 hover:bg-accent transition ${active ? "bg-accent" : ""}`}
+                  className={`w-full text-left px-4 py-3 hover:bg-primary/5 transition-all duration-200 ${active ? "bg-primary/10" : ""}`}
                 >
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className={`inline-block w-2 h-2 rounded-full ${urgencyDot(n.urgency)}`} />
