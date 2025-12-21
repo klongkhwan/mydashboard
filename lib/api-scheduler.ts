@@ -201,7 +201,7 @@ export async function checkAndRunDueSchedules(): Promise<{ executed: number; err
         }
 
         // Prepare request headers - Align with manual trigger to avoid being blocked
-        const requestHeaders = {
+        let requestHeaders: Record<string, string> = {
           'accept': '*/*',
           'accept-language': 'en-GB,en;q=0.9',
           'Content-Type': 'application/json',
@@ -214,8 +214,14 @@ export async function checkAndRunDueSchedules(): Promise<{ executed: number; err
 
         let fullUrl = schedule.url
         // Handle PropertyHub specially if it's using the proxy URL in data
-        if (fullUrl.includes('/api/proxy/graphql') || fullUrl.includes('propertyhub.in.th/graphql')) {
+        const isPropertyHub = fullUrl.includes('/api/proxy/graphql') || fullUrl.includes('propertyhub.in.th/graphql')
+
+        if (isPropertyHub) {
           fullUrl = 'https://api.propertyhub.in.th/graphql'
+          // Inject the hardcoded PropertyHub token if not present
+          if (!requestHeaders['authorization'] && !requestHeaders['Authorization']) {
+            requestHeaders['authorization'] = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIyMjQ0LCJlbWFpbCI6InJrMTE2NzlAZ21haWwuY29tIiwicm9sZSI6Ik1FTUJFUiIsInNhbHQiOiI5OTg0MTg2MzgzMTYwODU2OTY3IiwiaWF0IjoxNzU5OTM0OTY3LCJleHAiOjE3Njc3MTA5Njd9.rpKmygX-plzkoUhE4wWAhtFS8wVToajdb65cISguvog'
+          }
         } else if (!fullUrl.startsWith('http')) {
           if (process.env.NEXT_PUBLIC_APP_URL) {
             fullUrl = `${process.env.NEXT_PUBLIC_APP_URL}${fullUrl.startsWith('/') ? '' : '/'}${fullUrl}`
