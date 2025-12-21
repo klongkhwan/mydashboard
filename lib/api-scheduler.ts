@@ -1,5 +1,8 @@
 import { supabase } from './supabase'
 import { ApiSchedule, CreateScheduleRequest, UpdateScheduleRequest } from '@/types/api-scheduler'
+import { toZonedTime, fromZonedTime } from 'date-fns-tz'
+
+const TIMEZONE = 'Asia/Bangkok'
 
 export async function getSchedules(): Promise<ApiSchedule[]> {
   try {
@@ -92,11 +95,26 @@ export async function toggleScheduleStatus(id: string): Promise<ApiSchedule> {
 
     const newStatus = current.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
 
+    // Recalculate next_run if activating
+    let nextRun = undefined
+    if (newStatus === 'ACTIVE') {
+      const { data: schedule } = await supabase
+        .from('api_schedules')
+        .select('frequency, time, cron_expression')
+        .eq('id', id)
+        .single()
+
+      if (schedule) {
+        nextRun = calculateNextRun(schedule.frequency, schedule.time, schedule.cron_expression)
+      }
+    }
+
     const { data, error } = await supabase
       .from('api_schedules')
       .update({
         status: newStatus,
         updated_at: new Date().toISOString(),
+        ...(nextRun && { next_run: nextRun })
       })
       .eq('id', id)
       .select()
@@ -113,46 +131,38 @@ export async function toggleScheduleStatus(id: string): Promise<ApiSchedule> {
 // --- Scheduler Logic ---
 
 function calculateNextRun(frequency: ApiSchedule['frequency'], timeStr: string, cronExpression?: string | null): string {
+  // Get current time in Bangkok
   const now = new Date()
-  let nextDate = new Date()
+  const bangkokNow = toZonedTime(now, TIMEZONE)
 
-  // Parse time string (HH:MM)
+  // Parse target time HH:MM
   const [hours, minutes] = timeStr.split(':').map(Number)
 
-  if (frequency === 'CUSTOM' && cronExpression) {
-    // TODO: Implement actual cron parsing if needed. 
-    // For now, if it's custom/cron, we might default to a simple interval or skip.
-    // Let's assume a simple fallback or implement a basic interval if needed.
-    // For this MVP, we will handle the standard frequencies robustly.
-    // If "Every 6 hrs" is desired (as hinted in UI), we can add specific logic here.
+  // Create target date in Bangkok
+  let nextBangkokDate = new Date(bangkokNow)
+  nextBangkokDate.setHours(hours, minutes, 0, 0)
 
-    // Fallback: Add 6 hours if custom
+  if (frequency === 'CUSTOM' && cronExpression) {
+    // Basic fallback for custom: +6 hours from now
+    const nextDate = new Date(now)
     nextDate.setHours(nextDate.getHours() + 6)
     return nextDate.toISOString()
   }
 
-  // Set the target time on the current date
-  nextDate.setHours(hours, minutes, 0, 0)
-
-  // If the time has already passed today, advance based on frequency
-  if (nextDate <= now) {
+  // If the target time has already passed today in Bangkok, move to the next occurrence
+  if (nextBangkokDate <= bangkokNow) {
     if (frequency === 'DAILY') {
-      nextDate.setDate(nextDate.getDate() + 1)
+      nextBangkokDate.setDate(nextBangkokDate.getDate() + 1)
     } else if (frequency === 'WEEKLY') {
-      nextDate.setDate(nextDate.getDate() + 7)
+      nextBangkokDate.setDate(nextBangkokDate.getDate() + 7)
     } else if (frequency === 'MONTHLY') {
-      nextDate.setMonth(nextDate.getMonth() + 1)
+      nextBangkokDate.setMonth(nextBangkokDate.getMonth() + 1)
     }
   }
 
-  // Handle specific frequency logic if it wasn't already passed but needs specific day alignment
-  // (Simplified for now: Daily/Weekly/Monthly from *now* or *today's scheduled time*)
-  // The above logic covers "Next occurrence of HH:MM" for Daily.
-  // weekly/monthly might need specific "Day of week" logic if not just "7 days from now".
-  // For basic MVP: "Daily at X" means every day. "Weekly" means every 7 days from the start? 
-  // Usually generic "Weekly" implies "Same day next week". The current logic preserves the day if it hasn't passed, or adds 7 days.
-
-  return nextDate.toISOString()
+  // Convert the calculated Bangkok time back to UTC for storage
+  const nextRunUTC = fromZonedTime(nextBangkokDate, TIMEZONE)
+  return nextRunUTC.toISOString()
 }
 
 export async function checkAndRunDueSchedules(): Promise<{ executed: number; errors: number; details: any[] }> {
