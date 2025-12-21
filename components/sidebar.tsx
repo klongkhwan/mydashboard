@@ -12,6 +12,10 @@ import {
   Clock,
   TrendingUp,
   CreditCard,
+  Clapperboard,
+  FileText,
+  ChevronDown,
+  Folder,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { logout } from "@/app/login/actions"
@@ -57,6 +61,23 @@ const menuItems = [
     href: "/dashboard/subscriptions",
     allowedRoles: ["user", "admin"],
   },
+  {
+    title: "Programs",
+    icon: Folder,
+    allowedRoles: ["user", "admin"],
+    subItems: [
+      {
+        title: "Edit Clip",
+        icon: Clapperboard,
+        href: "/dashboard/programs/edit-clip",
+      },
+      {
+        title: "Edit PDF",
+        icon: FileText,
+        href: "/dashboard/programs/edit-pdf",
+      },
+    ],
+  },
 ]
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
@@ -65,6 +86,15 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const [userRole, setUserRole] = useState<string | null>(null)
   const [userProfile, setUserProfile] = useState<{ full_name: string | null; email: string | null; avatar_url: string | null } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([])
+
+  const toggleMenu = (title: string) => {
+    setExpandedMenus(prev =>
+      prev.includes(title)
+        ? prev.filter(t => t !== title)
+        : [...prev, title]
+    )
+  }
 
   useEffect(() => {
     const getUserData = async () => {
@@ -156,11 +186,67 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           </div>
         ) : (
           filteredMenuItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
+            // Check if this is a menu with sub-items
+            if (item.subItems) {
+              const isSubActive = item.subItems.some(sub => pathname === sub.href || pathname.startsWith(sub.href))
+              const isExpanded = expandedMenus.includes(item.title)
+
+              return (
+                <div key={item.title}>
+                  <Button
+                    variant={isSubActive ? "default" : "ghost"}
+                    onClick={() => toggleMenu(item.title)}
+                    className={cn(
+                      "w-full justify-start gap-3 h-9",
+                      isCollapsed && "justify-center px-2",
+                      isSubActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    )}
+                  >
+                    <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                    {!isCollapsed && (
+                      <>
+                        <span className="text-sm font-medium flex-1 text-left">{item.title}</span>
+                        <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isExpanded && "rotate-180")} />
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Sub-menu items */}
+                  {!isCollapsed && isExpanded && (
+                    <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border/50 pl-2">
+                      {item.subItems.map((subItem) => {
+                        const isActive = pathname === subItem.href || pathname.startsWith(subItem.href)
+                        return (
+                          <Link key={subItem.href} href={subItem.href}>
+                            <Button
+                              variant="ghost"
+                              className={cn(
+                                "w-full justify-start gap-3 h-9",
+                                isActive
+                                  ? "bg-sidebar-primary/70 text-sidebar-primary-foreground hover:bg-sidebar-primary/80"
+                                  : "text-sidebar-foreground/90 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                              )}
+                            >
+                              <subItem.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span className="text-sm">{subItem.title}</span>
+                            </Button>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            // Regular menu item
+            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href!))
 
             return (
               <div key={item.href}>
-                <Link href={item.href}>
+                <Link href={item.href!}>
                   <Button
                     variant={isActive ? "default" : "ghost"}
                     className={cn(

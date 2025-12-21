@@ -5,11 +5,10 @@ export const dynamic = 'force-dynamic' // Ensure this is not cached
 
 export async function GET(req: NextRequest) {
     try {
-        // optional: add secret key validation
-        // const authHeader = req.headers.get('authorization')
-        // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        //   return new Response('Unauthorized', { status: 401 })
-        // }
+        const authHeader = req.headers.get('authorization')
+        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+            return new NextResponse('Unauthorized', { status: 401 })
+        }
 
         const result = await checkAndRunDueSchedules()
 

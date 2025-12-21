@@ -14,10 +14,9 @@ export default function DashboardLayout({
   const { isCollapsed, toggle } = useSidebar()
   const { isLoading: settingsLoading } = useSettings()
 
-  // ถ้า settings กำลังโหลด แสดง loading state
   if (settingsLoading) {
     return (
-      <div className="flex h-screen bg-background items-center justify-center">
+      <div className="flex h-screen bg-background items-center justify-center" suppressHydrationWarning>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     )

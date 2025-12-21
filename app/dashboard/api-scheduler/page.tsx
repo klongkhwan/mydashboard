@@ -47,7 +47,6 @@ export default function ApiSchedulerPage() {
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [checkLoading, setCheckLoading] = useState(false)
-  const [autoCheck, setAutoCheck] = useState(false)
   const [editingSchedule, setEditingSchedule] = useState<ApiSchedule | null>(null)
   const [formData, setFormData] = useState({
     apiName: "",
@@ -86,17 +85,6 @@ export default function ApiSchedulerPage() {
     }
   }
 
-  // Auto-check effect
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (autoCheck) {
-      handleCheckSchedules(true) // Run immediately on toggle
-      interval = setInterval(() => {
-        handleCheckSchedules(true)
-      }, 60000) // Check every minute
-    }
-    return () => clearInterval(interval)
-  }, [autoCheck])
 
   useEffect(() => {
     loadSchedules()
@@ -488,13 +476,6 @@ export default function ApiSchedulerPage() {
           <p className="text-muted-foreground">Manage your scheduled API calls and automations</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant={autoCheck ? "secondary" : "outline"}
-            onClick={() => setAutoCheck(!autoCheck)}
-            className={autoCheck ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200" : ""}
-          >
-            {autoCheck ? "Auto Check: ON 🟢" : "Auto Check: OFF ⚪"}
-          </Button>
           <Button
             onClick={() => handleCheckSchedules(false)}
             disabled={checkLoading}
