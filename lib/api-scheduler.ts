@@ -200,12 +200,23 @@ export async function checkAndRunDueSchedules(): Promise<{ executed: number; err
           body = typeof schedule.body === 'string' ? schedule.body : JSON.stringify(schedule.body)
         }
 
-        // Construct URL (Handle relative or proxy URLs as in existing UI logic if possible, 
-        // but server-side fetch needs absolute URLs. Since this runs on server/cron, 
-        // local relative URLs like '/api/...' won't work unless base URL is known.
-        // We assume users provide full URLs or we have a BASE_URL env var.)
+        // Prepare request headers - Align with manual trigger to avoid being blocked
+        const requestHeaders = {
+          'accept': '*/*',
+          'accept-language': 'en-GB,en;q=0.9',
+          'Content-Type': 'application/json',
+          'locale': 'TH',
+          'origin': 'https://dashboard.propertyhub.in.th',
+          'referer': 'https://dashboard.propertyhub.in.th/',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          ...headers
+        }
+
         let fullUrl = schedule.url
-        if (!fullUrl.startsWith('http')) {
+        // Handle PropertyHub specially if it's using the proxy URL in data
+        if (fullUrl.includes('/api/proxy/graphql') || fullUrl.includes('propertyhub.in.th/graphql')) {
+          fullUrl = 'https://api.propertyhub.in.th/graphql'
+        } else if (!fullUrl.startsWith('http')) {
           if (process.env.NEXT_PUBLIC_APP_URL) {
             fullUrl = `${process.env.NEXT_PUBLIC_APP_URL}${fullUrl.startsWith('/') ? '' : '/'}${fullUrl}`
           } else {
@@ -217,11 +228,7 @@ export async function checkAndRunDueSchedules(): Promise<{ executed: number; err
         // Execute Request
         const response = await fetch(fullUrl, {
           method: schedule.method,
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'SuperlBoard-Scheduler/1.0',
-            ...headers
-          },
+          headers: requestHeaders,
           body: body
         })
 
