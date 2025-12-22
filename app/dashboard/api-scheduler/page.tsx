@@ -41,6 +41,7 @@ import {
   deleteSchedule,
   toggleScheduleStatus
 } from "@/lib/api-scheduler"
+import { supabase } from "@/lib/supabase"
 
 export default function ApiSchedulerPage() {
   const [schedules, setSchedules] = useState<ApiSchedule[]>([])
@@ -86,13 +87,37 @@ export default function ApiSchedulerPage() {
   }
 
 
+
+
   useEffect(() => {
     loadSchedules()
+
+    // Realtime subscription
+    const channel = supabase
+      .channel('api-scheduler-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'api_schedules',
+        },
+        (payload: any) => {
+          console.log('Realtime update received:', payload)
+          loadSchedules(false) // Silent reload
+          // Optional: Show a subtle toast if needed, but usually silent is better for status updates
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
-  const loadSchedules = async () => {
+  const loadSchedules = async (showLoading = true) => {
     try {
-      setLoading(true)
+      if (showLoading) setLoading(true)
       const data = await getSchedules()
       setSchedules(data)
     } catch (error) {
@@ -102,7 +127,7 @@ export default function ApiSchedulerPage() {
         variant: "destructive",
       })
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 

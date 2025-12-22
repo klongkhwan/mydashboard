@@ -218,9 +218,15 @@ export async function checkAndRunDueSchedules(): Promise<{ executed: number; err
 
         if (isPropertyHub) {
           fullUrl = 'https://api.propertyhub.in.th/graphql'
-          // Inject the hardcoded PropertyHub token if not present
-          if (!requestHeaders['authorization'] && !requestHeaders['Authorization']) {
-            requestHeaders['authorization'] = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIyMjQ0LCJlbWFpbCI6InJrMTE2NzlAZ21haWwuY29tIiwicm9sZSI6Ik1FTUJFUiIsInNhbHQiOiI5OTg0MTg2MzgzMTYwODU2OTY3IiwiaWF0IjoxNzU5OTM0OTY3LCJleHAiOjE3Njc3MTA5Njd9.rpKmygX-plzkoUhE4wWAhtFS8wVToajdb65cISguvog'
+          // Force use exact headers that are known to work (matching /api/proxy/graphql)
+          requestHeaders = {
+            'accept': '*/*',
+            'accept-language': 'en-GB,en;q=0.9',
+            'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIyMjQ0LCJlbWFpbCI6InJrMTE2NzlAZ21haWwuY29tIiwicm9sZSI6Ik1FTUJFUiIsInNhbHQiOiI5OTg0MTg2MzgzMTYwODU2OTY3IiwiaWF0IjoxNzU5OTM0OTY3LCJleHAiOjE3Njc3MTA5Njd9.rpKmygX-plzkoUhE4wWAhtFS8wVToajdb65cISguvog',
+            'content-type': 'application/json',
+            'locale': 'TH',
+            'origin': 'https://dashboard.propertyhub.in.th',
+            'referer': 'https://dashboard.propertyhub.in.th/',
           }
         } else if (!fullUrl.startsWith('http')) {
           if (process.env.NEXT_PUBLIC_APP_URL) {
