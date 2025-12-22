@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Newspaper, Calendar as CalendarIcon, RefreshCw } from "lucide-react"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 
 // Country flag component using TradingView URLs
 const FlagIcon = ({ country, size = 24 }: { country: string; size?: number }) => {
@@ -164,10 +165,10 @@ const importanceLabel = (n: number) => (n === 1 ? "High" : n === 0 ? "Medium" : 
 type DayPreset = { key: string; label: string; kind: "single" | "span"; value: number }
 const DAY_PRESETS: DayPreset[] = [
   { key: "yesterday", label: "Yesterday", kind: "single", value: -1 }, // offset -1
-  { key: "today",     label: "Today",     kind: "single", value: 0 },  // offset +0
-  { key: "tomorrow",  label: "Tomorrow",  kind: "single", value: 1 },  // offset +1
-  { key: "thisWeek",  label: "This Week", kind: "span",   value: 7 },  // 7 days including today
-  { key: "nextWeek",  label: "Next Week", kind: "span",   value: 7 },  // next 7 days
+  { key: "today", label: "Today", kind: "single", value: 0 },  // offset +0
+  { key: "tomorrow", label: "Tomorrow", kind: "single", value: 1 },  // offset +1
+  { key: "thisWeek", label: "This Week", kind: "span", value: 7 },  // 7 days including today
+  { key: "nextWeek", label: "Next Week", kind: "span", value: 7 },  // next 7 days
 ]
 
 // ===== Component =====
@@ -291,18 +292,17 @@ export function Calendar() {
               <button
                 key={p.key}
                 onClick={() => setDayPreset(p.key)}
-                className={`px-3 py-1 rounded-full border text-sm transition ${
-                  dayPreset === p.key
-                    ? "bg-primary border-primary text-primary-foreground shadow"
-                    : "bg-transparent border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
-                }`}
+                className={`px-3 py-1 rounded-full border text-sm transition ${dayPreset === p.key
+                  ? "bg-primary border-primary text-primary-foreground shadow"
+                  : "bg-transparent border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
+                  }`}
                 title={
                   p.key === "yesterday" ? "Yesterday (Thai time)" :
-                  p.key === "today" ? "Today (Thai time)" :
-                  p.key === "tomorrow" ? "Tomorrow (Thai time)" :
-                  p.key === "thisWeek" ? "Today through Sunday (Thai time)" :
-                  p.key === "nextWeek" ? "Next Monday through Sunday (Thai time)" :
-                  ""
+                    p.key === "today" ? "Today (Thai time)" :
+                      p.key === "tomorrow" ? "Tomorrow (Thai time)" :
+                        p.key === "thisWeek" ? "Today through Sunday (Thai time)" :
+                          p.key === "nextWeek" ? "Next Monday through Sunday (Thai time)" :
+                            ""
                 }
               >
                 {p.label}
@@ -319,11 +319,10 @@ export function Calendar() {
                 <button
                   key={c}
                   onClick={() => toggleCountry(c)}
-                  className={`w-8 h-8 rounded-full border transition flex items-center justify-center p-0.5 ${
-                    active
-                      ? "bg-primary border-primary shadow"
-                      : "bg-transparent border-border hover:border-primary"
-                  }`}
+                  className={`w-8 h-8 rounded-full border transition flex items-center justify-center p-0.5 ${active
+                    ? "bg-primary border-primary shadow"
+                    : "bg-transparent border-border hover:border-primary"
+                    }`}
                   title={c}
                 >
                   <FlagIcon country={c} size={20} />
@@ -354,44 +353,40 @@ export function Calendar() {
             <span className="text-xs text-muted-foreground">ความสำคัญ:</span>
             <button
               onClick={() => setImportanceFilter("high")}
-              className={`px-3 py-1 rounded-full border text-sm transition ${
-                importanceFilter === "high"
-                  ? "bg-red-600 border-red-600 text-white shadow"
-                  : "bg-transparent border-border text-muted-foreground hover:border-red-600 hover:text-red-600"
-              }`}
+              className={`px-3 py-1 rounded-full border text-sm transition ${importanceFilter === "high"
+                ? "bg-red-600 border-red-600 text-white shadow"
+                : "bg-transparent border-border text-muted-foreground hover:border-red-600 hover:text-red-600"
+                }`}
               title="High importance (importance = 1)"
             >
               High
             </button>
             <button
               onClick={() => setImportanceFilter("medium")}
-              className={`px-3 py-1 rounded-full border text-sm transition ${
-                importanceFilter === "medium"
-                  ? "bg-orange-500 border-orange-500 text-white shadow"
-                  : "bg-transparent border-border text-muted-foreground hover:border-orange-500 hover:text-orange-500"
-              }`}
+              className={`px-3 py-1 rounded-full border text-sm transition ${importanceFilter === "medium"
+                ? "bg-orange-500 border-orange-500 text-white shadow"
+                : "bg-transparent border-border text-muted-foreground hover:border-orange-500 hover:text-orange-500"
+                }`}
               title="Medium importance (importance = 0)"
             >
               Medium
             </button>
             <button
               onClick={() => setImportanceFilter("low")}
-              className={`px-3 py-1 rounded-full border text-sm transition ${
-                importanceFilter === "low"
-                  ? "bg-green-400 border-green-400 text-gray-900 shadow"
-                  : "bg-transparent border-border text-muted-foreground hover:border-green-400 hover:text-green-400"
-              }`}
+              className={`px-3 py-1 rounded-full border text-sm transition ${importanceFilter === "low"
+                ? "bg-green-400 border-green-400 text-gray-900 shadow"
+                : "bg-transparent border-border text-muted-foreground hover:border-green-400 hover:text-green-400"
+                }`}
               title="Low importance (importance = -1)"
             >
               Low
             </button>
             <button
               onClick={() => setImportanceFilter("all")}
-              className={`px-3 py-1 rounded-full border text-sm transition ${
-                importanceFilter === "all"
-                  ? "bg-primary border-primary text-primary-foreground shadow"
-                  : "bg-transparent border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
-              }`}
+              className={`px-3 py-1 rounded-full border text-sm transition ${importanceFilter === "all"
+                ? "bg-primary border-primary text-primary-foreground shadow"
+                : "bg-transparent border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
+                }`}
               title="ทุกระดับความสำคัญ"
             >
               ทั้งหมด
@@ -410,11 +405,10 @@ export function Calendar() {
               <button
                 onClick={fetchData}
                 disabled={loading}
-                className={`px-3 py-1 rounded-md border text-sm flex items-center gap-2 ${
-                  loading
-                    ? "border-border text-muted-foreground"
-                    : "border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
-                }`}
+                className={`px-3 py-1 rounded-md border text-sm flex items-center gap-2 ${loading
+                  ? "border-border text-muted-foreground"
+                  : "border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
+                  }`}
                 title="รีเฟรชข้อมูล"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -437,7 +431,7 @@ export function Calendar() {
         </div>
 
         {/* States */}
-        {loading && <div className="text-foreground">กำลังโหลดข้อมูล…</div>}
+        {loading && <ModernPageLoading text="กำลังโหลดข้อมูล…" />}
         {error && <div className="text-destructive">เกิดข้อผิดพลาด: {error}</div>}
         {!loading && !error && events.length === 0 && (
           <div className="text-muted-foreground">ไม่พบรายการในช่วงที่เลือก</div>
@@ -477,15 +471,14 @@ export function Calendar() {
                               </span>
                             )}
                             <span
-                              className={`text-xs px-2 py-0.5 rounded ${
-                                ev.importance === 1
-                                  ? "bg-red-600 text-white"
-                                  : ev.importance === 0
+                              className={`text-xs px-2 py-0.5 rounded ${ev.importance === 1
+                                ? "bg-red-600 text-white"
+                                : ev.importance === 0
                                   ? "bg-orange-500 text-white"
                                   : ev.importance === -1
-                                  ? "bg-green-400 text-gray-900"
-                                  : "bg-muted text-muted-foreground"
-                              }`}
+                                    ? "bg-green-400 text-gray-900"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
                               title={`importance=${ev.importance}`}
                             >
                               {importanceLabel(ev.importance)}
@@ -529,8 +522,8 @@ export function Calendar() {
                             <div className="text-card-foreground">
                               {ev.referenceDate
                                 ? new Date(ev.referenceDate).toLocaleDateString("th-TH", {
-                                    timeZone: "Asia/Bangkok",
-                                  })
+                                  timeZone: "Asia/Bangkok",
+                                })
                                 : "—"}
                             </div>
                           </div>

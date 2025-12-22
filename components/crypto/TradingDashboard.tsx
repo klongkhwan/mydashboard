@@ -13,6 +13,7 @@ import { LongShortRatioChart } from "@/components/charts/LongShortRatioChart"
 import { TakerVolumeChart } from "@/components/charts/TakerVolumeChart"
 import { BasisChart } from "@/components/charts/BasisChart"
 import { TradingDataPoint } from "@/types/crypto"
+import { Loading } from "@/components/ui/loading"
 
 export function TradingDashboard() {
   const [symbol, setSymbol] = useState("DOGEUSDC")
@@ -102,7 +103,7 @@ export function TradingDashboard() {
         { label: "Short", value: `${globalShortPct}%`, color: "text-rose-600" }
       ]
     },
-    
+
   ]
 
   return (
@@ -164,7 +165,7 @@ export function TradingDashboard() {
             </div>
             <Button onClick={refetch} disabled={isLoading} className="flex items-center gap-2">
               {isLoading ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
+                <Loading variant="spinner" size="sm" />
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}

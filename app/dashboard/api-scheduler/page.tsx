@@ -42,6 +42,7 @@ import {
   toggleScheduleStatus
 } from "@/lib/api-scheduler"
 import { supabase } from "@/lib/supabase"
+import { PageLoading, Loading } from "@/components/ui/loading"
 
 export default function ApiSchedulerPage() {
   const [schedules, setSchedules] = useState<ApiSchedule[]>([])
@@ -507,7 +508,7 @@ export default function ApiSchedulerPage() {
             variant="outline"
             size="lg"
           >
-            {checkLoading ? <span className="animate-spin mr-2">↻</span> : <Clock className="w-4 h-4 mr-2" />}
+            {checkLoading ? <Loading variant="spinner" size="sm" className="mr-2" /> : <Clock className="w-4 h-4 mr-2" />}
             Check Schedules Now
           </Button>
           <Button
@@ -545,8 +546,8 @@ export default function ApiSchedulerPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
-                    Loading schedules...
+                  <TableCell colSpan={9} className="py-8">
+                    <PageLoading />
                   </TableCell>
                 </TableRow>
               ) : schedules.length === 0 ? (

@@ -17,6 +17,8 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { th } from "date-fns/locale"
 import { toZonedTime } from "date-fns-tz"
+import { Loading } from "@/components/ui/loading"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 
 const tradeFormSchema = z.object({
   entry_date: z.string().min(1, "กรุณาระบุวันที่เข้าเทรด"),
@@ -356,12 +358,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-        <span className="text-sm">กำลังโหลดข้อมูล...</span>
-      </div>
-    )
+    return <ModernPageLoading text="กำลังโหลดข้อมูล..." />
   }
 
   return (
@@ -732,7 +729,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
             <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto min-w-[100px] bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30">
               {isSubmitting ? (
                 <>
-                  <span className="mr-2 h-4 w-4 animate-spin">⏳</span>
+                  <Loading variant="spinner" size="sm" className="mr-2" />
                   กำลังบันทึก...
                 </>
               ) : (

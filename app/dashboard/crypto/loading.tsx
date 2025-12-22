@@ -1,5 +1,5 @@
-import { PageLoading } from "@/components/ui/loading"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 
 export default function Loading() {
-  return <PageLoading />
+  return <ModernPageLoading />
 }

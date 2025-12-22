@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { XIcon, Loader2 } from "lucide-react"
+import { XIcon } from "lucide-react"
+import { Loading } from "@/components/ui/loading"
 import { cn } from "@/lib/utils"
 import {
     Dialog,
@@ -188,7 +189,7 @@ export function Modal({
                                         )}
                                     >
                                         {saveButtonLoading && (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            <Loading variant="spinner" size="sm" className="mr-2" />
                                         )}
                                         {saveButtonText}
                                     </Button>

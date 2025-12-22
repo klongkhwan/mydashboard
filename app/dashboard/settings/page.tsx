@@ -1,6 +1,6 @@
 'use client'
 
-import { PageLoading } from "@/components/ui/loading"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -32,7 +32,7 @@ export default function SettingsPage() {
   }, [])
 
   if (isSettingsLoading || !profile) {
-    return <PageLoading />
+    return <ModernPageLoading />
   }
 
   const handleSave = () => {

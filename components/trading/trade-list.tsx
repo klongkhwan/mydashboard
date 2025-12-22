@@ -27,6 +27,7 @@ import {
   Brain
 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 import { Trade, TradeFilters, Market, TradeStatus, EmotionType } from "@/types/trading"
 import { getTrades, deleteTrade, getUniqueSymbols, getUniqueTimeframes } from "@/lib/trading"
 import { format } from "date-fns"
@@ -372,7 +373,7 @@ export function TradeList({
 
       {/* Trade Table */}
       {loading ? (
-        <PageLoading />
+        <ModernPageLoading />
       ) : filteredTrades.length === 0 ? (
         <div className="text-center p-6">
           <Eye className="mx-auto h-8 w-8 text-muted-foreground mb-2" />

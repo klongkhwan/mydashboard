@@ -3,6 +3,7 @@
 import React from "react"
 import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 
 interface LoadingProps {
   size?: "sm" | "md" | "lg" | "xl"
@@ -21,8 +22,11 @@ const LoadingSpinner = ({ size = "md", className = "" }: { size?: "sm" | "md" | 
   }
 
   return (
-    <div className={cn("animate-spin text-[#39FF14]", sizeClasses[size], className)}>
-      <div className="w-full h-full border-2 border-current border-t-transparent rounded-full"></div>
+    <div className={cn("relative", sizeClasses[size], className)}>
+      {/* Track */}
+      <div className="absolute inset-0 rounded-full border-2 border-secondary/30" />
+      {/* Spinner */}
+      <div className="absolute inset-0 rounded-full border-2 border-t-[#39FF14] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
     </div>
   )
 }
@@ -121,9 +125,7 @@ export function Loading({
 
 // Specialized loading components
 export const PageLoading = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-  </div>
+  <ModernPageLoading />
 )
 
 export const ButtonLoading = ({ text = "กำลังดำเนินการ..." }: { text?: string }) => (

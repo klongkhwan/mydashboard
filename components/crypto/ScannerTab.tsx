@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { RefreshCw, Clock, Gift, ExternalLink } from "lucide-react"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 
 type Campaign = {
   id: number
@@ -36,8 +37,8 @@ const getStatus = (start: number, end: number) => {
 const statusBadge = (status: ReturnType<typeof getStatus>) => {
   switch (status) {
     case "upcoming": return <Badge className="bg-blue-600 h-5 px-2 text-[10px]">เร็ว ๆ นี้</Badge>
-    case "ongoing":  return <Badge className="bg-emerald-600 h-5 px-2 text-[10px]">กำลังจัด</Badge>
-    case "ended":    return <Badge variant="secondary" className="h-5 px-2 text-[10px]">จบแล้ว</Badge>
+    case "ongoing": return <Badge className="bg-emerald-600 h-5 px-2 text-[10px]">กำลังจัด</Badge>
+    case "ended": return <Badge variant="secondary" className="h-5 px-2 text-[10px]">จบแล้ว</Badge>
   }
 }
 
@@ -98,7 +99,7 @@ export default function ScannerTab() {
 
       <CardContent className="pt-0">
         <div className="space-y-2">
-          {loading && <div className="p-4 text-foreground text-sm text-center">กำลังโหลด…</div>}
+          {loading && <div className="p-4"><ModernPageLoading text="กำลังโหลด…" /></div>}
           {error && <div className="p-4 text-destructive text-sm text-center">เกิดข้อผิดพลาด: {error}</div>}
           {!loading && !error && rows.length === 0 && (
             <div className="p-4 text-muted-foreground text-sm text-center">ไม่มีข้อมูลกิจกรรม</div>

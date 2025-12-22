@@ -17,7 +17,7 @@ import { format } from "date-fns"
 import { Edit, Trash2, CreditCard, RefreshCw, History, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { Modal } from "@/components/ui/modal"
-import { Loading, PageLoading } from "@/components/ui/loading"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 import {
     Dialog,
     DialogContent,
@@ -208,7 +208,7 @@ export function SubscriptionManager() {
     }
 
     if (loading) {
-        return <PageLoading />
+        return <ModernPageLoading />
     }
 
     return (

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { RefreshCw, ExternalLink, Clock, ChevronLeft, ChevronRight } from "lucide-react"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 
 type Provider = { id: string; name: string; logo_id?: string; url?: string }
 type RelatedSymbol = { symbol: string }
@@ -153,8 +154,8 @@ export default function NewsFlowPanel() {
             <button
               onClick={() => setRefetchTick((x) => x + 1)}
               className={`px-3 py-1 rounded-md border text-sm flex items-center gap-2 transition ${loading
-                  ? "border-border text-muted-foreground"
-                  : "border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
+                ? "border-border text-muted-foreground"
+                : "border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
                 }`}
               title="Refresh"
               disabled={loading}
@@ -171,7 +172,7 @@ export default function NewsFlowPanel() {
           style={{ height: CONTENT_H_LEFT }}
         >
           <div className="divide-y divide-border flex-1 overflow-y-auto">
-            {loading && <div className="p-4 text-foreground">กำลังโหลดรายการ…</div>}
+            {loading && <div className="p-4"><ModernPageLoading text="กำลังโหลดรายการ…" /></div>}
             {error && <div className="p-4 text-destructive">เกิดข้อผิดพลาด: {error}</div>}
             {!loading && !error && pageItems.length === 0 && (
               <div className="p-4 text-muted-foreground">ไม่มีข่าวในหน้านี้</div>
@@ -232,7 +233,7 @@ export default function NewsFlowPanel() {
           style={{ height: CONTENT_H_RIGHT }}
         >
           {!selectedId && <div className="text-muted-foreground">เลือกข่าวจากด้านซ้ายเพื่อดูรายละเอียด</div>}
-          {selectedId && loadingDetail && <div className="text-foreground">กำลังโหลดรายละเอียด…</div>}
+          {selectedId && loadingDetail && <ModernPageLoading text="กำลังโหลดรายละเอียด…" />}
           {selectedId && !loadingDetail && !detail && (
             <div className="text-muted-foreground">ไม่พบรายละเอียดข่าว</div>
           )}

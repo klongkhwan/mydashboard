@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { TrendingUp, TrendingDown, Calendar, DollarSign, Filter, RefreshCw } from "lucide-react"
-import { PageLoading } from "@/components/ui/loading"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 import { fetchDualInvestmentProjects, DualInvestmentProject, DualInvestmentFilters } from "@/lib/dual-investment"
 import { DualInvestmentCalculator } from "./DualInvestmentCalculator"
 
@@ -221,7 +221,7 @@ export function DualInvestmentTab() {
       <Card className="max-h-[600px] flex flex-col">
         <CardContent className="flex-1 overflow-hidden flex flex-col px-3 py-2">
           {loading ? (
-            <PageLoading />
+            <ModernPageLoading />
           ) : projects.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No projects found matching your criteria</p>

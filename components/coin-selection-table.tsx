@@ -21,6 +21,7 @@ const availableCoins: CoinData[] = [
   { symbol: "BTC", name: "Bitcoin" },
   { symbol: "ETH", name: "Ethereum" },
   { symbol: "BNB", name: "Binance Coin" },
+  // { symbol: "XAU", name: "Gold" },
   { symbol: "XRP", name: "Xrp" },
   { symbol: "DOGE", name: "Doge" },
   { symbol: "SOL", name: "Solana" },

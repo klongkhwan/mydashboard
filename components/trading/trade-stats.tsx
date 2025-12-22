@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageLoading } from "@/components/ui/loading"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 import { DollarSign, Target, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Activity, Calendar, Brain } from "lucide-react"
 import { Trade, Market, EmotionType, TradeStatistics } from "@/types/trading"
 import { calculateTradeStatistics } from "@/lib/trading"
@@ -58,7 +59,7 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
   }, [refreshTrigger])
 
   if (loading) {
-    return <PageLoading />
+    return <ModernPageLoading />
   }
 
   if (!stats || (stats.total_trades === 0 && stats.open_trades === 0)) {

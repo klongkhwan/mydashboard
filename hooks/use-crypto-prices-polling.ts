@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 interface CryptoPrice {
   symbol: string
@@ -16,7 +16,10 @@ interface CryptoPrices {
 // Global state to share data between components
 let globalPrices: CryptoPrices = {}
 let globalListeners: (() => void)[] = []
-let globalIntervalId: NodeJS.Timeout | null = null
+let globalSocket: WebSocket | null = null
+let activeSymbols: Set<string> = new Set()
+let connectionAttempts = 0
+let reconnectTimeout: NodeJS.Timeout | null = null
 let isInitialized = false
 
 // Initialize immediately when module loads
@@ -34,7 +37,7 @@ const initializeSymbols = () => {
           .filter((coin: any) => coin.show)
           .map((coin: any) => coin.symbol)
 
-        console.log('CryptoPricesPolling: Loaded symbols from localStorage:', symbols)
+        console.log('CryptoPricesWebSocket: Loaded symbols from localStorage:', symbols)
         return symbols
       }
 
@@ -53,6 +56,106 @@ const initializeSymbols = () => {
 // Store initial symbols globally
 const initialSymbols = initializeSymbols()
 isInitialized = true
+
+const connectWebSocket = () => {
+  if (globalSocket?.readyState === WebSocket.OPEN || globalSocket?.readyState === WebSocket.CONNECTING) {
+    return
+  }
+
+  // Clear any pending reconnect
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout)
+    reconnectTimeout = null
+  }
+
+  try {
+    const ws = new WebSocket('wss://stream.binance.com:9443/ws')
+    globalSocket = ws
+
+    ws.onopen = () => {
+      console.log('CryptoPricesWebSocket: Connected')
+      connectionAttempts = 0 // Reset attempts on success
+      subscribeToSymbols(Array.from(activeSymbols))
+    }
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+
+        // Handle ticker update
+        if (data.e === '24hrTicker') {
+          const symbol = data.s
+          const newPrice: CryptoPrice = {
+            symbol: symbol,
+            price: parseFloat(data.c),
+            priceChange: parseFloat(data.p),
+            priceChangePercent: parseFloat(data.P)
+          }
+
+          globalPrices[symbol] = newPrice
+          notifyListeners()
+        }
+      } catch (error) {
+        // Ignore parse errors or non-ticker messages
+      }
+    }
+
+    ws.onerror = (error) => {
+      console.error('CryptoPricesWebSocket: Error', error)
+    }
+
+    ws.onclose = () => {
+      console.log('CryptoPricesWebSocket: Closed')
+      globalSocket = null
+
+      // Reconnect logic with exponential backoff
+      const timeout = Math.min(1000 * Math.pow(2, connectionAttempts), 30000)
+      connectionAttempts++
+      console.log(`CryptoPricesWebSocket: Reconnecting in ${timeout}ms...`)
+
+      reconnectTimeout = setTimeout(() => {
+        connectWebSocket()
+      }, timeout)
+    }
+
+  } catch (error) {
+    console.error('CryptoPricesWebSocket: Failed to connect', error)
+  }
+}
+
+const subscribeToSymbols = (symbols: string[]) => {
+  if (!globalSocket || globalSocket.readyState !== WebSocket.OPEN) return
+  if (symbols.length === 0) return
+
+  const params = symbols.map(s => `${s.toLowerCase()}usdt@ticker`)
+
+  const msg = {
+    method: 'SUBSCRIBE',
+    params: params,
+    id: Date.now()
+  }
+
+  globalSocket.send(JSON.stringify(msg))
+}
+
+const unsubscribeFromSymbols = (symbols: string[]) => {
+  if (!globalSocket || globalSocket.readyState !== WebSocket.OPEN) return
+  if (symbols.length === 0) return
+
+  const params = symbols.map(s => `${s.toLowerCase()}usdt@ticker`)
+
+  const msg = {
+    method: 'UNSUBSCRIBE',
+    params: params,
+    id: Date.now()
+  }
+
+  globalSocket.send(JSON.stringify(msg))
+}
+
+const notifyListeners = () => {
+  globalListeners.forEach(listener => listener())
+}
 
 export function useCryptoPricesPolling() {
   const [prices, setPrices] = useState<CryptoPrices>({})
@@ -95,19 +198,19 @@ export function useCryptoPricesPolling() {
 
       if (symbolsChanged) {
         setSymbols(newSymbols)
-        console.log('CryptoPricesPolling: Symbols changed, updating:', newSymbols)
+        console.log('CryptoPricesWebSocket: Symbols changed, updating:', newSymbols)
       }
     }
 
     // Check immediately
     checkSymbolChanges()
 
-    // Check periodically for changes (every 3 seconds)
+    // Check periodically for changes (every 3 seconds) - kept for settings sync
     const interval = setInterval(checkSymbolChanges, 3000)
 
     // Listen for custom settings change event
     const handleSettingsChange = () => {
-      console.log('CryptoPricesPolling: Settings change event received')
+      console.log('CryptoPricesWebSocket: Settings change event received')
       checkSymbolChanges()
     }
 
@@ -119,57 +222,39 @@ export function useCryptoPricesPolling() {
     }
   }, [symbols])
 
-  // Fetch prices function
-  const fetchPrices = async () => {
-    try {
-      const symbolsParam = symbols.join(',')
-      console.log('CryptoPricesPolling: Fetching prices for symbols:', symbols)
-      const response = await fetch(`/api/crypto-prices?symbols=${encodeURIComponent(symbolsParam)}`)
-      if (response.ok) {
-        const data = await response.json()
-        const newPrices: CryptoPrices = {}
-
-        data.forEach((item: CryptoPrice) => {
-          newPrices[item.symbol] = item
-        })
-
-        // Update global state
-        globalPrices = newPrices
-
-        // Notify all listeners
-        globalListeners.forEach(listener => listener())
-
-        setIsLoading(false)
-      }
-    } catch (error) {
-      console.error('Error fetching prices:', error)
-      setIsLoading(false)
-    }
-  }
-
-  // Re-fetch when symbols change
+  // Manage WebSocket subscription
   useEffect(() => {
     if (symbols.length === 0) return
 
-    // Add listener for updates
-    const updateListener = () => {
-      setPrices({ ...globalPrices })
-    }
-    globalListeners.push(updateListener)
+    // Update active symbols ref
+    const newSymbols = new Set(symbols)
 
-    // Set initial prices from global state
-    if (Object.keys(globalPrices).length > 0) {
+    // Calculate diffs if socket is open to optimize calls
+    // But for simplicity, we can just resubscribe if needed or manage global set
+    // Let's rely on global set management
+
+    symbols.forEach(s => activeSymbols.add(s))
+
+    // Connect if not connected
+    if (!globalSocket) {
+      connectWebSocket()
+    } else if (globalSocket.readyState === WebSocket.OPEN) {
+      // If already connected, ensure we are subscribed to current symbols
+      // It's safe to resubscribe to existing ones, Binance handles it
+      subscribeToSymbols(symbols)
+    }
+
+    const updateListener = () => {
       setPrices({ ...globalPrices })
       setIsLoading(false)
     }
 
-    // Start polling only if not already started
-    if (globalListeners.length === 1 && !globalIntervalId) {
-      // Clear cache and fetch immediately when symbols change
-      console.log('CryptoPricesPolling: Starting fresh fetch for new symbols:', symbols)
-      globalPrices = {} // Clear cache
-      fetchPrices()
-      globalIntervalId = setInterval(fetchPrices, 10000)
+    globalListeners.push(updateListener)
+
+    // Set initial prices if available
+    if (Object.keys(globalPrices).length > 0) {
+      setPrices({ ...globalPrices })
+      setIsLoading(false)
     }
 
     return () => {
@@ -179,11 +264,9 @@ export function useCryptoPricesPolling() {
         globalListeners.splice(index, 1)
       }
 
-      // Clean up interval if no more listeners
-      if (globalListeners.length === 0 && globalIntervalId) {
-        clearInterval(globalIntervalId)
-        globalIntervalId = null
-      }
+      // We don't unsubscribe here because other components might need the data
+      // and we don't have reference counting. 
+      // Ideally we would ref count, but for this app keeping connection open is fine.
     }
   }, [symbols])
 

@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useSettings } from "@/hooks/use-settings"
+import { ModernPageLoading } from "@/components/ui/modern-loader"
 
 export default function DashboardLayout({
   children,
@@ -17,7 +18,7 @@ export default function DashboardLayout({
   if (settingsLoading) {
     return (
       <div className="flex h-screen bg-background items-center justify-center" suppressHydrationWarning>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <ModernPageLoading />
       </div>
     )
   }
