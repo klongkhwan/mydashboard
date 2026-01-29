@@ -16,6 +16,7 @@ import {
   FileText,
   ChevronDown,
   Folder,
+  BookHeart,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { logout } from "@/app/login/actions"
@@ -61,6 +62,7 @@ const menuItems = [
     href: "/dashboard/subscriptions",
     allowedRoles: ["user", "admin"],
   },
+
   {
     title: "Programs",
     icon: Folder,

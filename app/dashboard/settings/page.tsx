@@ -14,8 +14,10 @@ import {
   Bell,
   Shield,
   Lock,
-  Upload
+  Upload,
+  BookHeart
 } from "lucide-react"
+import Link from "next/link"
 import { CoinSelectionTable } from "@/components/coin-selection-table"
 import { useSettings } from "@/hooks/use-settings"
 import { getProfile, updateProfile, updatePassword } from "./actions"
@@ -166,6 +168,10 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
               <Shield className="w-3.5 h-3.5" />
               {profile.role || "User"}
             </div>
+
+            <Link href="/dashboard/memories" className="mt-4 opacity-5 hover:opacity-100 transition-opacity duration-300">
+              <BookHeart className="w-3 h-3 text-muted-foreground" />
+            </Link>
           </CardContent>
 
           <div className="px-8 py-5 bg-muted/30 border-t border-border/40 flex justify-between items-center text-[11px] mt-auto">

@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { SupabaseProvider } from '@/components/providers/supabase-provider'
+import { Toaster } from 'sonner'
 import '../styles/globals.css'
 
 export const metadata: Metadata = {
@@ -25,6 +26,12 @@ export default function RootLayout({
         <SupabaseProvider>
           {children}
         </SupabaseProvider>
+        <Toaster
+          position="bottom-right"
+          richColors
+          closeButton
+          theme="dark"
+        />
         <Analytics />
       </body>
     </html>
