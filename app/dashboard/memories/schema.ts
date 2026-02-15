@@ -31,3 +31,14 @@ export interface MemoryLog {
     updated_at: string
     memory_photos: MemoryPhoto[]
 }
+
+export type MediaType = 'image' | 'video' | 'audio'
+
+export const getMediaType = (url: string): MediaType => {
+    const ext = url.split('.').pop()?.toLowerCase()
+    if (['mp4', 'webm', 'ogg'].includes(ext || '')) return 'video'
+    if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext || '')) return 'audio'
+    return 'image'
+}
+
+export type MemoryMedia = MemoryPhoto

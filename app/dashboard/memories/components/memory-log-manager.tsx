@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { format } from "date-fns"
 import { th } from "date-fns/locale"
-import { Edit, Trash2, MapPin, Calendar, BookHeart, ChevronLeft, ChevronRight, Image as ImageIcon, Eye, X, ZoomIn } from "lucide-react"
+import { Edit, Trash2, MapPin, Calendar, BookHeart, ChevronLeft, ChevronRight, Image as ImageIcon, Eye, X, ZoomIn, Video, FileAudio } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { ModernPageLoading } from "@/components/ui/modern-loader"
 import {
@@ -25,7 +25,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { MemoryLog } from "../schema"
+import { MemoryLog, getMediaType } from "../schema"
 
 export function MemoryLogManager() {
     const { toast } = useToast()
@@ -67,7 +67,7 @@ export function MemoryLogManager() {
     const totalPages = Math.ceil(memoryLogs.length / PAGE_SIZE)
 
     // Stats
-    const totalPhotos = memoryLogs.reduce((acc, log) => acc + (log.memory_photos?.length || 0), 0)
+    const totalMedia = memoryLogs.reduce((acc, log) => acc + (log.memory_photos?.length || 0), 0)
     const uniqueLocations = new Set(memoryLogs.map(log => log.location).filter(Boolean)).size
     const latestMemory = memoryLogs[0]
 
@@ -110,13 +110,13 @@ export function MemoryLogManager() {
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">รูปภาพ</CardTitle>
+                            <CardTitle className="text-sm font-medium">สื่อ (รูป/วิดีโอ/เสียง)</CardTitle>
                             <ImageIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-blue-500">{totalPhotos}</div>
+                            <div className="text-2xl font-bold text-blue-500">{totalMedia}</div>
                             <p className="text-xs text-muted-foreground">
-                                รูปภาพทั้งหมด
+                                ไฟล์แนบทั้งหมด
                             </p>
                         </CardContent>
                     </Card>
@@ -162,7 +162,7 @@ export function MemoryLogManager() {
                                 <TableHead>วันที่</TableHead>
                                 <TableHead>สถานที่</TableHead>
                                 <TableHead>อารมณ์</TableHead>
-                                <TableHead>รูปภาพ</TableHead>
+                                <TableHead>สื่อแนบ</TableHead>
                                 <TableHead className="text-right">จัดการ</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -279,7 +279,7 @@ export function MemoryLogManager() {
                         <DialogDescription className="flex items-center gap-4 text-base">
                             <span className="flex items-center gap-1">
                                 <Calendar className="h-4 w-4" />
-                                {viewLog && format(new Date(viewLog.date), "วันdddd ที่ d MMMM yyyy", { locale: th })}
+                                {viewLog && format(new Date(viewLog.date), "EEEE ที่ d MMMM yyyy", { locale: th })}
                             </span>
                             {viewLog?.location && (
                                 <span className="flex items-center gap-1">
@@ -308,43 +308,71 @@ export function MemoryLogManager() {
                                 </div>
                             )}
 
-                            {/* Photos Gallery */}
+                            {/* Media Gallery */}
                             {viewLog.memory_photos?.length > 0 && (
                                 <div>
                                     <span className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
                                         <ImageIcon className="h-4 w-4" />
-                                        รูปภาพ ({viewLog.memory_photos.length})
-                                        <span className="text-xs text-muted-foreground/70">- คลิกเพื่อขยาย</span>
+                                        สื่อแนบ ({viewLog.memory_photos.length})
                                     </span>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        {viewLog.memory_photos.map((photo) => (
-                                            <div
-                                                key={photo.id}
-                                                className="relative group cursor-pointer"
-                                                onClick={() => setLightboxImage(photo.photo_url)}
-                                            >
-                                                <div className="aspect-square rounded-lg overflow-hidden bg-muted relative">
-                                                    {/* Loading placeholder */}
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
-                                                        <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                                        {viewLog.memory_photos.map((photo) => {
+                                            const type = getMediaType(photo.photo_url)
+
+                                            // Video
+                                            if (type === 'video') {
+                                                return (
+                                                    <div key={photo.id} className="aspect-square rounded-lg bg-black overflow-hidden flex items-center justify-center relative group">
+                                                        <video
+                                                            src={photo.photo_url}
+                                                            controls
+                                                            className="w-full h-full object-contain"
+                                                            preload="metadata"
+                                                        />
                                                     </div>
-                                                    <img
-                                                        src={photo.photo_url}
-                                                        alt="Memory photo"
-                                                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300 relative z-10"
-                                                        loading="lazy"
-                                                        onLoad={(e) => {
-                                                            const target = e.target as HTMLImageElement
-                                                            target.style.opacity = "1"
-                                                        }}
-                                                        style={{ opacity: 0, transition: "opacity 0.3s ease-in-out" }}
-                                                    />
+                                                )
+                                            }
+
+                                            // Audio
+                                            if (type === 'audio') {
+                                                return (
+                                                    <div key={photo.id} className="aspect-square rounded-lg bg-orange-100 flex flex-col items-center justify-center p-2 relative group">
+                                                        <FileAudio className="h-10 w-10 text-orange-500 mb-2" />
+                                                        <audio src={photo.photo_url} controls className="w-full max-w-[150px]" />
+                                                    </div>
+                                                )
+                                            }
+
+                                            // Image
+                                            return (
+                                                <div
+                                                    key={photo.id}
+                                                    className="relative group cursor-pointer"
+                                                    onClick={() => setLightboxImage(photo.photo_url)}
+                                                >
+                                                    <div className="aspect-square rounded-lg overflow-hidden bg-muted relative">
+                                                        {/* Loading placeholder */}
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
+                                                            <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                                                        </div>
+                                                        <img
+                                                            src={photo.photo_url}
+                                                            alt="Memory info"
+                                                            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300 relative z-10"
+                                                            loading="lazy"
+                                                            onLoad={(e) => {
+                                                                const target = e.target as HTMLImageElement
+                                                                target.style.opacity = "1"
+                                                            }}
+                                                            style={{ opacity: 0, transition: "opacity 0.3s ease-in-out" }}
+                                                        />
+                                                    </div>
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center z-20">
+                                                        <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                                    </div>
                                                 </div>
-                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center z-20">
-                                                    <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                                                </div>
-                                            </div>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -386,7 +414,7 @@ export function MemoryLogManager() {
                     <DialogHeader>
                         <DialogTitle>ลบความทรงจำ?</DialogTitle>
                         <DialogDescription>
-                            การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลและรูปภาพทั้งหมดจะถูกลบออกจากระบบถาวร
+                            การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลและไฟล์แนบทั้งหมดจะถูกลบออกจากระบบถาวร
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

@@ -3,7 +3,8 @@
 import { useState, useRef, type ReactNode } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { memoryLogSchema, type MemoryLogFormValues, type MemoryLog, type MemoryPhoto } from "../schema"
+import { memoryLogSchema, type MemoryLogFormValues, type MemoryLog, type MemoryPhoto, getMediaType } from "../schema"
+import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -26,7 +27,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { useToast } from "@/components/ui/use-toast"
-import { Plus, Upload, X, Image as ImageIcon, Loader2 } from "lucide-react"
+import { Plus, Upload, X, Image as ImageIcon, Loader2, Video, FileAudio } from "lucide-react"
 
 interface MemoryLogDialogProps {
     memoryLog?: MemoryLog
@@ -67,7 +68,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...values,
-                    date: values.date.toISOString().split("T")[0],
+                    date: format(values.date, "yyyy-MM-dd"),
                 }),
             })
 
@@ -137,9 +138,9 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                         setPhotos(prev => [...prev, newPhoto])
                     }
                 }
-                toast({ title: "อัปโหลดสำเร็จ", description: "เพิ่มรูปภาพเรียบร้อย" })
+                toast({ title: "อัปโหลดสำเร็จ", description: "เพิ่มไฟล์เรียบร้อย" })
             } catch {
-                toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถอัปโหลดรูปภาพได้", variant: "destructive" })
+                toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถอัปโหลดไฟล์ได้", variant: "destructive" })
             } finally {
                 setUploadingPhotos(false)
             }
@@ -164,10 +165,10 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
 
             if (res.ok) {
                 setPhotos(prev => prev.filter(p => p.id !== photoId))
-                toast({ title: "ลบแล้ว", description: "ลบรูปภาพเรียบร้อย" })
+                toast({ title: "ลบแล้ว", description: "ลบไฟล์เรียบร้อย" })
             }
         } catch {
-            toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถลบรูปภาพได้", variant: "destructive" })
+            toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถลบไฟล์ได้", variant: "destructive" })
         }
     }
 
@@ -191,6 +192,55 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
             setPhotos([])
             setPendingFiles([])
         }
+    }
+
+    const renderPreview = (file: File) => {
+        if (file.type.startsWith('video/')) {
+            return (
+                <div className="w-full h-full flex items-center justify-center bg-black text-white">
+                    <Video className="h-8 w-8" />
+                </div>
+            )
+        }
+        if (file.type.startsWith('audio/')) {
+            return (
+                <div className="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600">
+                    <FileAudio className="h-8 w-8" />
+                </div>
+            )
+        }
+        return (
+            <img
+                src={URL.createObjectURL(file)}
+                alt="Pending"
+                className="object-cover w-full h-full"
+            />
+        )
+    }
+
+    const renderExistingMedia = (photo: MemoryPhoto) => {
+        const type = getMediaType(photo.photo_url)
+        if (type === 'video') {
+            return (
+                <div className="w-full h-full flex items-center justify-center bg-black text-white">
+                    <Video className="h-8 w-8" />
+                </div>
+            )
+        }
+        if (type === 'audio') {
+            return (
+                <div className="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600">
+                    <FileAudio className="h-8 w-8" />
+                </div>
+            )
+        }
+        return (
+            <img
+                src={photo.photo_url}
+                alt="Memory media"
+                className="object-cover w-full h-full"
+            />
+        )
     }
 
     return (
@@ -292,9 +342,9 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                             )}
                         />
 
-                        {/* Photo Upload Section */}
+                        {/* Media Upload Section */}
                         <div className="space-y-3">
-                            <FormLabel>รูปภาพ</FormLabel>
+                            <FormLabel>รูปภาพ / วิดีโอ / เสียง</FormLabel>
 
                             {/* Upload Area */}
                             <div
@@ -304,7 +354,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                 <input
                                     ref={fileInputRef}
                                     type="file"
-                                    accept="image/jpeg,image/png,image/webp,image/gif"
+                                    accept="image/*,video/*,audio/*"
                                     multiple
                                     className="hidden"
                                     onChange={handleFileSelect}
@@ -321,7 +371,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                             คลิกหรือลากไฟล์มาวางที่นี่
                                         </span>
                                         <span className="text-xs text-muted-foreground">
-                                            รองรับ JPEG, PNG, WebP, GIF (สูงสุด 5MB)
+                                            รองรับ รูปภาพ, วิดีโอ, เสียง (สูงสุด 50MB)
                                         </span>
                                     </div>
                                 )}
@@ -333,11 +383,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                     {pendingFiles.map((file, index) => (
                                         <div key={index} className="relative group">
                                             <div className="aspect-square rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                                                <img
-                                                    src={URL.createObjectURL(file)}
-                                                    alt={`Pending ${index}`}
-                                                    className="object-cover w-full h-full"
-                                                />
+                                                {renderPreview(file)}
                                             </div>
                                             <button
                                                 type="button"
@@ -351,17 +397,13 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                 </div>
                             )}
 
-                            {/* Existing Photos (Edit Mode) */}
+                            {/* Existing Media (Edit Mode) */}
                             {photos.length > 0 && (
                                 <div className="grid grid-cols-4 gap-2">
                                     {photos.map((photo) => (
                                         <div key={photo.id} className="relative group">
                                             <div className="aspect-square rounded-lg bg-muted overflow-hidden">
-                                                <img
-                                                    src={photo.photo_url}
-                                                    alt="Memory photo"
-                                                    className="object-cover w-full h-full"
-                                                />
+                                                {renderExistingMedia(photo)}
                                             </div>
                                             <button
                                                 type="button"
@@ -378,7 +420,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                             {photos.length === 0 && pendingFiles.length === 0 && (
                                 <div className="text-sm text-muted-foreground text-center py-2">
                                     <ImageIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                    ยังไม่มีรูปภาพ
+                                    ยังไม่มีไฟล์แนบ
                                 </div>
                             )}
                         </div>
