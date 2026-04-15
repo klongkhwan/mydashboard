@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Newspaper, Calendar as CalendarIcon, RefreshCw } from "lucide-react"
@@ -269,181 +270,144 @@ export function Calendar() {
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="card-spotify border border-white/5 shadow-heavy bg-[#181818]">
+      <CardHeader className="px-5 py-3 border-b border-white/5 bg-white/[0.02]">
         <CardTitle className="flex items-center gap-2">
-          <Newspaper className="w-5 h-5" />
-          ปฏิทินเศรษฐกิจ
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <CalendarIcon className="w-4 h-4" />
+          </div>
+          <span className="text-spotify-label text-white text-[10px]">ปฏิทินเศรษฐกิจ</span>
         </CardTitle>
-        {/* <CardDescription>
-          กรองตามวันและประเทศ • ส่งเวลาแบบ UTC Z ครบวัน
-        </CardDescription> */}
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="px-5 py-4 space-y-6">
         {/* Filters */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           {/* Day presets */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <CalendarIcon className="w-4 h-4" /> ช่วงวัน:
-            </span>
+            <span className="text-spotify-label text-[9px] mr-1">ช่วงวัน:</span>
             {DAY_PRESETS.map(p => (
               <button
                 key={p.key}
                 onClick={() => setDayPreset(p.key)}
-                className={`px-3 py-1 rounded-full border text-sm transition ${dayPreset === p.key
-                  ? "bg-primary border-primary text-primary-foreground shadow"
-                  : "bg-transparent border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
+                className={`btn-pill h-7 px-3 text-[10px] border-none transition-all ${dayPreset === p.key
+                  ? "bg-white text-black scale-105"
+                  : "bg-[#282828] text-[#b3b3b3] hover:text-white"
                   }`}
-                title={
-                  p.key === "yesterday" ? "Yesterday (Thai time)" :
-                    p.key === "today" ? "Today (Thai time)" :
-                      p.key === "tomorrow" ? "Tomorrow (Thai time)" :
-                        p.key === "thisWeek" ? "Today through Sunday (Thai time)" :
-                          p.key === "nextWeek" ? "Next Monday through Sunday (Thai time)" :
-                            ""
-                }
               >
                 {p.label}
               </button>
             ))}
           </div>
 
-          {/* Countries chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">ประเทศ:</span>
+          {/* Countries chips + Quick actions */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-spotify-label text-[9px] mr-1">ประเทศ:</span>
             {COUNTRY_OPTIONS.map(c => {
               const active = countries.includes(c)
               return (
                 <button
                   key={c}
                   onClick={() => toggleCountry(c)}
-                  className={`w-8 h-8 rounded-full border transition flex items-center justify-center p-0.5 ${active
-                    ? "bg-primary border-primary shadow"
-                    : "bg-transparent border-border hover:border-primary"
+                  className={`w-7 h-7 rounded-full transition-all flex items-center justify-center p-1 border-none ${active
+                    ? "bg-white scale-110 shadow-play"
+                    : "bg-[#282828] hover:bg-[#333333]"
                     }`}
                   title={c}
                 >
-                  <FlagIcon country={c} size={20} />
+                  <FlagIcon country={c} size={18} />
                 </button>
               )
             })}
-            {/* Quick actions */}
-            <div className="ml-1 flex gap-2">
+            <div className="ml-2 flex gap-1.5">
               <button
                 onClick={() => setCountries(["US"])}
-                className="text-xs px-2 py-1 rounded border border-border hover:border-primary text-muted-foreground hover:text-primary-foreground"
-                title="เลือกเฉพาะ US"
+                className="text-[9px] font-bold uppercase tracking-wider text-[#b3b3b3] hover:text-white px-2 py-1 rounded hover:bg-white/5"
               >
-                เฉพาะ US
+                US ONLY
               </button>
               <button
                 onClick={() => setCountries([...COUNTRY_OPTIONS])}
-                className="text-xs px-2 py-1 rounded border border-border hover:border-primary text-muted-foreground hover:text-primary-foreground"
-                title="เลือกทุกประเทศ"
+                className="text-[9px] font-bold uppercase tracking-wider text-[#b3b3b3] hover:text-white px-2 py-1 rounded hover:bg-white/5"
               >
-                เลือกทั้งหมด
+                ALL
               </button>
             </div>
           </div>
 
           {/* Importance filter */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">ความสำคัญ:</span>
-            <button
-              onClick={() => setImportanceFilter("high")}
-              className={`px-3 py-1 rounded-full border text-sm transition ${importanceFilter === "high"
-                ? "bg-red-600 border-red-600 text-white shadow"
-                : "bg-transparent border-border text-muted-foreground hover:border-red-600 hover:text-red-600"
-                }`}
-              title="High importance (importance = 1)"
-            >
-              High
-            </button>
-            <button
-              onClick={() => setImportanceFilter("medium")}
-              className={`px-3 py-1 rounded-full border text-sm transition ${importanceFilter === "medium"
-                ? "bg-orange-500 border-orange-500 text-white shadow"
-                : "bg-transparent border-border text-muted-foreground hover:border-orange-500 hover:text-orange-500"
-                }`}
-              title="Medium importance (importance = 0)"
-            >
-              Medium
-            </button>
-            <button
-              onClick={() => setImportanceFilter("low")}
-              className={`px-3 py-1 rounded-full border text-sm transition ${importanceFilter === "low"
-                ? "bg-green-400 border-green-400 text-gray-900 shadow"
-                : "bg-transparent border-border text-muted-foreground hover:border-green-400 hover:text-green-400"
-                }`}
-              title="Low importance (importance = -1)"
-            >
-              Low
-            </button>
-            <button
-              onClick={() => setImportanceFilter("all")}
-              className={`px-3 py-1 rounded-full border text-sm transition ${importanceFilter === "all"
-                ? "bg-primary border-primary text-primary-foreground shadow"
-                : "bg-transparent border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
-                }`}
-              title="ทุกระดับความสำคัญ"
-            >
-              ทั้งหมด
-            </button>
-          </div>
-
-          {/* Params + Refresh */}
-          <div className="flex flex-col md:flex-row md:items-center gap-2">
-            {/* <div className="text-xs text-muted-foreground">
-              ส่งพารามิเตอร์:
-              <span className="ml-1 font-mono">from={from}</span>{" "}
-              <span className="font-mono">to={to}</span>{" "}
-              <span className="font-mono">countries={countriesParam}</span>
-            </div> */}
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-4 pt-2 border-t border-white/5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-spotify-label text-[9px] mr-1">ระดับ:</span>
               <button
-                onClick={fetchData}
-                disabled={loading}
-                className={`px-3 py-1 rounded-md border text-sm flex items-center gap-2 ${loading
-                  ? "border-border text-muted-foreground"
-                  : "border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
+                onClick={() => setImportanceFilter("high")}
+                className={`btn-pill h-7 px-3 text-[10px] border-none transition-all ${importanceFilter === "high"
+                  ? "bg-[#f3727f] text-white"
+                  : "bg-[#282828] text-[#b3b3b3] hover:text-[#f3727f]"
                   }`}
-                title="รีเฟรชข้อมูล"
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                Refresh
+                High
               </button>
-              {lastUpdated && (
-                <span className="text-xs text-muted-foreground">
-                  อัปเดตล่าสุด:{" "}
-                  {lastUpdated.toLocaleTimeString("th-TH", {
-                    hour12: false,
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    timeZone: "Asia/Bangkok",
-                  })}
-                </span>
-              )}
+              <button
+                onClick={() => setImportanceFilter("medium")}
+                className={`btn-pill h-7 px-3 text-[10px] border-none transition-all ${importanceFilter === "medium"
+                  ? "bg-[#ffa42b] text-white"
+                  : "bg-[#282828] text-[#b3b3b3] hover:text-[#ffa42b]"
+                  }`}
+              >
+                Med
+              </button>
+              <button
+                onClick={() => setImportanceFilter("low")}
+                className={`btn-pill h-7 px-3 text-[10px] border-none transition-all ${importanceFilter === "low"
+                  ? "bg-primary text-black"
+                  : "bg-[#282828] text-[#b3b3b3] hover:text-primary"
+                  }`}
+              >
+                Low
+              </button>
+              <button
+                onClick={() => setImportanceFilter("all")}
+                className={`btn-pill h-7 px-3 text-[10px] border-none transition-all ${importanceFilter === "all"
+                  ? "bg-white text-black"
+                  : "bg-[#282828] text-[#b3b3b3] hover:text-white"
+                  }`}
+              >
+                ALL
+              </button>
             </div>
+            
+            <button
+              onClick={fetchData}
+              disabled={loading}
+              className="btn-pill h-7 px-4 bg-primary text-black hover:bg-primary/90 flex items-center gap-1.5 active:scale-95 text-[10px]"
+            >
+              <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
           </div>
         </div>
 
-        {/* States */}
-        {loading && <ModernPageLoading text="กำลังโหลดข้อมูล…" />}
-        {error && <div className="text-destructive">เกิดข้อผิดพลาด: {error}</div>}
-        {!loading && !error && events.length === 0 && (
-          <div className="text-muted-foreground">ไม่พบรายการในช่วงที่เลือก</div>
-        )}
-
-        {/* Results (group by day) */}
-        {!loading && !error && events.length > 0 && (
-          <div className="space-y-4">
-            {grouped.map(([label, items]) => (
-              <div key={label} className="space-y-2">
-                <h3 className="text-lg font-semibold text-card-foreground mt-4">{label}</h3>
-                <div className="space-y-2">
+        {/* Results */}
+        <div className="space-y-6 pt-2">
+          {loading ? (
+            <div className="p-10 flex flex-col items-center justify-center gap-3">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#b3b3b3]">Loading data...</p>
+            </div>
+          ) : error ? (
+            <div className="p-6 text-center bg-[#f3727f]/10 rounded-lg">
+              <p className="text-[#f3727f] text-xs font-bold">{error}</p>
+            </div>
+          ) : events.length === 0 ? (
+            <div className="p-10 text-center text-[#b3b3b3] text-xs font-bold">
+              No events found.
+            </div>
+          ) : (
+            grouped.map(([label, items]) => (
+              <div key={label} className="space-y-3">
+                <h3 className="text-sm font-black text-white tracking-tighter border-b border-white/5 pb-1">{label}</h3>
+                <div className="space-y-0.5">
                   {items.map(ev => {
                     const timeLocal = new Date(ev.date).toLocaleTimeString("th-TH", {
                       timeZone: "Asia/Bangkok",
@@ -452,98 +416,46 @@ export function Calendar() {
                       hour12: false,
                     })
                     return (
-                      <div key={ev.id} className="rounded-lg border border-border bg-card p-3">
-                        {/* Header row: badges + time */}
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 border border-primary/30 p-0.5">
-                              <FlagIcon country={ev.country} size={20} />
-                            </div>
-                            <Badge variant="outline">{ev.currency ?? "-"}</Badge>
-                            {ev.category && (
-                              <span className="text-xs px-2 py-0.5 rounded bg-secondary text-secondary-foreground">
-                                {ev.category}
-                              </span>
-                            )}
-                            {ev.period && (
-                              <span className="text-xs px-2 py-0.5 rounded bg-secondary text-secondary-foreground">
-                                {ev.period}
-                              </span>
-                            )}
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded ${ev.importance === 1
-                                ? "bg-red-600 text-white"
-                                : ev.importance === 0
-                                  ? "bg-orange-500 text-white"
-                                  : ev.importance === -1
-                                    ? "bg-green-400 text-gray-900"
-                                    : "bg-muted text-muted-foreground"
-                                }`}
-                              title={`importance=${ev.importance}`}
-                            >
-                              {importanceLabel(ev.importance)}
-                            </span>
+                      <div key={ev.id} className="group px-3 py-2 hover:bg-white/5 rounded-md transition-all flex flex-col md:flex-row md:items-center gap-4">
+                        {/* Time & Flag Column - Fixed Width */}
+                        <div className="flex items-center gap-3 md:w-28 shrink-0">
+                          <span className="text-[13px] font-bold text-white tabular-nums w-10">{timeLocal}</span>
+                          <div className="w-6 h-6 rounded-full bg-[#282828] flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <FlagIcon country={ev.country} size={16} />
                           </div>
-                          <div className="text-sm text-muted-foreground">{timeLocal} น.</div>
+                          <span className="text-[11px] font-black text-spotify-muted w-8">{ev.currency}</span>
                         </div>
 
-                        {/* Title + Indicator */}
-                        <div className="mt-2 text-base text-card-foreground font-medium">{ev.title}</div>
-                        {ev.indicator && (
-                          <div className="text-sm text-muted-foreground">{ev.indicator}</div>
-                        )}
+                        {/* Title & Info Column - Flexible but structured */}
+                        <div className="flex-1 min-w-0 flex items-center gap-3">
+                          <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", 
+                            ev.importance === 1 ? "bg-[#f3727f]" : 
+                            ev.importance === 0 ? "bg-[#ffa42b]" : 
+                            "bg-primary")}>
+                          </div>
+                          <span className="text-[13px] font-bold text-white group-hover:text-primary transition-colors truncate flex-1">
+                            {ev.title}
+                          </span>
+                          {ev.category && (
+                            <span className="hidden md:inline text-[9px] font-bold text-spotify-muted uppercase tracking-wider bg-white/5 px-1.5 py-0.5 rounded truncate max-w-[100px]">
+                              {ev.category}
+                            </span>
+                          )}
+                        </div>
 
-                        {/* Values + Reference + Source (ครบฟิลด์) */}
-                        <div className="mt-2 grid grid-cols-2 md:grid-cols-6 gap-2 text-sm">
-                          <div className="rounded bg-muted/60 p-2">
-                            <div className="text-muted-foreground">Actual</div>
-                            <div className="text-card-foreground">
-                              {displayValue(ev.actual, ev.actualRaw, ev.unit)}
-                            </div>
+                        {/* Values Grid - Perfectly Aligned Columns with Increased Width */}
+                        <div className="flex gap-0 items-center shrink-0 ml-auto md:ml-0 bg-black/20 rounded-md p-1.5">
+                          <div className="flex flex-col items-center w-24 border-r border-white/5 px-2">
+                            <span className="text-[8px] font-black text-spotify-muted uppercase tracking-widest mb-0.5">Actual</span>
+                            <span className="text-[12px] font-bold text-white tabular-nums">{displayValue(ev.actual, ev.actualRaw, ev.unit)}</span>
                           </div>
-                          <div className="rounded bg-muted/60 p-2">
-                            <div className="text-muted-foreground">Forecast</div>
-                            <div className="text-card-foreground">
-                              {displayValue(ev.forecast, ev.forecastRaw, ev.unit)}
-                            </div>
+                          <div className="flex flex-col items-center w-24 border-r border-white/5 px-2">
+                            <span className="text-[8px] font-black text-spotify-muted uppercase tracking-widest mb-0.5">Forecast</span>
+                            <span className="text-[12px] font-bold text-white tabular-nums">{displayValue(ev.forecast, ev.forecastRaw, ev.unit)}</span>
                           </div>
-                          <div className="rounded bg-muted/60 p-2">
-                            <div className="text-muted-foreground">Previous</div>
-                            <div className="text-card-foreground">
-                              {displayValue(ev.previous, ev.previousRaw, ev.unit)}
-                            </div>
-                          </div>
-                          <div className="rounded bg-muted/60 p-2">
-                            <div className="text-muted-foreground">Unit</div>
-                            <div className="text-card-foreground">{ev.unit ?? "—"}</div>
-                          </div>
-                          <div className="rounded bg-muted/60 p-2">
-                            <div className="text-muted-foreground">Reference</div>
-                            <div className="text-card-foreground">
-                              {ev.referenceDate
-                                ? new Date(ev.referenceDate).toLocaleDateString("th-TH", {
-                                  timeZone: "Asia/Bangkok",
-                                })
-                                : "—"}
-                            </div>
-                          </div>
-                          <div className="rounded bg-muted/60 p-2">
-                            <div className="text-muted-foreground">Source</div>
-                            <div className="text-card-foreground truncate">
-                              {ev.source_url ? (
-                                <a
-                                  href={ev.source_url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="underline hover:opacity-80 text-primary hover:text-primary/80"
-                                  title={ev.source_url}
-                                >
-                                  {ev.source || ev.source_url}
-                                </a>
-                              ) : (
-                                ev.source ?? "—"
-                              )}
-                            </div>
+                          <div className="flex flex-col items-center w-24 px-2">
+                            <span className="text-[8px] font-black text-spotify-muted uppercase tracking-widest mb-0.5">Previous</span>
+                            <span className="text-[12px] font-bold text-[#b3b3b3] tabular-nums">{displayValue(ev.previous, ev.previousRaw, ev.unit)}</span>
                           </div>
                         </div>
                       </div>
@@ -551,9 +463,9 @@ export function Calendar() {
                   })}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </CardContent>
     </Card>
   )

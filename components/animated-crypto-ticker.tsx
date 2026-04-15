@@ -43,10 +43,10 @@ function PriceDisplay({ symbol, price }: { symbol: string; price: number }) {
 
   return (
     <span
-      className={`text-[13px] font-mono font-semibold transition-all duration-300 ${direction === 'up' ? 'text-green-400' :
-        direction === 'down' ? 'text-red-400' :
-          'text-white'
-        } ${isAnimating ? 'scale-105' : 'scale-100'}`}
+      className={`text-[12px] font-bold tracking-tight transition-colors duration-500 tabular-nums ${direction === 'up' ? 'text-primary' :
+        direction === 'down' ? 'text-destructive' :
+          'text-foreground'
+        }`}
     >
       {formatCryptoPrice(symbol, displayValue)}
     </span>
@@ -114,18 +114,9 @@ export function AnimatedCryptoTicker() {
   // Pure CSS animation doesn't need setInterval anymore
 
   return (
-    <div className="relative w-full h-12 bg-black overflow-hidden border-b border-gray-800/50">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black via-gray-900 to-black opacity-80" />
-
-      {/* Subtle grid pattern */}
-      <div
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: 'linear-gradient(0deg, transparent 24%, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,0.05) 75%, rgba(255,255,255,0.05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,0.05) 75%, rgba(255,255,255,0.05) 76%, transparent 77%, transparent)',
-          backgroundSize: '50px 50px'
-        }}
-      />
+    <div className="relative w-full h-10 bg-background overflow-hidden border-b border-white/5">
+      {/* Subtle overlay */}
+      <div className="absolute inset-0 bg-black/20" />
 
       <div
         className="whitespace-nowrap flex items-center h-full animate-ticker-scroll"
@@ -140,16 +131,16 @@ export function AnimatedCryptoTicker() {
           return (
             <div
               key={`${symbol}-${index}`}
-              className="flex items-center gap-2 mx-4 px-2 py-1 bg-black/40 backdrop-blur-md rounded-full border border-gray-800/30 hover:bg-gray-900/60 transition-all duration-300 hover:scale-105 hover:border-gray-700/50"
+              className="flex items-center gap-3 mx-6 shrink-0"
             >
-              {/* Crypto icon/symbol with accent */}
-              <div className="flex items-center gap-0.5">
-                <span className="text-[10px] font-black text-white uppercase tracking-wider">
+              {/* Crypto symbol */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider group-hover:text-foreground transition-colors">
                   {shortSymbol}
                 </span>
-                <div className={`w-0.5 h-0.5 rounded-full ${(priceData?.priceChangePercent ?? 0) >= 0
-                  ? 'bg-green-400'
-                  : 'bg-red-400'
+                <div className={`w-1 h-1 rounded-full ${(priceData?.priceChangePercent ?? 0) >= 0
+                  ? 'bg-primary'
+                  : 'bg-destructive'
                   }`} />
               </div>
 
@@ -161,21 +152,19 @@ export function AnimatedCryptoTicker() {
                   />
 
                   {(priceData.priceChangePercent ?? 0) !== 0 && (
-                    <div className="flex items-center gap-0.5">
-                      <span
-                        className={`text-[10px] px-1 py-0.5 rounded-full font-medium ${(priceData.priceChangePercent ?? 0) >= 0
-                          ? 'bg-green-500/20 text-green-300 border border-green-500/20'
-                          : 'bg-red-500/20 text-red-300 border border-red-500/20'
-                          }`}
-                      >
-                        {(priceData.priceChangePercent ?? 0) >= 0 ? '▲' : '▼'} {Math.abs(priceData.priceChangePercent ?? 0).toFixed(1)}%
-                      </span>
-                    </div>
+                    <span
+                      className={`text-[11px] font-bold ${(priceData.priceChangePercent ?? 0) >= 0
+                        ? 'text-primary'
+                        : 'text-destructive'
+                        }`}
+                    >
+                      {(priceData.priceChangePercent ?? 0) >= 0 ? '+' : ''}{priceData.priceChangePercent.toFixed(2)}%
+                    </span>
                   )}
                 </>
               ) : (
-                <span className="text-[10px] text-gray-500 font-mono">
-                  {isLoading ? '⋯' : '—'}
+                <span className="text-[11px] text-muted-foreground font-mono">
+                  {isLoading ? '...' : '—'}
                 </span>
               )}
             </div>
@@ -184,12 +173,8 @@ export function AnimatedCryptoTicker() {
       </div>
 
       {/* Smooth gradient overlays for edges */}
-      <div className="absolute left-0 top-0 w-24 h-full bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
-      <div className="absolute right-0 top-0 w-24 h-full bg-gradient-to-l from-black via-black/80 to-transparent z-10" />
-
-      {/* Top and bottom accent lines */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700/50 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700/30 to-transparent" />
+      <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-background to-transparent z-10" />
+      <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-background to-transparent z-10" />
     </div>
   )
 }

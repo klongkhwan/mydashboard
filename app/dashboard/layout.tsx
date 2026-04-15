@@ -24,11 +24,13 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar isCollapsed={isCollapsed} onToggle={toggle} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0">
         <DashboardHeader />
-        <main className="flex-1 overflow-auto p-4">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-gradient-to-b from-black/20 to-background">
+          {children}
+        </main>
       </div>
     </div>
   )

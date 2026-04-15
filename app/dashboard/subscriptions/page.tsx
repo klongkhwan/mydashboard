@@ -2,9 +2,10 @@ import { SubscriptionManager } from "./components/subscription-manager"
 
 export default function SubscriptionsPage() {
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">Subscription</h1>
+        <div className="p-8 space-y-8">
+            <div>
+                <h1 className="text-spotify-title">Subscriptions</h1>
+                <p className="text-spotify-muted mt-2">Manage your active and past service subscriptions.</p>
             </div>
             <SubscriptionManager />
         </div>

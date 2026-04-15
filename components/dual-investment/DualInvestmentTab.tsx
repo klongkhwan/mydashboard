@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,6 +14,9 @@ import { TrendingUp, TrendingDown, Calendar, DollarSign, Filter, RefreshCw } fro
 import { ModernPageLoading } from "@/components/ui/modern-loader"
 import { fetchDualInvestmentProjects, DualInvestmentProject, DualInvestmentFilters } from "@/lib/dual-investment"
 import { DualInvestmentCalculator } from "./DualInvestmentCalculator"
+import { ReusableDataTable } from "@/components/ui/reusable-data-table"
+import { type ColumnDef, type Row } from "@tanstack/react-table"
+import { cn } from "@/lib/utils"
 
 const COINS = ["ETH", "BTC", "BNB", "SOL"]
 const DURATION_OPTIONS = [
@@ -91,13 +94,6 @@ export function DualInvestmentTab() {
     }))
   }
 
-  const totalPages = Math.ceil(total / filters.pageSize)
-
-  const handleTypeClick = (project: DualInvestmentProject) => {
-    setSelectedProject(project)
-    setShowCalculator(true)
-  }
-
   const closeCalculator = () => {
     setShowCalculator(false)
     setSelectedProject(null)
@@ -107,249 +103,218 @@ export function DualInvestmentTab() {
     fetchProjects()
   }
 
+  const columns = useMemo<ColumnDef<DualInvestmentProject>[]>(() => [
+    {
+      accessorKey: "targetAsset",
+      header: "Target Asset",
+      cell: ({ row }: { row: Row<DualInvestmentProject> }) => (
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-white">{row.original.targetAsset}</span>
+          <Badge className="bg-[#282828] text-[#b3b3b3] border-none text-[10px] font-bold uppercase px-2 py-0.5">
+            {row.original.underlying}
+          </Badge>
+        </div>
+      )
+    },
+    {
+      accessorKey: "strikePrice",
+      header: "Strike Price",
+      cell: ({ row }: { row: Row<DualInvestmentProject> }) => (
+        <div className="flex items-center gap-2">
+          <DollarSign className="w-3.5 h-3.5 text-spotify-muted" />
+          <span className="font-bold text-white tabular-nums">
+            {parseFloat(row.original.strikePrice).toLocaleString()}
+          </span>
+        </div>
+      )
+    },
+    {
+      accessorKey: "apr",
+      header: "APR",
+      cell: ({ row }: { row: Row<DualInvestmentProject> }) => (
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-3.5 h-3.5 text-primary" />
+          <span className="font-bold text-primary tabular-nums">
+            {(parseFloat(row.original.apr) * 100).toFixed(2)}%
+          </span>
+        </div>
+      )
+    },
+    {
+      accessorKey: "duration",
+      header: "Duration",
+      cell: ({ row }: { row: Row<DualInvestmentProject> }) => (
+        <div className="flex items-center gap-2">
+          <Calendar className="w-3.5 h-3.5 text-spotify-muted" />
+          <span className="text-spotify-muted">{row.original.duration} day{row.original.duration !== "1" ? "s" : ""}</span>
+        </div>
+      )
+    },
+    {
+      accessorKey: "settleTime",
+      header: "Settlement Date",
+      cell: ({ row }: { row: Row<DualInvestmentProject> }) => (
+        <span className="text-spotify-muted tabular-nums">
+          {new Date(parseInt(row.original.settleTime)).toLocaleDateString('en-GB')}
+        </span>
+      )
+    },
+    {
+      accessorKey: "type",
+      header: "Type",
+      cell: ({ row }: { row: Row<DualInvestmentProject> }) => (
+        <Badge
+          className={cn(
+            "flex items-center gap-1.5 w-fit cursor-pointer hover:shadow-play transition-all px-3 py-1 text-[10px] font-black uppercase tracking-wider border-none",
+            row.original.type === "UP"
+              ? "bg-[#f3727f] text-white"
+              : "bg-primary text-black"
+          )}
+          onClick={() => handleTypeClick(row.original)}
+        >
+          {row.original.type === "UP" ? (
+            <TrendingUp className="w-3 h-3" />
+          ) : (
+            <TrendingDown className="w-3 h-3" />
+          )}
+          {row.original.type === "UP" ? "Sell High" : "Buy Low"}
+        </Badge>
+      )
+    }
+  ], [])
+
+  const handleTypeClick = (project: DualInvestmentProject) => {
+    setSelectedProject(project)
+    setShowCalculator(true)
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Dual Investment</h2>
-        <div className="flex items-center gap-2">
+        <div>
+          <h2 className="text-spotify-title">Dual Investment</h2>
+          <p className="text-spotify-muted mt-2">Maximize your returns with automated dual investment strategies</p>
+        </div>
+        <div className="flex items-center gap-3">
           <Button
             onClick={handleRefresh}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="flex items-center gap-2"
+            className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
             disabled={loading}
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Button
             onClick={() => window.open('https://www.binance.com/en/dual-investment', '_blank')}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="flex items-center gap-2"
+            className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
           >
-            <TrendingUp className="w-4 h-4" />
+            <TrendingUp className="w-4 h-4 mr-2 text-primary" />
             Binance
           </Button>
           <Button
             onClick={() => window.open('https://www.bybit.com/en/earn/dual-asset-mining', '_blank')}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="flex items-center gap-2"
+            className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
           >
-            <TrendingUp className="w-4 h-4" />
+            <TrendingUp className="w-4 h-4 mr-2 text-primary" />
             Bybit
           </Button>
         </div>
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
-        <div className="flex flex-wrap items-end gap-6">
-          {/* Coin Selection */}
-          <div className="flex-shrink-0">
-            <label className="text-sm font-medium mb-2 block">Select Coin</label>
-            <RadioGroup
-              value={filters.coins[0]}
-              onValueChange={handleCoinChange}
-              className="flex gap-3"
-            >
-              {COINS.map(coin => (
-                <div key={coin} className="flex items-center space-x-1">
-                  <RadioGroupItem value={coin} id={coin} className="h-4 w-4" />
-                  <label htmlFor={coin} className="text-sm font-medium cursor-pointer">
-                    {coin}
-                  </label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          {/* Order Type */}
-          <div className="flex-shrink-0">
-            <label className="text-sm font-medium mb-2 block">Order Type</label>
-            <ToggleGroup
-              type="single"
-              value={filters.projectType}
-              onValueChange={handleProjectTypeChange}
-              className="grid grid-cols-2 gap-2"
-            >
-              <ToggleGroupItem
-                value="DOWN"
-                className="flex items-center gap-1 text-xs data-[state=on]:bg-green-600 data-[state=on]:text-white hover:bg-green-100 px-2 py-1"
+      <Card className="card-spotify border border-white/5 bg-[#181818]/60 shadow-heavy backdrop-blur-md">
+        <CardContent className="p-8">
+          <div className="flex flex-wrap items-end gap-10">
+            {/* Coin Selection */}
+            <div className="space-y-4">
+              <label className="text-spotify-label">Select Coin</label>
+              <RadioGroup
+                value={filters.coins[0]}
+                onValueChange={handleCoinChange}
+                className="flex gap-6"
               >
-                <TrendingDown className="w-3 h-3" />
-                Buy Low
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value="UP"
-                className="flex items-center gap-1 text-xs data-[state=on]:bg-red-600 data-[state=on]:text-white hover:bg-red-100 px-2 py-1"
-              >
-                <TrendingUp className="w-3 h-3" />
-                Sell High
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
+                {COINS.map(coin => (
+                  <div key={coin} className="flex items-center space-x-2">
+                    <RadioGroupItem value={coin} id={coin} className="border-white/20 text-primary focus:ring-primary h-5 w-5" />
+                    <label htmlFor={coin} className="text-sm font-bold text-white cursor-pointer uppercase tracking-wider">
+                      {coin}
+                    </label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
 
-          {/* Duration */}
-          <div className="flex-shrink-0 flex-1 min-w-0">
-            <label className="text-sm font-medium mb-2 block">Duration</label>
-            <div className="flex flex-wrap gap-2">
+            {/* Order Type */}
+            <div className="space-y-4">
+              <label className="text-spotify-label">Order Type</label>
               <ToggleGroup
                 type="single"
-                value={filters.duration}
-                onValueChange={handleDurationChange}
-                className="flex flex-wrap gap-2"
+                value={filters.projectType}
+                onValueChange={handleProjectTypeChange}
+                className="flex gap-2"
               >
-                {DURATION_OPTIONS.map(option => (
-                  <ToggleGroupItem
-                    key={option.value}
-                    value={option.value}
-                    className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground px-3 py-1"
-                  >
-                    {option.label}
-                  </ToggleGroupItem>
-                ))}
+                <ToggleGroupItem
+                  value="DOWN"
+                  className="btn-pill h-9 px-4 text-[11px] font-black uppercase tracking-widest data-[state=on]:bg-primary data-[state=on]:text-black hover:bg-white/5 border border-white/5 transition-all"
+                >
+                  <TrendingDown className="w-3.5 h-3.5 mr-2" />
+                  Buy Low
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="UP"
+                  className="btn-pill h-9 px-4 text-[11px] font-black uppercase tracking-widest data-[state=on]:bg-[#f3727f] data-[state=on]:text-white hover:bg-white/5 border border-white/5 transition-all"
+                >
+                  <TrendingUp className="w-3.5 h-3.5 mr-2" />
+                  Sell High
+                </ToggleGroupItem>
               </ToggleGroup>
             </div>
-          </div>
-        </div>
-      </Card>
 
-      {/* Results Table */}
-      <Card className="max-h-[600px] flex flex-col">
-        <CardContent className="flex-1 overflow-hidden flex flex-col px-3 py-2">
-          {loading ? (
-            <ModernPageLoading />
-          ) : projects.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No projects found matching your criteria</p>
-            </div>
-          ) : (
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <div className="flex-1 overflow-auto -mt-2 -mb-1">
-                <Table className="border-separate border-spacing-y-1">
-                  <TableHeader className="sticky top-0 bg-background z-10">
-                    <TableRow>
-                      <TableHead className="py-2">Target Asset</TableHead>
-                      <TableHead className="py-2">Strike Price</TableHead>
-                      <TableHead className="py-2">APR</TableHead>
-                      <TableHead className="py-2">Duration</TableHead>
-                      <TableHead className="py-2">Settlement Date</TableHead>
-                      <TableHead className="py-2">Type</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {projects.map((project) => (
-                      <TableRow key={project.id} className="hover:bg-muted/50">
-                        <TableCell className="font-medium py-1">
-                          <div className="flex items-center gap-2">
-                            <span>{project.targetAsset}</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {project.underlying}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-1">
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-mono">
-                              {parseFloat(project.strikePrice).toLocaleString()}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-1">
-                          <div className="flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-green-600" />
-                            <span className="font-semibold text-green-600">
-                              {(parseFloat(project.apr) * 100).toFixed(2)}%
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-1">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span>{project.duration} day{project.duration !== "1" ? "s" : ""}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-1">
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(parseInt(project.settleTime)).toLocaleDateString('en-GB')}
-                          </span>
-                        </TableCell>
-                        <TableCell className="py-1.5">
-                          <Badge
-                            variant="secondary"
-                            className={`flex items-center gap-1 w-fit cursor-pointer hover:opacity-80 ${project.type === "UP"
-                              ? "bg-red-100 text-red-800 border-red-200"
-                              : "bg-green-100 text-green-800 border-green-200"
-                              }`}
-                            onClick={() => handleTypeClick(project)}
-                          >
-                            {project.type === "UP" ? (
-                              <TrendingUp className="w-3 h-3" />
-                            ) : (
-                              <TrendingDown className="w-3 h-3" />
-                            )}
-                            {project.type === "UP" ? "Sell High" : "Buy Low"}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+            {/* Duration */}
+            <div className="space-y-4 flex-1 min-w-0">
+              <label className="text-spotify-label">Duration</label>
+              <div className="flex flex-wrap gap-2">
+                <ToggleGroup
+                  type="single"
+                  value={filters.duration}
+                  onValueChange={handleDurationChange}
+                  className="flex flex-wrap gap-2"
+                >
+                  {DURATION_OPTIONS.map(option => (
+                    <ToggleGroupItem
+                      key={option.value}
+                      value={option.value}
+                      className="btn-pill h-8 px-4 text-[10px] font-bold uppercase tracking-widest data-[state=on]:bg-white data-[state=on]:text-black hover:bg-white/5 border border-white/5 transition-all"
+                    >
+                      {option.label}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
               </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center mt-1 flex-shrink-0">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => handlePageChange(filters.pageIndex - 1)}
-                          className={filters.pageIndex <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        const pageNum = i + 1
-                        const isCurrentPage = pageNum === filters.pageIndex
-
-                        return (
-                          <PaginationItem key={pageNum}>
-                            <PaginationLink
-                              onClick={() => handlePageChange(pageNum)}
-                              isActive={isCurrentPage}
-                              className="cursor-pointer"
-                            >
-                              {pageNum}
-                            </PaginationLink>
-                          </PaginationItem>
-                        )
-                      })}
-
-                      {totalPages > 5 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => handlePageChange(filters.pageIndex + 1)}
-                          className={filters.pageIndex >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Results Table using ReusableDataTable */}
+      <ReusableDataTable
+        columns={columns}
+        data={projects}
+        loading={loading}
+        totalCount={total}
+        page={filters.pageIndex}
+        pageSize={filters.pageSize}
+        onPageChange={handlePageChange}
+        onPageSizeChange={(newSize) => setFilters(prev => ({ ...prev, pageSize: newSize, pageIndex: 1 }))}
+        manualPagination={true}
+      />
 
       {/* Calculator Modal */}
       <DualInvestmentCalculator

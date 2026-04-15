@@ -1,14 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TradeModal } from "@/components/trading/trade-modal"
 import { TradeList } from "@/components/trading/trade-list"
 import { TradeStats } from "@/components/trading/trade-stats"
 import { TradingCalculator } from "@/components/trading/trading-calculator"
-import { DualInvestmentTab } from "@/components/dual-investment/DualInvestmentTab"
-import { PlusCircle, TrendingUp, ListTodo, BarChart3, Calculator, Target } from "lucide-react"
+import { PlusCircle, TrendingUp, ListTodo, BarChart3, Calculator } from "lucide-react"
 
 export default function MyTradePage() {
   const [activeTab, setActiveTab] = useState("overview")
@@ -47,69 +46,60 @@ export default function MyTradePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-8 space-y-8">
       {/* Header with Prominent Add Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Trade</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-spotify-title">My Trade</h1>
+          <p className="text-spotify-muted mt-2">
             บันทึกและติดตามการเทรดของคุณ
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={() => setShowCalculatorModal(true)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Calculator className="w-4 h-4" />
-              Calculate
-            </Button>
-            <Button
-              onClick={() => setShowNewTradeModal(true)}
-              className="flex items-center gap-2"
-            >
-              <PlusCircle className="w-4 h-4" />
-              บันทึกการเทรด
-            </Button>
-          </div>
+          <Button
+            onClick={() => setShowCalculatorModal(true)}
+            variant="ghost"
+            className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
+          >
+            <Calculator className="w-4 h-4 mr-2 text-primary" />
+            Calculate
+          </Button>
+          <Button
+            onClick={() => setShowNewTradeModal(true)}
+            className="btn-pill-primary"
+          >
+            <PlusCircle className="w-4 h-4 mr-2" />
+            บันทึกการเทรด
+          </Button>
         </div>
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 bg-card border border-border">
-          <TabsTrigger
-            value="overview"
-            className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <BarChart3 className="w-4 h-4" />
-            ภาพรวม
-          </TabsTrigger>
-          <TabsTrigger
-            value="trades"
-            className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <ListTodo className="w-4 h-4" />
-            รายการทั้งหมด
-          </TabsTrigger>
-          <TabsTrigger
-            value="dual-investment"
-            className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <Target className="w-4 h-4" />
-            Dual Investment
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <div className="sticky top-0 bg-background/80 backdrop-blur-md z-20 pt-2 pb-4">
+          <TabsList className="flex w-fit bg-transparent p-0 gap-2 border-none">
+            <TabsTrigger
+              value="overview"
+              className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-6 py-2 h-auto transition-all duration-300"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              ภาพรวม
+            </TabsTrigger>
+            <TabsTrigger
+              value="trades"
+              className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-6 py-2 h-auto transition-all duration-300"
+            >
+              <ListTodo className="w-4 h-4 mr-2" />
+              รายการทั้งหมด
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="overview" className="space-y-6">
-
-
+        <TabsContent value="overview" className="mt-0">
           <TradeStats refreshTrigger={refreshKey} />
         </TabsContent>
 
-        <TabsContent value="trades" className="space-y-6">
+        <TabsContent value="trades" className="mt-0">
           <TradeList
             refreshTrigger={refreshKey}
             onTradeUpdated={handleTradeUpdated}
@@ -118,11 +108,6 @@ export default function MyTradePage() {
             onEditTrade={handleEditTrade}
           />
         </TabsContent>
-
-        <TabsContent value="dual-investment" className="space-y-6">
-          <DualInvestmentTab />
-        </TabsContent>
-
       </Tabs>
 
       {/* Shared Trade Modal */}

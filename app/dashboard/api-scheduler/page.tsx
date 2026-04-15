@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 import { Plus, Edit, Pause, Play, Trash2, PlayCircle, Clock } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { ApiSchedule, CreateScheduleRequest } from "@/types/api-scheduler"
@@ -44,12 +45,21 @@ import {
 import { supabase } from "@/lib/supabase"
 import { PageLoading, Loading } from "@/components/ui/loading"
 
+import { ReusableDataTable } from "@/components/ui/reusable-data-table"
+import { type ColumnDef, type Row } from "@tanstack/react-table"
+import { useMemo } from "react"
+
 export default function ApiSchedulerPage() {
   const [schedules, setSchedules] = useState<ApiSchedule[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [checkLoading, setCheckLoading] = useState(false)
   const [editingSchedule, setEditingSchedule] = useState<ApiSchedule | null>(null)
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  // ... (rest of the component state)
   const [formData, setFormData] = useState({
     apiName: "",
     url: "",
@@ -432,41 +442,124 @@ export default function ApiSchedulerPage() {
       await loadSchedules()
     } catch (error) {
       console.error('Manual trigger error:', error)
-      console.error('Error details:', {
-        name: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      })
-      toast({
-        title: "❌ API Trigger Failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive",
-      })
+      // ...
     }
   }
+
+  const columns = useMemo<ColumnDef<ApiSchedule>[]>(() => [
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => getStatusBadge(row.original.status)
+    },
+    {
+      accessorKey: "api_name",
+      header: "API Name",
+      cell: ({ row }) => <span className="font-bold text-white group-hover:text-primary transition-colors">{row.original.api_name}</span>
+    },
+    {
+      accessorKey: "url",
+      header: "URL",
+      cell: ({ row }) => <span className="text-spotify-muted group-hover:text-white truncate max-w-[200px] block">{row.original.url}</span>
+    },
+    {
+      accessorKey: "method",
+      header: "Method",
+      cell: ({ row }) => getMethodBadge(row.original.method)
+    },
+    {
+      accessorKey: "frequency",
+      header: "Frequency",
+      cell: ({ row }) => <span className="text-spotify-muted">{getFrequencyDisplay(row.original.frequency)}</span>
+    },
+    {
+      accessorKey: "time",
+      header: "Time",
+      cell: ({ row }) => <span className="text-spotify-muted tabular-nums">{row.original.time}</span>
+    },
+    {
+      accessorKey: "next_run",
+      header: "Next Run",
+      cell: ({ row }) => <span className="text-primary font-bold tabular-nums">{formatLastRun(row.original.next_run)}</span>
+    },
+    {
+      accessorKey: "last_run",
+      header: "Last Run",
+      cell: ({ row }) => <span className="text-spotify-muted tabular-nums">{formatLastRun(row.original.last_run)}</span>
+    },
+    {
+      id: "manual",
+      header: "Manual",
+      cell: ({ row }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleManualTrigger(row.original)}
+          className="h-8 px-4 rounded-full bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white text-[10px] font-bold uppercase tracking-wider"
+        >
+          <PlayCircle className="w-3.5 h-3.5 mr-1.5 text-primary" />
+          Run
+        </Button>
+      )
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right pr-6">Actions</div>,
+      cell: ({ row }) => (
+        <div className="flex justify-end gap-1 transition-opacity pr-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleEditSchedule(row.original)}
+            className="h-8 w-8 text-[#b3b3b3] hover:text-white"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleToggleStatus(row.original.id)}
+            className="h-8 w-8 text-[#b3b3b3] hover:text-white"
+          >
+            {row.original.status === "ACTIVE" ? (
+              <Pause className="w-4 h-4" />
+            ) : (
+              <Play className="w-4 h-4" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleDeleteSchedule(row.original.id)}
+            className="h-8 w-8 text-[#b3b3b3] hover:text-destructive"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      )
+    }
+  ], [])
 
   const getStatusBadge = (status: ApiSchedule["status"]) => {
     switch (status) {
       case "ACTIVE":
-        return <Badge className="bg-green-500 hover:bg-green-600">✅ Active</Badge>
+        return <Badge className="bg-primary text-black hover:bg-primary/90 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Active</Badge>
       case "PAUSED":
-        return <Badge className="bg-orange-500 hover:bg-orange-600">⏸ Paused</Badge>
+        return <Badge className="bg-[#282828] text-[#b3b3b3] hover:bg-[#333333] rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Paused</Badge>
       case "FAILED":
-        return <Badge className="bg-red-500 hover:bg-red-600">❌ Failed</Badge>
+        return <Badge className="bg-destructive text-white hover:bg-destructive/90 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Failed</Badge>
     }
   }
 
   const getMethodBadge = (method: ApiSchedule["method"]) => {
     const methodColors: Record<string, string> = {
-      "GET": "bg-green-100 text-green-800 border-green-300 hover:bg-green-200",
-      "POST": "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200",
-      "PUT": "bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200",
-      "PATCH": "bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200",
-      "DELETE": "bg-red-100 text-red-800 border-red-300 hover:bg-red-200",
-      "HEAD": "bg-orange-100 text-orange-800 border-orange-300 hover:bg-orange-200",
-      "OPTIONS": "bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200",
+      "GET": "bg-[#181818] text-[#1ed760] border-white/5",
+      "POST": "bg-[#181818] text-[#ffa42b] border-white/5",
+      "PUT": "bg-[#181818] text-[#539df5] border-white/5",
+      "PATCH": "bg-[#181818] text-[#cbcbcb] border-white/5",
+      "DELETE": "bg-[#181818] text-[#f3727f] border-white/5",
     }
-    return <Badge className={methodColors[method] || "bg-gray-100 text-gray-800"}>{method}</Badge>
+    return <Badge className={cn("rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-widest border", methodColors[method] || "bg-[#181818] text-[#b3b3b3] border-white/5")}>{method}</Badge>
   }
 
   const getFrequencyDisplay = (frequency: ApiSchedule["frequency"]) => {
@@ -495,26 +588,25 @@ export default function ApiSchedulerPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-balance">API Scheduler</h2>
-          <p className="text-muted-foreground">Manage your scheduled API calls and automations</p>
+          <h2 className="text-spotify-title">API Scheduler</h2>
+          <p className="text-spotify-muted mt-2">Manage your scheduled API calls and automations</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button
             onClick={() => handleCheckSchedules(false)}
             disabled={checkLoading}
-            variant="outline"
-            size="lg"
+            variant="ghost"
+            className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
           >
-            {checkLoading ? <Loading variant="spinner" size="sm" className="mr-2" /> : <Clock className="w-4 h-4 mr-2" />}
-            Check Schedules Now
+            {checkLoading ? <Loading variant="spinner" size="sm" className="mr-2" /> : <Clock className="w-4 h-4 mr-2 text-primary" />}
+            Check Now
           </Button>
           <Button
             onClick={handleAddSchedule}
-            className="bg-green-600 hover:bg-green-700 text-white"
-            size="lg"
+            className="btn-pill-primary"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Schedule
@@ -522,246 +614,146 @@ export default function ApiSchedulerPage() {
         </div>
       </div>
 
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle>Scheduled APIs</CardTitle>
-          <CardDescription>Manage your API schedules and execution history</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Status</TableHead>
-                <TableHead>API Name</TableHead>
-                <TableHead>URL</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Frequency</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Next Run</TableHead>
-                <TableHead>Last Run</TableHead>
-                <TableHead>Manual</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="py-8">
-                    <PageLoading />
-                  </TableCell>
-                </TableRow>
-              ) : schedules.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                    No schedules found. Create your first schedule!
-                  </TableCell>
-                </TableRow>
-              ) : (
-                schedules.map((schedule) => (
-                  <TableRow key={schedule.id} className="border-border/30">
-                    <TableCell>{getStatusBadge(schedule.status)}</TableCell>
-                    <TableCell className="font-medium">{schedule.api_name}</TableCell>
-                    <TableCell className="text-muted-foreground">{schedule.url}</TableCell>
-                    <TableCell>
-                      {getMethodBadge(schedule.method)}
-                    </TableCell>
-                    <TableCell>{getFrequencyDisplay(schedule.frequency)}</TableCell>
-                    <TableCell>{schedule.time}</TableCell>
-                    <TableCell className="text-blue-600 font-medium">{formatLastRun(schedule.next_run)}</TableCell>
-                    <TableCell className="text-muted-foreground">{formatLastRun(schedule.last_run)}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleManualTrigger(schedule)}
-                        className="h-8 px-2 text-xs hover:bg-green-50 hover:border-green-300 hover:text-green-700"
-                      >
-                        <PlayCircle className="w-3 h-3 mr-1" />
-                        Run Now
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditSchedule(schedule)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleStatus(schedule.id)}
-                          className="h-8 w-8 p-0"
-                        >
-                          {schedule.status === "ACTIVE" ? (
-                            <Pause className="w-4 h-4" />
-                          ) : (
-                            <Play className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteSchedule(schedule.id)}
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <ReusableDataTable
+        columns={columns}
+        data={schedules}
+        loading={loading}
+        page={currentPage}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        manualPagination={false}
+      />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-[#181818] border-none shadow-heavy text-white">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl font-bold">
               {editingSchedule ? "Edit Schedule" : "Add New Schedule"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-spotify-muted">
               Configure your API schedule settings
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 gap-4 items-start">
-              <Label htmlFor="apiName" className="text-right pt-2">
+          <div className="grid gap-6 py-6">
+            <div className="grid grid-cols-4 gap-4 items-center">
+              <Label htmlFor="apiName" className="text-right text-spotify-label">
                 API Name
               </Label>
               <Input
                 id="apiName"
                 value={formData.apiName}
                 onChange={(e) => setFormData((prev) => ({ ...prev, apiName: e.target.value }))}
-                className="col-span-3"
+                className="col-span-3 spotify-input"
                 placeholder="e.g., Refresh Listing"
               />
             </div>
-            <div className="grid grid-cols-4 gap-4 items-start">
-              <Label htmlFor="url" className="text-right pt-2">
-                Endpoint URL
+            <div className="grid grid-cols-4 gap-4 items-center">
+              <Label htmlFor="url" className="text-right text-spotify-label">
+                URL
               </Label>
               <Input
                 id="url"
                 value={formData.url}
                 onChange={(e) => setFormData((prev) => ({ ...prev, url: e.target.value }))}
-                className="col-span-3"
+                className="col-span-3 spotify-input"
                 placeholder="e.g., /graphql"
               />
             </div>
-            <div className="grid grid-cols-4 gap-4 items-start">
-              <Label htmlFor="method" className="text-right pt-2">
-                HTTP Method
+            <div className="grid grid-cols-4 gap-4 items-center">
+              <Label htmlFor="method" className="text-right text-spotify-label">
+                Method
               </Label>
-              <Select
-                value={formData.method}
-                onValueChange={(value: ApiSchedule["method"]) =>
-                  setFormData((prev) => ({ ...prev, method: value }))
-                }
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="GET">GET</SelectItem>
-                  <SelectItem value="POST">POST</SelectItem>
-                  <SelectItem value="PATCH">PATCH</SelectItem>
-                  <SelectItem value="PUT">PUT</SelectItem>
-                  <SelectItem value="DELETE">DELETE</SelectItem>
-                  <SelectItem value="HEAD">HEAD</SelectItem>
-                  <SelectItem value="OPTIONS">OPTIONS</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="col-span-3">
+                <Select
+                  value={formData.method}
+                  onValueChange={(value: ApiSchedule["method"]) =>
+                    setFormData((prev) => ({ ...prev, method: value }))
+                  }
+                >
+                  <SelectTrigger className="spotify-input w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#282828] border-none text-white shadow-heavy">
+                    <SelectItem value="GET" className="focus:bg-white/10 cursor-pointer">GET</SelectItem>
+                    <SelectItem value="POST" className="focus:bg-white/10 cursor-pointer">POST</SelectItem>
+                    <SelectItem value="PATCH" className="focus:bg-white/10 cursor-pointer">PATCH</SelectItem>
+                    <SelectItem value="PUT" className="focus:bg-white/10 cursor-pointer">PUT</SelectItem>
+                    <SelectItem value="DELETE" className="focus:bg-white/10 cursor-pointer">DELETE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="grid grid-cols-4 gap-4 items-start">
-              <Label htmlFor="time" className="text-right pt-2">
-                Schedule Time
+            <div className="grid grid-cols-4 gap-4 items-center">
+              <Label htmlFor="time" className="text-right text-spotify-label">
+                Time
               </Label>
               <Input
                 id="time"
                 type="time"
                 value={formData.time}
                 onChange={(e) => setFormData((prev) => ({ ...prev, time: e.target.value }))}
-                className="col-span-3"
+                className="col-span-3 spotify-input"
               />
             </div>
-            <div className="grid grid-cols-4 gap-4 items-start">
-              <Label htmlFor="frequency" className="text-right pt-2">
+            <div className="grid grid-cols-4 gap-4 items-center">
+              <Label htmlFor="frequency" className="text-right text-spotify-label">
                 Frequency
               </Label>
-              <Select
-                value={formData.frequency}
-                onValueChange={(value: ApiSchedule["frequency"]) =>
-                  setFormData((prev) => ({ ...prev, frequency: value }))
-                }
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DAILY">Daily</SelectItem>
-                  <SelectItem value="WEEKLY">Weekly</SelectItem>
-                  <SelectItem value="MONTHLY">Monthly</SelectItem>
-                  <SelectItem value="CUSTOM">Custom (cron)</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="col-span-3">
+                <Select
+                  value={formData.frequency}
+                  onValueChange={(value: ApiSchedule["frequency"]) =>
+                    setFormData((prev) => ({ ...prev, frequency: value }))
+                  }
+                >
+                  <SelectTrigger className="spotify-input w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#282828] border-none text-white shadow-heavy">
+                    <SelectItem value="DAILY" className="focus:bg-white/10 cursor-pointer">Daily</SelectItem>
+                    <SelectItem value="WEEKLY" className="focus:bg-white/10 cursor-pointer">Weekly</SelectItem>
+                    <SelectItem value="MONTHLY" className="focus:bg-white/10 cursor-pointer">Monthly</SelectItem>
+                    <SelectItem value="CUSTOM" className="focus:bg-white/10 cursor-pointer">Custom (cron)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-4 gap-4 items-start">
-              <Label htmlFor="headers" className="text-right pt-2">
-                Headers (JSON)
+              <Label htmlFor="headers" className="text-right pt-2 text-spotify-label">
+                Headers
               </Label>
               <Textarea
                 id="headers"
                 value={formData.headers}
                 onChange={(e) => setFormData((prev) => ({ ...prev, headers: e.target.value }))}
-                className="col-span-3 font-mono text-sm"
-                style={{
-                  resize: 'none',
-                  overflowY: 'auto',
-                  minHeight: '144px',
-                  maxHeight: '144px'
-                }}
-                rows={6}
+                className="col-span-3 bg-[#121212] border-none rounded-lg p-4 font-mono text-[13px] text-white shadow-inset focus:ring-1 focus:ring-white/20"
+                style={{ resize: 'none', minHeight: '120px' }}
                 placeholder='{"Content-Type": "application/json"}'
               />
             </div>
             {(formData.method === "POST" || formData.method === "PUT" || formData.method === "PATCH") && (
               <div className="grid grid-cols-4 gap-4 items-start">
-                <Label htmlFor="body" className="text-right pt-2">
-                  Body (JSON)
+                <Label htmlFor="body" className="text-right pt-2 text-spotify-label">
+                  Body
                 </Label>
                 <Textarea
                   id="body"
                   value={formData.body}
                   onChange={(e) => setFormData((prev) => ({ ...prev, body: e.target.value }))}
-                  className="col-span-3 font-mono text-sm"
-                  style={{
-                    resize: 'none',
-                    overflowY: 'auto',
-                    minHeight: '192px',
-                    maxHeight: '192px'
-                  }}
-                  rows={8}
-                  placeholder='{
-  "query": "your query here",
-  "variables": {}
-}'
+                  className="col-span-3 bg-[#121212] border-none rounded-lg p-4 font-mono text-[13px] text-white shadow-inset focus:ring-1 focus:ring-white/20"
+                  style={{ resize: 'none', minHeight: '180px' }}
+                  placeholder='{ "query": "..." }'
                 />
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="text-[#b3b3b3] hover:text-white">
               Cancel
             </Button>
-            <Button onClick={handleSaveSchedule} className="bg-green-600 hover:bg-green-700">
-              บันทึก
+            <Button onClick={handleSaveSchedule} className="btn-pill-primary">
+              Save Schedule
             </Button>
           </DialogFooter>
         </DialogContent>

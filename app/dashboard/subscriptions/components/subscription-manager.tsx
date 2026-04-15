@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { SubscriptionDialog } from "./subscription-dialog"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
     Table,
@@ -27,6 +28,9 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 
+import { ReusableDataTable } from "@/components/ui/reusable-data-table"
+import { type ColumnDef, type Row } from "@tanstack/react-table"
+
 interface Subscription {
     id: string
     name: string
@@ -51,9 +55,9 @@ export function SubscriptionManager() {
 
     // Pagination states
     const [mainPage, setMainPage] = useState(1)
+    const [mainPageSize, setMainPageSize] = useState(10)
     const [historyPage, setHistoryPage] = useState(1)
-    const MAIN_PAGE_SIZE = 10
-    const HISTORY_PAGE_SIZE = 5
+    const [historyPageSize, setHistoryPageSize] = useState(5)
 
     // Fetch subscriptions from API
     const fetchSubscriptions = useCallback(async () => {
@@ -75,22 +79,49 @@ export function SubscriptionManager() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    const billingCycleLabels: Record<string, string> = {
+        weekly: "รายสัปดาห์",
+        monthly: "รายเดือน",
+        yearly: "รายปี",
+    }
+
+    const statusLabels: Record<string, string> = {
+        active: "ใช้งาน",
+        canceled: "ยกเลิก",
+        paused: "หยุดชั่วคราว",
+        completed: "จบครบ",
+    }
+
+    const getStatusBadgeClass = (status: string) => {
+        switch (status) {
+            case 'active':
+            case 'completed':
+                return 'bg-primary text-black hover:bg-primary/90'
+            case 'canceled':
+                return 'bg-destructive text-white hover:bg-destructive/90'
+            case 'paused':
+                return 'bg-[#282828] text-[#b3b3b3] hover:bg-[#333333]'
+            default:
+                return 'bg-[#181818] text-white'
+        }
+    }
+
     const activeSubscriptions = subscriptions.filter(s => s.status === 'active')
     const historySubscriptions = subscriptions.filter(s => s.status === 'canceled' || s.status === 'completed')
 
     // Paginated data
     const paginatedActive = useMemo(() => {
-        const start = (mainPage - 1) * MAIN_PAGE_SIZE
-        return activeSubscriptions.slice(start, start + MAIN_PAGE_SIZE)
-    }, [activeSubscriptions, mainPage])
+        const start = (mainPage - 1) * mainPageSize
+        return activeSubscriptions.slice(start, start + mainPageSize)
+    }, [activeSubscriptions, mainPage, mainPageSize])
 
     const paginatedHistory = useMemo(() => {
-        const start = (historyPage - 1) * HISTORY_PAGE_SIZE
-        return historySubscriptions.slice(start, start + HISTORY_PAGE_SIZE)
-    }, [historySubscriptions, historyPage])
+        const start = (historyPage - 1) * historyPageSize
+        return historySubscriptions.slice(start, start + historyPageSize)
+    }, [historySubscriptions, historyPage, historyPageSize])
 
-    const totalMainPages = Math.ceil(activeSubscriptions.length / MAIN_PAGE_SIZE)
-    const totalHistoryPages = Math.ceil(historySubscriptions.length / HISTORY_PAGE_SIZE)
+    const totalMainPages = Math.ceil(activeSubscriptions.length / mainPageSize)
+    const totalHistoryPages = Math.ceil(historySubscriptions.length / historyPageSize)
 
     const totalMonthlyCost = activeSubscriptions.reduce((acc, sub) => {
         let monthlyPrice = Number(sub.price)
@@ -168,30 +199,144 @@ export function SubscriptionManager() {
         }
     }
 
-    const billingCycleLabels: Record<string, string> = {
-        weekly: "รายสัปดาห์",
-        monthly: "รายเดือน",
-        yearly: "รายปี",
-    }
-
-    const statusLabels: Record<string, string> = {
-        active: "ใช้งาน",
-        canceled: "ยกเลิก",
-        paused: "หยุดชั่วคราว",
-        completed: "จบครบ",
-    }
-
-    const getStatusBadgeClass = (status: string) => {
-        switch (status) {
-            case 'active':
-            case 'completed':
-                return 'bg-green-500 hover:bg-green-600'
-            case 'canceled':
-                return 'bg-red-500 hover:bg-red-600'
-            default:
-                return ''
+    const activeColumns = useMemo<ColumnDef<Subscription>[]>(() => [
+        {
+            accessorKey: "name",
+            header: "ชื่อบริการ",
+            cell: ({ row }) => (
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded bg-[#282828] flex items-center justify-center flex-shrink-0 group-hover:shadow-play transition-all">
+                        <CreditCard className="w-4 h-4 text-[#b3b3b3] group-hover:text-primary transition-colors" />
+                    </div>
+                    <span className="font-bold text-white group-hover:text-primary transition-colors">{row.original.name}</span>
+                </div>
+            )
+        },
+        {
+            accessorKey: "type",
+            header: "ประเภท",
+            cell: ({ row }) => <span className="text-spotify-muted group-hover:text-white">{row.original.type}</span>
+        },
+        {
+            accessorKey: "price",
+            header: "ราคา",
+            cell: ({ row }) => <span className="font-bold text-white tabular-nums">฿{Number(row.original.price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
+        },
+        {
+            accessorKey: "billing_cycle",
+            header: "รอบการชำระ",
+            cell: ({ row }) => <span className="text-spotify-muted">{billingCycleLabels[row.original.billing_cycle]}</span>
+        },
+        {
+            accessorKey: "payment_method",
+            header: "วิธีชำระเงิน",
+            cell: ({ row }) => <span className="text-spotify-muted">{row.original.payment_method || "-"}</span>
+        },
+        {
+            accessorKey: "start_date",
+            header: "วันเริ่ม",
+            cell: ({ row }) => <span className="text-spotify-muted">{row.original.start_date ? format(new Date(row.original.start_date), "d MMM yyyy") : "-"}</span>
+        },
+        {
+            accessorKey: "next_billing_date",
+            header: "วันครบ",
+            cell: ({ row }) => (
+                <span className={cn("tabular-nums font-bold", getDueDateWarning(row.original.next_billing_date) || "text-spotify-muted")}>
+                    {format(new Date(row.original.next_billing_date), "d MMM yyyy")}
+                </span>
+            )
+        },
+        {
+            accessorKey: "status",
+            header: "สถานะ",
+            cell: ({ row }) => (
+                <Badge className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider", getStatusBadgeClass(row.original.status))}>
+                    {statusLabels[row.original.status]}
+                </Badge>
+            )
+        },
+        {
+            id: "actions",
+            header: () => <div className="text-right">จัดการ</div>,
+            cell: ({ row }) => (
+                <div className="flex justify-end gap-1 transition-opacity">
+                    <SubscriptionDialog
+                        subscription={row.original}
+                        onSuccess={fetchSubscriptions}
+                        trigger={
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#b3b3b3] hover:text-white" title="แก้ไข">
+                                <Edit className="h-4 w-4" />
+                            </Button>
+                        }
+                    />
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-[#b3b3b3] hover:text-primary"
+                        title="ต่ออายุ"
+                        onClick={() => setRenewSub(row.original)}
+                    >
+                        <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-[#b3b3b3] hover:text-destructive"
+                        title="ลบ"
+                        onClick={() => setDeleteSubId(row.original.id)}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            )
         }
-    }
+    ], [fetchSubscriptions])
+
+    const historyColumns = useMemo<ColumnDef<Subscription>[]>(() => [
+        {
+            accessorKey: "name",
+            header: "ชื่อบริการ",
+            cell: ({ row }) => <span className="font-bold text-white">{row.original.name}</span>
+        },
+        {
+            accessorKey: "type",
+            header: "ประเภท",
+            cell: ({ row }) => <span className="text-spotify-muted">{row.original.type}</span>
+        },
+        {
+            accessorKey: "price",
+            header: "ราคา",
+            cell: ({ row }) => <span className="tabular-nums">฿{Number(row.original.price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
+        },
+        {
+            accessorKey: "payment_method",
+            header: "วิธีชำระเงิน",
+            cell: ({ row }) => <span className="text-spotify-muted">{row.original.payment_method || "-"}</span>
+        },
+        {
+            accessorKey: "start_date",
+            header: "วันเริ่ม",
+            cell: ({ row }) => <span className="text-spotify-muted">{row.original.start_date ? format(new Date(row.original.start_date), "d MMM yyyy") : "-"}</span>
+        },
+        {
+            accessorKey: "next_billing_date",
+            header: "วันครบ",
+            cell: ({ row }) => <span className="text-spotify-muted">{format(new Date(row.original.next_billing_date), "d MMM yyyy")}</span>
+        },
+        {
+            accessorKey: "status",
+            header: "สถานะ",
+            cell: ({ row }) => (
+                <Badge className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider", getStatusBadgeClass(row.original.status))}>
+                    {row.original.status === 'completed' ? (
+                        <><CheckCircle className="h-3 w-3 mr-1" /> {statusLabels[row.original.status]}</>
+                    ) : (
+                        statusLabels[row.original.status]
+                    )}
+                </Badge>
+            )
+        }
+    ], [])
 
     const getDueDateWarning = (nextBillingDate: string) => {
         const today = new Date()
@@ -200,9 +345,9 @@ export function SubscriptionManager() {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
         if (diffDays <= 7) {
-            return 'text-red-500 font-semibold'
+            return 'text-[#f3727f] font-bold'
         } else if (diffDays <= 14) {
-            return 'text-yellow-500 font-semibold'
+            return 'text-[#ffa42b] font-bold'
         }
         return ''
     }
@@ -213,169 +358,64 @@ export function SubscriptionManager() {
 
     return (
         <>
-            <div className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Subscriptions ที่ใช้งาน</CardTitle>
-                            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <div className="space-y-8">
+                <div className="grid gap-6 md:grid-cols-3">
+                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
+                            <CardTitle className="text-spotify-label">Subscriptions ที่ใช้งาน</CardTitle>
+                            <CreditCard className="h-4 w-4 text-[#b3b3b3] group-hover:text-primary transition-colors" />
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{activeSubscriptions.length}</div>
-                            <p className="text-xs text-muted-foreground">
-                                รายการที่กำลัง active
-                            </p>
+                        <CardContent className="px-4 pb-4">
+                            <div className="text-3xl font-bold text-white">{activeSubscriptions.length}</div>
+                            <p className="text-spotify-muted mt-1">รายการที่กำลัง active</p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">ค่าใช้จ่ายรายเดือน</CardTitle>
-                            <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
+                            <CardTitle className="text-spotify-label">ค่าใช้จ่ายรายเดือน</CardTitle>
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <span className="text-xs font-bold">฿</span>
+                            </div>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-[#39FF14]">฿{totalMonthlyCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                            <p className="text-xs text-muted-foreground">
-                                ประมาณการต่อเดือน
-                            </p>
+                        <CardContent className="px-4 pb-4">
+                            <div className="text-3xl font-bold text-primary">฿{totalMonthlyCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <p className="text-spotify-muted mt-1">ประมาณการต่อเดือน</p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">ค่าใช้จ่ายที่ผ่านไปแล้ว</CardTitle>
-                            <History className="h-4 w-4 text-muted-foreground" />
+                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
+                            <CardTitle className="text-spotify-label">ค่าใช้จ่ายที่ผ่านไปแล้ว</CardTitle>
+                            <History className="h-4 w-4 text-[#b3b3b3] group-hover:text-white transition-colors" />
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-[#8C8C8C]">฿{totalPastCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                            <p className="text-xs text-muted-foreground">
-                                จาก {historySubscriptions.length} รายการที่จบไปแล้ว
-                            </p>
+                        <CardContent className="px-4 pb-4">
+                            <div className="text-3xl font-bold text-[#b3b3b3]">฿{totalPastCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <p className="text-spotify-muted mt-1">จาก {historySubscriptions.length} รายการที่จบไปแล้ว</p>
                         </CardContent>
                     </Card>
                 </div>
 
-                <div className="flex justify-end items-center gap-2">
+                <div className="flex justify-end items-center gap-3">
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => setHistoryOpen(true)}
-                        className="gap-2"
+                        className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
                     >
-                        <History className="h-4 w-4" />
+                        <History className="h-4 w-4 mr-2" />
                         ประวัติ
                     </Button>
                     <SubscriptionDialog onSuccess={fetchSubscriptions} />
                 </div>
 
-                {/* Active Subscriptions Table */}
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>ชื่อบริการ</TableHead>
-                                <TableHead>ประเภท</TableHead>
-                                <TableHead>ราคา</TableHead>
-                                <TableHead>รอบการชำระ</TableHead>
-                                <TableHead>วิธีชำระเงิน</TableHead>
-                                <TableHead>วันเริ่ม</TableHead>
-                                <TableHead>วันครบ</TableHead>
-                                <TableHead>สถานะ</TableHead>
-                                <TableHead className="text-right">จัดการ</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedActive.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={9} className="h-24 text-center">
-                                        ยังไม่มี subscription ที่ใช้งาน
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                paginatedActive.map((sub) => (
-                                    <TableRow key={sub.id}>
-                                        <TableCell className="font-medium">{sub.name}</TableCell>
-                                        <TableCell>{sub.type}</TableCell>
-                                        <TableCell>฿{Number(sub.price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</TableCell>
-                                        <TableCell>{billingCycleLabels[sub.billing_cycle]}</TableCell>
-                                        <TableCell>{sub.payment_method || "-"}</TableCell>
-                                        <TableCell>
-                                            {sub.start_date ? format(new Date(sub.start_date), "d MMM yyyy") : "-"}
-                                        </TableCell>
-                                        <TableCell className={getDueDateWarning(sub.next_billing_date)}>
-                                            {format(new Date(sub.next_billing_date), "d MMM yyyy")}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge className={getStatusBadgeClass(sub.status)}>
-                                                {statusLabels[sub.status]}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-1">
-                                                {/* Edit */}
-                                                <SubscriptionDialog
-                                                    subscription={sub}
-                                                    onSuccess={fetchSubscriptions}
-                                                    trigger={
-                                                        <Button variant="ghost" size="icon" title="แก้ไข">
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                    }
-                                                />
-
-                                                {/* Renew */}
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-green-500 hover:text-green-400"
-                                                    title="ต่ออายุ"
-                                                    onClick={() => setRenewSub(sub)}
-                                                >
-                                                    <RefreshCw className="h-4 w-4" />
-                                                </Button>
-
-                                                {/* Delete */}
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive hover:text-destructive/80"
-                                                    title="ลบ"
-                                                    onClick={() => setDeleteSubId(sub.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {/* Pagination for main table */}
-                {totalMainPages > 1 && (
-                    <div className="flex items-center justify-between px-2">
-                        <div className="text-sm text-muted-foreground">
-                            หน้า {mainPage} จาก {totalMainPages} ({activeSubscriptions.length} รายการ)
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setMainPage(p => Math.max(1, p - 1))}
-                                disabled={mainPage === 1}
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setMainPage(p => Math.min(totalMainPages, p + 1))}
-                                disabled={mainPage === totalMainPages}
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
+                <ReusableDataTable
+                    columns={activeColumns}
+                    data={activeSubscriptions}
+                    loading={loading}
+                    page={mainPage}
+                    pageSize={mainPageSize}
+                    onPageChange={setMainPage}
+                    onPageSizeChange={setMainPageSize}
+                    manualPagination={false}
+                />
 
                 {/* History Modal */}
                 <Modal
@@ -388,88 +428,25 @@ export function SubscriptionManager() {
                     showSaveButton={false}
                     showCancelButton={false}
                     footer={
-                        <div className="flex items-center justify-between w-full">
-                            {totalHistoryPages > 1 ? (
-                                <>
-                                    <div className="text-sm text-muted-foreground">
-                                        หน้า {historyPage} จาก {totalHistoryPages}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
-                                            disabled={historyPage === 1}
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setHistoryPage(p => Math.min(totalHistoryPages, p + 1))}
-                                            disabled={historyPage === totalHistoryPages}
-                                        >
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="outline" onClick={() => setHistoryOpen(false)}>
-                                            ปิด
-                                        </Button>
-                                    </div>
-                                </>
-                            ) : (
-                                <Button variant="outline" onClick={() => setHistoryOpen(false)} className="ml-auto">
-                                    ปิด
-                                </Button>
-                            )}
+                        <div className="flex justify-end w-full">
+                            <Button variant="ghost" onClick={() => setHistoryOpen(false)} className="btn-pill bg-white text-black hover:bg-white/90">
+                                ปิดหน้าต่าง
+                            </Button>
                         </div>
                     }
                 >
-                    {historySubscriptions.length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                            ยังไม่มีประวัติ
-                        </div>
-                    ) : (
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>ชื่อบริการ</TableHead>
-                                        <TableHead>ประเภท</TableHead>
-                                        <TableHead>ราคา</TableHead>
-                                        <TableHead>วิธีชำระเงิน</TableHead>
-                                        <TableHead>วันเริ่ม</TableHead>
-                                        <TableHead>วันครบ</TableHead>
-                                        <TableHead>สถานะ</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {paginatedHistory.map((sub) => (
-                                        <TableRow key={sub.id}>
-                                            <TableCell className="font-medium">{sub.name}</TableCell>
-                                            <TableCell>{sub.type}</TableCell>
-                                            <TableCell>฿{Number(sub.price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</TableCell>
-                                            <TableCell>{sub.payment_method || "-"}</TableCell>
-                                            <TableCell>
-                                                {sub.start_date ? format(new Date(sub.start_date), "d MMM yyyy") : "-"}
-                                            </TableCell>
-                                            <TableCell>
-                                                {format(new Date(sub.next_billing_date), "d MMM yyyy")}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge className={getStatusBadgeClass(sub.status)}>
-                                                    {sub.status === 'completed' ? (
-                                                        <><CheckCircle className="h-3 w-3 mr-1" /> {statusLabels[sub.status]}</>
-                                                    ) : (
-                                                        statusLabels[sub.status]
-                                                    )}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
+                    <div className="space-y-4">
+                        <ReusableDataTable
+                            columns={historyColumns}
+                            data={historySubscriptions}
+                            loading={loading}
+                            page={historyPage}
+                            pageSize={historyPageSize}
+                            onPageChange={setHistoryPage}
+                            onPageSizeChange={setHistoryPageSize}
+                            manualPagination={false}
+                        />
+                    </div>
                 </Modal>
             </div>
 

@@ -25,13 +25,33 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { th } from "date-fns/locale"
 
-export default function SettingsPage() {
+import { ReusableDataTable } from "@/components/ui/reusable-data-table"
+import { type ColumnDef } from "@tanstack/react-table"
+import { useMemo } from "react"
+
+export default function SubscriptionsPage() {
   const { isLoading: isSettingsLoading } = useSettings()
   const [profile, setProfile] = useState<any>(null)
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   useEffect(() => {
     getProfile().then(setProfile)
   }, [])
+
+  const columns = useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: "symbol",
+      header: "Coin",
+      cell: ({ row }) => <span className="font-bold text-white uppercase">{row.original.symbol}</span>
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => <span className="text-spotify-muted">{row.original.name}</span>
+    }
+  ], [])
 
   if (isSettingsLoading || !profile) {
     return <ModernPageLoading />
@@ -42,36 +62,37 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-8 space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-        <p className="text-muted-foreground">Manage your application settings and preferences</p>
+        <h2 className="text-spotify-title">Settings</h2>
+        <p className="text-spotify-muted mt-2">Manage your application settings and preferences</p>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 bg-card border border-border">
-          <TabsTrigger value="profile" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <User className="h-4 w-4" />
-            <span>My Profile</span>
-          </TabsTrigger>
-          <TabsTrigger value="page" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Settings className="h-4 w-4" />
-            <span>Page</span>
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="profile" className="space-y-8">
+        <div className="sticky top-0 bg-background/80 backdrop-blur-md z-20 pt-2 pb-4">
+          <TabsList className="flex w-fit bg-transparent p-0 gap-2 border-none">
+            <TabsTrigger value="profile" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-6 py-2 h-auto transition-all duration-300">
+              <User className="h-4 w-4 mr-2" />
+              My Profile
+            </TabsTrigger>
+            <TabsTrigger value="page" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-6 py-2 h-auto transition-all duration-300">
+              <Settings className="h-4 w-4 mr-2" />
+              Page
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="profile" className="space-y-6">
+        <TabsContent value="profile" className="space-y-8 mt-0">
           <ProfileSettings initialProfile={profile} />
         </TabsContent>
 
-        <TabsContent value="page" className="space-y-6">
+        <TabsContent value="page" className="space-y-8 mt-0">
           <CoinSelectionTable onSave={handleSave} saveButtonText="บันทึก" />
         </TabsContent>
       </Tabs>
     </div>
   )
 }
-
 
 function ProfileSettings({ initialProfile }: { initialProfile: any }) {
   const [isLoading, setIsLoading] = useState(false)
@@ -80,7 +101,6 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialProfile?.avatar_url)
 
   useEffect(() => {
-    // Sync if needed, but usually initialProfile is enough
     setProfile(initialProfile)
     setPreviewUrl(initialProfile?.avatar_url)
   }, [initialProfile])
@@ -135,70 +155,62 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
 
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Left column: Substantial Profile Summary - Matching Height */}
       <div className="lg:col-span-4">
-        <Card className="bg-card/90 border-border/50 overflow-hidden relative shadow-none h-full flex flex-col group">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary via-primary/80 to-primary/50" />
-
-          <CardContent className="p-8 flex flex-col items-center text-center relative z-10 flex-1 justify-center">
-            <div className="relative mb-6">
-              <div className="h-40 w-40 rounded-full p-1.5 bg-gradient-to-br from-primary/40 via-accent/20 to-transparent relative">
-                <div className="h-full w-full rounded-full overflow-hidden border-4 border-background bg-muted relative">
+        <Card className="card-spotify border border-white/5 shadow-heavy bg-[#181818] overflow-hidden relative h-full flex flex-col group">
+          <CardContent className="p-10 flex flex-col items-center text-center relative z-10 flex-1 justify-center">
+            <div className="relative mb-8">
+              <div className="h-48 w-48 rounded-full p-1 bg-[#282828] relative shadow-play group-hover:scale-105 transition-transform duration-500">
+                <div className="h-full w-full rounded-full overflow-hidden border-4 border-[#181818] bg-black relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={previewUrl || "https://ui.shadcn.com/avatars/02.png"}
                     alt="Profile"
                     className="h-full w-full object-cover"
+                    referrerPolicy="no-referrer"
                   />
 
                   {/* Upload Overlay */}
                   <label htmlFor="avatar-upload" className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white">
-                    <Upload className="w-6 h-6 mb-1" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Change Photo</span>
+                    <Upload className="w-8 h-8 mb-2" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest">Change Photo</span>
                   </label>
                 </div>
               </div>
             </div>
 
-            <h3 className="text-2xl font-black gradient-text mb-2 tracking-tight">{profile.full_name || "New User"}</h3>
-            <p className="text-sm text-muted-foreground mb-6 font-medium">{profile.email}</p>
+            <h3 className="text-3xl font-black text-white mb-2 tracking-tighter">{profile.full_name || "New User"}</h3>
+            <p className="text-sm text-spotify-muted mb-8 font-bold uppercase tracking-widest">{profile.email}</p>
 
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-[0.2em] bg-primary/10 text-primary border border-primary/20">
-              <Shield className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.2em] bg-primary text-black shadow-play">
+              <Shield className="w-4 h-4" />
               {profile.role || "User"}
             </div>
-
-            <Link href="/dashboard/memories" className="mt-4 opacity-5 hover:opacity-100 transition-opacity duration-300">
-              <BookHeart className="w-3 h-3 text-muted-foreground" />
-            </Link>
           </CardContent>
 
-          <div className="px-8 py-5 bg-muted/30 border-t border-border/40 flex justify-between items-center text-[11px] mt-auto">
-            <span className="text-muted-foreground uppercase font-bold tracking-widest">Account Status</span>
+          <div className="px-10 py-6 bg-black/20 border-t border-white/5 flex justify-between items-center text-[11px]">
+            <span className="text-spotify-muted uppercase font-black tracking-widest">Status</span>
             <span className="text-primary font-black flex items-center gap-2">
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(57,255,20,0.5)]" />
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-play" />
               ACTIVE
             </span>
           </div>
         </Card>
-
       </div>
 
       {/* Right column: Form Sections (Stacked & Compact) */}
-      <div className="lg:col-span-8 space-y-4">
+      <div className="lg:col-span-8 space-y-6">
         {/* Personal Information */}
-        <Card className="border-border/50 bg-card/95 shadow-none relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-primary via-accent to-primary" />
-
-          <CardHeader className="p-4 px-6 flex flex-row items-center justify-between space-y-0">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                <User className="w-4 h-4" />
+        <Card className="card-spotify border border-white/5 bg-[#181818]/60 shadow-none relative overflow-hidden group backdrop-blur-md">
+          <CardHeader className="p-6 flex flex-row items-center justify-between space-y-0 border-b border-white/5 bg-white/[0.02]">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-play">
+                <User className="w-5 h-5" />
               </div>
               <div>
-                <CardTitle className="text-base font-black gradient-text tracking-tight uppercase">Personal Information</CardTitle>
-                <CardDescription className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-wider">Public identity details</CardDescription>
+                <CardTitle className="text-spotify-label text-white">Personal Information</CardTitle>
+                <CardDescription className="text-[10px] font-bold text-spotify-muted uppercase tracking-widest mt-0.5">Public identity details</CardDescription>
               </div>
             </div>
 
@@ -206,18 +218,17 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
               type="submit"
               form="personal-info-form"
               disabled={isLoading}
-              className="h-10 px-8 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest text-[11px] shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all rounded-lg"
+              className="btn-pill-primary h-10 px-8"
             >
               {isLoading ? (
-                <div className="h-3.5 w-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
               ) : (
                 "บันทึก"
               )}
             </Button>
           </CardHeader>
-          <Separator className="opacity-20" />
-          <CardContent className="p-6">
-            <form id="personal-info-form" onSubmit={handleSubmit} className="space-y-6">
+          <CardContent className="p-8">
+            <form id="personal-info-form" onSubmit={handleSubmit} className="space-y-8">
               <input type="hidden" name="avatarUrl" value={profile.avatar_url || ""} />
               <input
                 id="avatar-upload"
@@ -228,32 +239,32 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
                 onChange={handleFileChange}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1.5 group/field">
-                  <Label htmlFor="email" className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 flex items-center gap-2 group-focus-within/field:text-primary transition-colors">
-                    <Bell className="w-3 h-3 text-primary/40" /> Email
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2.5">
+                  <Label htmlFor="email" className="text-spotify-label">
+                    Email Address
                   </Label>
                   <div className="relative">
                     <Input
                       id="email"
                       value={profile.email || ""}
                       disabled
-                      className="h-10 text-xs bg-muted/30 border-border/40 text-muted-foreground/50 font-bold pr-10 border-dashed"
+                      className="spotify-input bg-black/40 text-spotify-muted border-dashed h-12"
                     />
-                    <Lock className="absolute right-3.5 top-3 h-3.5 w-3.5 text-muted-foreground/20" />
+                    <Lock className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/10" />
                   </div>
                 </div>
 
-                <div className="space-y-1.5 group/field">
-                  <Label htmlFor="fullName" className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 flex items-center gap-2 group-focus-within/field:text-primary transition-colors">
-                    <User className="w-3 h-3 text-primary/40" /> Full Name
+                <div className="space-y-2.5">
+                  <Label htmlFor="fullName" className="text-spotify-label">
+                    Full Name
                   </Label>
                   <Input
                     id="fullName"
                     name="fullName"
                     defaultValue={profile.full_name || ""}
                     placeholder="Enter your name"
-                    className="h-10 text-xs bg-background/40 border-border/80 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-bold px-4"
+                    className="spotify-input h-12"
                   />
                 </div>
               </div>
@@ -262,17 +273,15 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
         </Card>
 
         {/* Security / Password */}
-        <Card className="border-border/50 bg-card/95 shadow-none relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-accent via-primary to-accent" />
-
-          <CardHeader className="p-4 px-6 flex flex-row items-center justify-between space-y-0">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent border border-accent/20">
-                <Lock className="w-4 h-4" />
+        <Card className="card-spotify border border-white/5 bg-[#181818]/60 shadow-none relative overflow-hidden group backdrop-blur-md">
+          <CardHeader className="p-6 flex flex-row items-center justify-between space-y-0 border-b border-white/5 bg-white/[0.02]">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-[#f3727f]/10 flex items-center justify-center text-[#f3727f] shadow-play">
+                <Shield className="w-5 h-5" />
               </div>
               <div>
-                <CardTitle className="text-base font-black gradient-text tracking-tight uppercase">Account Security</CardTitle>
-                <CardDescription className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-wider">Access credentials</CardDescription>
+                <CardTitle className="text-spotify-label text-white">Account Security</CardTitle>
+                <CardDescription className="text-[10px] font-bold text-spotify-muted uppercase tracking-widest mt-0.5">Access credentials</CardDescription>
               </div>
             </div>
 
@@ -280,42 +289,41 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
               type="submit"
               form="password-form"
               disabled={isPasswordLoading}
-              className="h-10 px-8 bg-accent hover:bg-accent/90 text-black font-black uppercase tracking-widest text-[11px] shadow-lg shadow-accent/20 hover:shadow-accent/40 hover:-translate-y-0.5 active:translate-y-0 transition-all rounded-lg"
+              className="btn-pill h-10 px-8 bg-[#f3727f] text-white hover:bg-[#f3727f]/90"
             >
               {isPasswordLoading ? (
-                <div className="h-3.5 w-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                "บันทึก"
+                "อัปเดตรหัสผ่าน"
               )}
             </Button>
           </CardHeader>
-          <Separator className="opacity-20" />
-          <CardContent className="p-6">
-            <form id="password-form" onSubmit={handlePasswordSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1.5 group/field">
-                  <Label htmlFor="newPassword" className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 flex items-center gap-2 group-focus-within/field:text-accent transition-colors">
-                    <Shield className="w-3 h-3 text-accent/40" /> New Password
+          <CardContent className="p-8">
+            <form id="password-form" onSubmit={handlePasswordSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2.5">
+                  <Label htmlFor="newPassword" className="text-spotify-label">
+                    New Password
                   </Label>
                   <Input
                     id="newPassword"
                     name="newPassword"
                     type="password"
                     placeholder="••••••••"
-                    className="h-10 text-xs bg-background/40 border-border/80 focus:border-accent focus:ring-4 focus:ring-accent/5 transition-all font-bold px-4"
+                    className="spotify-input h-12"
                   />
                 </div>
 
-                <div className="space-y-1.5 group/field">
-                  <Label htmlFor="confirmPassword" className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 flex items-center gap-2 group-focus-within/field:text-accent transition-colors">
-                    <Lock className="w-3 h-3 text-accent/40" /> Confirm
+                <div className="space-y-2.5">
+                  <Label htmlFor="confirmPassword" className="text-spotify-label">
+                    Confirm Password
                   </Label>
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
                     type="password"
                     placeholder="••••••••"
-                    className="h-10 text-xs bg-background/40 border-border/80 focus:border-accent focus:ring-4 focus:ring-accent/5 transition-all font-bold px-4"
+                    className="spotify-input h-12"
                   />
                 </div>
               </div>

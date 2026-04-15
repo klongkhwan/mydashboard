@@ -4,48 +4,66 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Modern SaaS Dashboard - Dark Theme + Neon Green */
-  --background: #0D0F0D;
-  --foreground: #E5E5E5;
-  --card: #1A1C1A;
-  --card-foreground: #E5E5E5;
-  --popover: #1A1C1A;
-  --popover-foreground: #E5E5E5;
-  --primary: #39FF14;
-  --primary-foreground: #0D0F0D;
-  --secondary: #262826;
-  --secondary-foreground: #E5E5E5;
-  --muted: #262826;
-  --muted-foreground: #8C8C8C;
-  --accent: #10B981;
-  --accent-foreground: #E5E5E5;
-  --destructive: #ef4444;
+  /* Spotify Inspired Design System */
+  --background: #121212;
+  --foreground: #ffffff;
+  --card: #181818;
+  --card-foreground: #ffffff;
+  --popover: #1f1f1f;
+  --popover-foreground: #ffffff;
+  --primary: #1ed760;
+  --primary-foreground: #000000;
+  --secondary: #1f1f1f;
+  --secondary-foreground: #b3b3b3;
+  --muted: #1f1f1f;
+  --muted-foreground: #b3b3b3;
+  --accent: #1ed760;
+  --accent-foreground: #ffffff;
+  --destructive: #f3727f;
   --destructive-foreground: #ffffff;
-  --border: #262826;
-  --input: #1A1C1A;
-  --ring: #39FF14;
-  --chart-1: #39FF14;
-  --chart-2: #10B981;
-  --chart-3: #4ade80;
-  --chart-4: #3b82f6;
-  --chart-5: #f97316;
-  --radius: 0.75rem;
-  --sidebar: #0D0F0D;
-  --sidebar-foreground: #E5E5E5;
-  --sidebar-primary: #39FF14;
-  --sidebar-primary-foreground: #0D0F0D;
-  --sidebar-accent: #1A1C1A;
-  --sidebar-accent-foreground: #E5E5E5;
-  --sidebar-border: #262826;
-  --sidebar-ring: #39FF14;
+  --border: #252525;
+  --input: #1f1f1f;
+  --ring: #1ed760;
+  --chart-1: #1ed760;
+  --chart-2: #539df5;
+  --chart-3: #ffa42b;
+  --chart-4: #f3727f;
+  --chart-5: #b3b3b3;
+  --radius: 0.5rem;
+  --sidebar: #121212;
+  --sidebar-foreground: #b3b3b3;
+  --sidebar-primary: #1ed760;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #1f1f1f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #121212;
+  --sidebar-ring: #1ed760;
+
+  --text-base: #ffffff;
+  --text-silver: #b3b3b3;
+  --text-near-white: #cbcbcb;
+  --text-negative: #f3727f;
+  --text-warning: #ffa42b;
+  --text-announcement: #539df5;
+
+  --shadow-heavy: rgba(0, 0, 0, 0.5) 0px 8px 24px;
+  --shadow-medium: rgba(0, 0, 0, 0.3) 0px 8px 8px;
+  --shadow-inset: rgb(18, 18, 18) 0px 1px 0px, rgb(124, 124, 124) 0px 0px 0px 1px inset;
+  --shadow-play: 0 8px 16px rgba(0,0,0,0.3);
 }
 
+@theme {
+  --shadow-play: 0 8px 16px rgba(0,0,0,0.3);
+  --shadow-inset: rgb(18, 18, 18) 0px 1px 0px, rgb(124, 124, 124) 0px 0px 0px 1px inset;
+}
+
+
 .dark {
-  --background: #080A08;
-  --card: #0D0F0D;
-  --popover: #0D0F0D;
-  --muted: #1A1C1A;
-  --sidebar: #080A08;
+  --background: #121212;
+  --card: #181818;
+  --popover: #1f1f1f;
+  --muted: #1f1f1f;
+  --sidebar: #121212;
 }
 
 @theme inline {
@@ -133,6 +151,71 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  .card-spotify {
+    @apply bg-card rounded-lg transition-colors duration-200;
+    box-shadow: var(--shadow-medium);
+  }
+
+  .card-spotify:hover {
+    @apply bg-muted;
+  }
+
+  .btn-pill {
+    @apply bg-[#1f1f1f] text-foreground px-4 py-2 rounded-full font-bold text-[13px] uppercase tracking-wider transition-all duration-200 active:scale-95;
+    letter-spacing: 1.5px;
+  }
+
+  .btn-pill:hover {
+    @apply bg-[#2a2a2a];
+    transform: scale(1.04);
+  }
+
+  .btn-pill-primary {
+    @apply bg-primary text-black px-8 py-3 rounded-full font-bold text-[14px] uppercase tracking-wider transition-all duration-200 active:scale-95 shadow-lg;
+    letter-spacing: 1.5px;
+  }
+
+  .btn-pill-primary:hover {
+    @apply bg-[#1fdf64];
+    transform: scale(1.04);
+  }
+
+  .btn-circle-play {
+    @apply bg-primary text-black p-3 rounded-full transition-all duration-200 flex items-center justify-center active:scale-90 shadow-play;
+  }
+
+  .btn-circle-play:hover {
+    @apply bg-[#1fdf64];
+    transform: scale(1.06);
+  }
+
+  .spotify-input {
+    @apply bg-[#121212] text-foreground px-4 py-3 rounded-full text-sm font-medium transition-all;
+    box-shadow: var(--shadow-inset);
+  }
+
+  .spotify-input:focus {
+    @apply outline-none;
+    box-shadow: 0 0 0 1px #ffffff inset;
+  }
+
+  .text-spotify-muted {
+    @apply text-[#b3b3b3] font-normal text-sm;
+    letter-spacing: -0.01em;
+  }
+
+  .text-spotify-title {
+    @apply text-white font-bold text-3xl tracking-tighter;
+  }
+
+  .text-spotify-label {
+    @apply text-[11px] font-bold uppercase tracking-[0.1em] text-[#b3b3b3];
+  }
+
+  .glow-spotify {
+    box-shadow: 0 0 20px rgba(30, 215, 96, 0.4);
   }
 }
 

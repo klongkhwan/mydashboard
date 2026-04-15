@@ -160,20 +160,20 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+      <div className="flex items-center justify-between p-6 mb-2">
         {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center">
-              <LayoutDashboard className="w-4 h-4 text-sidebar-primary-foreground" />
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-play transition-transform group-hover:scale-105">
+              <LayoutDashboard className="w-4 h-4 text-black" />
             </div>
-            <span className="font-semibold text-sidebar-foreground">Dashboard</span>
+            <span className="text-spotify-label text-white tracking-[0.2em]">AllBoard</span>
           </div>
         )}
-        <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0 hover:bg-sidebar-accent">
+        <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0 hover:bg-[#282828] rounded-full transition-all text-[#b3b3b3] hover:text-white">
           {isCollapsed ? (
-            <ChevronRight className="w-4 h-4 text-sidebar-foreground" />
+            <ChevronRight className="w-5 h-5" />
           ) : (
-            <ChevronLeft className="w-4 h-4 text-sidebar-foreground" />
+            <ChevronLeft className="w-5 h-5" />
           )}
         </Button>
       </div>
@@ -247,20 +247,25 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href!))
 
             return (
-              <div key={item.href}>
+              <div key={item.href} className="px-2">
                 <Link href={item.href!}>
                   <Button
-                    variant={isActive ? "default" : "ghost"}
+                    variant="ghost"
                     className={cn(
-                      "w-full justify-start gap-3 h-10",
-                      isCollapsed && "justify-center px-2",
+                      "w-full justify-start gap-4 h-11 px-3 transition-all duration-200 group rounded-md",
+                      isCollapsed && "justify-center px-0",
                       isActive
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        ? "text-white bg-[#282828]"
+                        : "text-[#b3b3b3] hover:text-white hover:bg-transparent",
                     )}
                   >
-                    <item.icon className="w-4 h-4 flex-shrink-0" />
-                    {!isCollapsed && <span className="text-sm font-medium">{item.title}</span>}
+                    <item.icon className={cn(
+                      "w-6 h-6 flex-shrink-0 transition-colors",
+                      isActive ? "text-primary" : "text-[#b3b3b3] group-hover:text-white"
+                    )} />
+                    {!isCollapsed && (
+                      <span className="text-sm font-bold tracking-tight">{item.title}</span>
+                    )}
                   </Button>
                 </Link>
               </div>
@@ -270,34 +275,31 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* Footer / User Profile */}
-      <div className="p-2 border-t border-sidebar-border space-y-1">
-
+      <div className="mt-auto p-4 space-y-2 bg-gradient-to-t from-black/40 to-transparent">
         {/* User Profile (Links to Settings) */}
         <Link href="/dashboard/settings" className="block">
           <Button
             variant="ghost"
             className={cn(
-              "w-full justify-start gap-3 h-14 hover:bg-sidebar-accent group relative",
-              isCollapsed && "justify-center h-14 px-0"
+              "w-full justify-start gap-3 h-14 hover:bg-[#282828] group transition-all rounded-md px-3",
+              isCollapsed && "justify-center px-0"
             )}
           >
-            <Avatar className="h-8 w-8 border border-border">
+            <Avatar className="h-8 w-8 border-none ring-2 ring-white/5 group-hover:ring-white/20 transition-all">
               <AvatarImage src={userProfile?.avatar_url || ""} />
-              <AvatarFallback>{userProfile?.full_name?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
+              <AvatarFallback className="bg-[#282828] text-white text-xs font-bold">{userProfile?.full_name?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
 
             {!isCollapsed && (
               <div className="flex flex-col items-start text-left overflow-hidden">
-                <span className="text-sm font-medium text-sidebar-foreground truncate w-32">
+                <span className="text-sm font-bold text-white truncate w-32 group-hover:text-primary transition-colors">
                   {userProfile?.full_name}
                 </span>
-                <span className="text-xs text-muted-foreground truncate w-32">
+                <span className="text-spotify-label text-[#b3b3b3] truncate w-32">
                   {userProfile?.email}
                 </span>
               </div>
             )}
-
-            {!isCollapsed && <Settings className="ml-auto w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />}
           </Button>
         </Link>
 
@@ -306,15 +308,14 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            "w-full justify-start gap-3 h-10 text-destructive hover:text-destructive hover:bg-destructive/10",
-            isCollapsed && "justify-center px-2",
+            "w-full justify-start gap-3 h-10 text-[#b3b3b3] hover:text-destructive hover:bg-destructive/10 rounded-md px-3 transition-all",
+            isCollapsed && "justify-center px-0",
           )}
           title="Logout"
         >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          {!isCollapsed && <span className="text-sm font-medium">Logout</span>}
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {!isCollapsed && <span className="text-sm font-bold tracking-tight">Logout</span>}
         </Button>
-
       </div>
     </div>
   )

@@ -57,43 +57,43 @@ export default function MemoriesPage() {
 
     if (!isUnlocked) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <Card className="w-full max-w-sm">
-                    <CardHeader className="text-center">
-                        <div className="mx-auto mb-4 p-3 rounded-full bg-primary/10 w-fit">
+            <div className="flex items-center justify-center min-h-[70vh]">
+                <Card className="w-full max-w-sm card-spotify border border-white/5 shadow-heavy bg-[#181818]">
+                    <CardHeader className="text-center pb-2">
+                        <div className="mx-auto mb-6 p-4 rounded-full bg-primary/10 w-fit shadow-play">
                             <Lock className="h-8 w-8 text-primary" />
                         </div>
-                        <CardTitle>ต้องใช้รหัสผ่าน</CardTitle>
-                        <CardDescription>
+                        <CardTitle className="text-white font-black tracking-tighter text-2xl">ต้องการรหัสผ่าน</CardTitle>
+                        <CardDescription className="text-spotify-muted mt-2">
                             กรุณากรอกรหัสผ่านเพื่อเข้าถึง Memories
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-6 pt-4">
                         <div className="relative">
                             <Input
                                 type={showPassword ? "text" : "password"}
-                                placeholder="กรอกรหัสผ่าน"
+                                placeholder="Password"
                                 value={password}
                                 onChange={(e) => {
                                     setPassword(e.target.value)
                                     setError("")
                                 }}
                                 onKeyDown={handleKeyDown}
-                                className="pr-10"
+                                className="spotify-input pr-12 h-12"
                                 autoFocus
                             />
                             <button
                                 type="button"
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white transition-colors"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
-                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                         </div>
                         {error && (
-                            <p className="text-sm text-destructive text-center">{error}</p>
+                            <p className="text-xs font-bold text-[#f3727f] text-center uppercase tracking-wider">{error}</p>
                         )}
-                        <Button onClick={handleUnlock} className="w-full">
+                        <Button onClick={handleUnlock} className="btn-pill-primary w-full h-12">
                             ปลดล็อก
                         </Button>
                     </CardContent>
@@ -103,9 +103,10 @@ export default function MemoriesPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">บันทึกความทรงจำ</h1>
+        <div className="p-8 space-y-8">
+            <div>
+                <h1 className="text-spotify-title">Memories</h1>
+                <p className="text-spotify-muted mt-2">บันทึกความทรงจำและเรื่องราวสำคัญของคุณ</p>
             </div>
             <MemoryLogManager />
         </div>

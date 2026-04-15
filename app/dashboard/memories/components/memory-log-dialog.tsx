@@ -247,30 +247,30 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 {trigger || (
-                    <Button className="gap-2">
-                        <Plus className="h-4 w-4" />
+                    <Button className="btn-pill-primary">
+                        <Plus className="h-4 w-4 mr-2" />
                         เพิ่มความทรงจำ
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-[#181818] border-none shadow-heavy text-white">
                 <DialogHeader>
-                    <DialogTitle>{isEdit ? "แก้ไขความทรงจำ" : "เพิ่มความทรงจำใหม่"}</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-xl font-bold">{isEdit ? "แก้ไขความทรงจำ" : "เพิ่มความทรงจำใหม่"}</DialogTitle>
+                    <DialogDescription className="text-spotify-muted">
                         {isEdit ? "แก้ไขรายละเอียดความทรงจำ" : "บันทึกความทรงจำพิเศษของคุณ"}
                     </DialogDescription>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
                         <FormField
                             control={form.control}
                             name="title"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>หัวข้อ *</FormLabel>
+                                    <FormLabel className="text-spotify-label">หัวข้อ *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="เช่น วันเกิดปีนี้" {...field} />
+                                        <Input placeholder="เช่น วันเกิดปีนี้" className="spotify-input" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -283,12 +283,14 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                 name="date"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>วันที่ *</FormLabel>
+                                        <FormLabel className="text-spotify-label">วันที่ *</FormLabel>
                                         <FormControl>
-                                            <DatePicker
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                            />
+                                            <div className="spotify-input flex items-center">
+                                                <DatePicker
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                />
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -300,9 +302,9 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                 name="location"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>สถานที่</FormLabel>
+                                        <FormLabel className="text-spotify-label">สถานที่</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="เช่น บ้าน, ที่ทำงาน" {...field} />
+                                            <Input placeholder="เช่น บ้าน, ที่ทำงาน" className="spotify-input" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -315,9 +317,9 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                             name="mood"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>อารมณ์/ความรู้สึก</FormLabel>
+                                    <FormLabel className="text-spotify-label">อารมณ์/ความรู้สึก</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="เช่น มีความสุขมาก! 🎉" {...field} />
+                                        <Input placeholder="เช่น มีความสุขมาก! 🎉" className="spotify-input" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -329,11 +331,12 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>รายละเอียด</FormLabel>
+                                    <FormLabel className="text-spotify-label">รายละเอียด</FormLabel>
                                     <FormControl>
                                         <Textarea
                                             placeholder="บันทึกเรื่องราวความทรงจำ..."
-                                            className="min-h-[100px]"
+                                            className="bg-[#121212] border-none rounded-xl p-4 font-medium text-white shadow-inset min-h-[120px] focus:ring-1 focus:ring-white/20"
+                                            style={{ resize: 'none' }}
                                             {...field}
                                         />
                                     </FormControl>
@@ -343,12 +346,12 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                         />
 
                         {/* Media Upload Section */}
-                        <div className="space-y-3">
-                            <FormLabel>รูปภาพ / วิดีโอ / เสียง</FormLabel>
+                        <div className="space-y-4">
+                            <FormLabel className="text-spotify-label">รูปภาพ / วิดีโอ / เสียง</FormLabel>
 
                             {/* Upload Area */}
                             <div
-                                className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary transition-colors"
+                                className="border-2 border-dashed border-white/5 rounded-xl p-8 text-center cursor-pointer hover:bg-white/5 hover:border-primary/50 transition-all group shadow-inset bg-[#121212]/50"
                                 onClick={() => fileInputRef.current?.click()}
                             >
                                 <input
@@ -360,35 +363,35 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                     onChange={handleFileSelect}
                                 />
                                 {uploadingPhotos ? (
-                                    <div className="flex items-center justify-center gap-2 py-2">
-                                        <Loader2 className="h-5 w-5 animate-spin" />
-                                        <span className="text-sm text-muted-foreground">กำลังอัปโหลด...</span>
+                                    <div className="flex flex-col items-center justify-center gap-3">
+                                        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                                        <span className="text-sm font-bold text-primary uppercase tracking-widest">Uploading...</span>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center gap-2 py-2">
-                                        <Upload className="h-8 w-8 text-muted-foreground" />
-                                        <span className="text-sm text-muted-foreground">
-                                            คลิกหรือลากไฟล์มาวางที่นี่
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                            รองรับ รูปภาพ, วิดีโอ, เสียง (สูงสุด 50MB)
-                                        </span>
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full bg-[#282828] flex items-center justify-center group-hover:scale-110 transition-transform">
+                                            <Upload className="h-6 w-6 text-[#b3b3b3] group-hover:text-primary transition-colors" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-bold text-white uppercase tracking-wider">เลือกไฟล์ หรือ ลากมาวาง</p>
+                                            <p className="text-[10px] font-bold text-[#b3b3b3] uppercase tracking-[0.1em]">
+                                                Support: Image, Video, Audio (Max 50MB)
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
 
                             {/* Pending Files Preview (New Log) */}
                             {pendingFiles.length > 0 && (
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-4 gap-3">
                                     {pendingFiles.map((file, index) => (
-                                        <div key={index} className="relative group">
-                                            <div className="aspect-square rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                                                {renderPreview(file)}
-                                            </div>
+                                        <div key={index} className="relative group aspect-square rounded-lg overflow-hidden bg-[#282828] shadow-heavy">
+                                            {renderPreview(file)}
                                             <button
                                                 type="button"
                                                 onClick={() => removePendingFile(index)}
-                                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-destructive text-white rounded-full p-1.5 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all z-20"
                                             >
                                                 <X className="h-3 w-3" />
                                             </button>
@@ -399,16 +402,14 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
 
                             {/* Existing Media (Edit Mode) */}
                             {photos.length > 0 && (
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-4 gap-3">
                                     {photos.map((photo) => (
-                                        <div key={photo.id} className="relative group">
-                                            <div className="aspect-square rounded-lg bg-muted overflow-hidden">
-                                                {renderExistingMedia(photo)}
-                                            </div>
+                                        <div key={photo.id} className="relative group aspect-square rounded-lg overflow-hidden bg-[#282828] shadow-heavy">
+                                            {renderExistingMedia(photo)}
                                             <button
                                                 type="button"
                                                 onClick={() => handleDeletePhoto(photo.id)}
-                                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-destructive text-white rounded-full p-1.5 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all z-20"
                                             >
                                                 <X className="h-3 w-3" />
                                             </button>
@@ -416,21 +417,14 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                     ))}
                                 </div>
                             )}
-
-                            {photos.length === 0 && pendingFiles.length === 0 && (
-                                <div className="text-sm text-muted-foreground text-center py-2">
-                                    <ImageIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                    ยังไม่มีไฟล์แนบ
-                                </div>
-                            )}
                         </div>
 
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                        <DialogFooter className="gap-3 pt-4 border-t border-white/5">
+                            <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-[#b3b3b3] hover:text-white">
                                 ยกเลิก
                             </Button>
-                            <Button type="submit" disabled={loading}>
-                                {loading ? "กำลังบันทึก..." : isEdit ? "บันทึก" : "เพิ่ม"}
+                            <Button type="submit" disabled={loading} className="btn-pill-primary min-w-[100px]">
+                                {loading ? "กำลังบันทึก..." : isEdit ? "บันทึก" : "เพิ่มความทรงจำ"}
                             </Button>
                         </DialogFooter>
                     </form>

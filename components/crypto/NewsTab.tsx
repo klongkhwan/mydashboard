@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { RefreshCw, ExternalLink, Clock, ChevronLeft, ChevronRight } from "lucide-react"
 import { ModernPageLoading } from "@/components/ui/modern-loader"
 
@@ -140,28 +141,23 @@ export default function NewsFlowPanel() {
   useEffect(() => { if (selectedId) fetchDetail(selectedId) }, [selectedId])
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* LEFT: list + pagination */}
-      <Card className="lg:col-span-5">
+      <Card className="lg:col-span-5 card-spotify border-none shadow-none bg-[#181818]/40 backdrop-blur-sm">
         <CardHeader
-          className="px-4"
-          style={{ height: HEADER_H }}
+          className="px-6 py-5"
         >
-          <div className="h-full flex items-center justify-between">
-            <CardTitle className="text-sm text-muted-foreground">
-              ฟีดข่าว (10 ต่อหน้า • สูงสุด 100 รายการ)
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-spotify-label">
+              ฟีดข่าว (100 รายการ)
             </CardTitle>
             <button
               onClick={() => setRefetchTick((x) => x + 1)}
-              className={`px-3 py-1 rounded-md border text-sm flex items-center gap-2 transition ${loading
-                ? "border-border text-muted-foreground"
-                : "border-border text-muted-foreground hover:border-primary hover:text-primary-foreground"
-                }`}
+              className="text-[#b3b3b3] hover:text-white transition-all p-2 hover:bg-white/10 rounded-full"
               title="Refresh"
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-              Refresh
             </button>
           </div>
         </CardHeader>
@@ -171,11 +167,16 @@ export default function NewsFlowPanel() {
           className="p-0 flex flex-col"
           style={{ height: CONTENT_H_LEFT }}
         >
-          <div className="divide-y divide-border flex-1 overflow-y-auto">
-            {loading && <div className="p-4"><ModernPageLoading text="กำลังโหลดรายการ…" /></div>}
-            {error && <div className="p-4 text-destructive">เกิดข้อผิดพลาด: {error}</div>}
+          <div className="divide-y divide-white/5 flex-1 overflow-y-auto spotify-scrollbar">
+            {loading && (
+              <div className="p-12 flex flex-col items-center justify-center gap-4">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="text-spotify-label animate-pulse">Fetching news...</p>
+              </div>
+            )}
+            {error && <div className="p-6 text-[#f3727f] text-sm font-bold text-center">{error}</div>}
             {!loading && !error && pageItems.length === 0 && (
-              <div className="p-4 text-muted-foreground">ไม่มีข่าวในหน้านี้</div>
+              <div className="p-12 text-center text-spotify-muted">ไม่มีข่าวในหน้านี้</div>
             )}
 
             {!loading && !error && pageItems.map((n) => {
@@ -184,21 +185,21 @@ export default function NewsFlowPanel() {
                 <button
                   key={n.id}
                   onClick={() => { setSelectedId(n.id) }}
-                  className={`w-full text-left px-4 py-3 hover:bg-primary/5 transition-all duration-200 ${active ? "bg-primary/10" : ""}`}
+                  className={`w-full text-left px-6 py-4 transition-all duration-200 group border-none outline-none ${active ? "bg-white/10" : "hover:bg-white/5"}`}
                 >
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className={`inline-block w-2 h-2 rounded-full ${urgencyDot(n.urgency)}`} />
-                    <span>{n.provider?.name || n.provider?.id}</span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
+                  <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-wider mb-1.5">
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${urgencyDot(n.urgency)}`} />
+                    <span className={active ? "text-primary" : "text-spotify-muted group-hover:text-white"}>{n.provider?.name || n.provider?.id}</span>
+                    <span className="text-white/10">•</span>
+                    <span className="flex items-center gap-1.5 text-spotify-muted group-hover:text-white transition-colors">
                       <Clock className="w-3 h-3" /> {timeAgo(n.published)}
                     </span>
                   </div>
-                  <div className="mt-1 text-sm text-card-foreground line-clamp-2">{n.title}</div>
+                  <div className={`text-sm font-bold line-clamp-2 transition-colors ${active ? "text-white" : "text-[#cbcbcb] group-hover:text-white"}`}>{n.title}</div>
                   {Array.isArray(n.relatedSymbols) && n.relatedSymbols.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {n.relatedSymbols.slice(0, 5).map((s, i) => (
-                        <Badge key={i} variant="secondary" className="text-[11px] px-2 py-0.5">
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {n.relatedSymbols.slice(0, 3).map((s, i) => (
+                        <Badge key={i} className="bg-[#282828] text-[#b3b3b3] group-hover:text-white border-none text-[10px] px-2 py-0.5 font-bold uppercase tracking-tighter">
                           {s.symbol}
                         </Badge>
                       ))}
@@ -210,80 +211,98 @@ export default function NewsFlowPanel() {
           </div>
 
           {/* pagination ติดก้น CardContent */}
-          <div className="shrink-0 flex items-center justify-between px-4 py-3 border-t border-border">
+          <div className="shrink-0 flex items-center justify-between px-6 py-4 border-t border-white/5 bg-black/20">
             <Pagination total={items.length} page={page} setPage={setPage} pageSize={PAGE_SIZE} />
           </div>
         </CardContent>
       </Card>
 
       {/* RIGHT: detail */}
-      <Card className="lg:col-span-7">
+      <Card className="lg:col-span-7 card-spotify border-none shadow-none bg-[#121212]/60 backdrop-blur-md">
         <CardHeader
-          className="px-4"
-          style={{ height: HEADER_H }}
+          className="px-6 py-5 border-b border-white/5"
         >
-          <div className="h-full flex items-center">
-            <CardTitle className="text-sm text-muted-foreground">รายละเอียดข่าว</CardTitle>
+          <div className="flex items-center">
+            <CardTitle className="text-spotify-label">รายละเอียดข่าว</CardTitle>
           </div>
         </CardHeader>
 
         {/* lock ความสูง CardContent + ทำให้เนื้อหาเลื่อนภายใน */}
         <CardContent
-          className="p-6 overflow-y-auto"
+          className="p-8 overflow-y-auto spotify-scrollbar"
           style={{ height: CONTENT_H_RIGHT }}
         >
-          {!selectedId && <div className="text-muted-foreground">เลือกข่าวจากด้านซ้ายเพื่อดูรายละเอียด</div>}
-          {selectedId && loadingDetail && <ModernPageLoading text="กำลังโหลดรายละเอียด…" />}
+          {!selectedId && (
+            <div className="h-full flex flex-col items-center justify-center text-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-[#181818] flex items-center justify-center">
+                <ExternalLink className="w-8 h-8 text-spotify-muted" />
+              </div>
+              <p className="text-spotify-muted font-bold">เลือกข่าวจากด้านซ้ายเพื่อดูรายละเอียด</p>
+            </div>
+          )}
+          {selectedId && loadingDetail && (
+            <div className="h-full flex flex-col items-center justify-center gap-4">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-spotify-label animate-pulse">Loading story...</p>
+            </div>
+          )}
           {selectedId && !loadingDetail && !detail && (
-            <div className="text-muted-foreground">ไม่พบรายละเอียดข่าว</div>
+            <div className="text-center py-20 text-spotify-muted font-bold">ไม่พบรายละเอียดข่าว</div>
           )}
           {selectedId && detail && (
-            <article className="space-y-4 ml-0 pl-0">
-              <header className="space-y-3 ml-0 pl-0">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground ml-0 pl-0">
+            <article className="space-y-6">
+              <header className="space-y-4">
+                <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-spotify-muted">
                   <span className={`inline-block w-2 h-2 rounded-full ${urgencyDot(detail.urgency ?? 0)}`} />
-                  <span>{detail.provider?.name || detail.provider?.id}</span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {timeAgo(detail.published)}</span>
-                  {typeof detail.read_time === "number" && <span>• ~{detail.read_time}s read</span>}
+                  <span className="text-white">{detail.provider?.name || detail.provider?.id}</span>
+                  <span className="text-white/10">•</span>
+                  <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {timeAgo(detail.published)}</span>
+                  {typeof detail.read_time === "number" && (
+                    <>
+                      <span className="text-white/10">•</span>
+                      <span>~{detail.read_time}s read</span>
+                    </>
+                  )}
                 </div>
-                <h1 className="text-xl md:text-2xl font-semibold text-card-foreground ml-0 pl-0">{detail.title}</h1>
-                {Array.isArray(detail.relatedSymbols) && detail.relatedSymbols.length > 0 && (
-                  <div className="flex flex-wrap gap-1 ml-0 pl-0">
-                    {detail.relatedSymbols.slice(0, 6).map((s, i) => (
-                      <Badge key={i} variant="outline" className="text-[11px] px-2 py-0.5">
-                        {s.symbol}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                {detail.link && (
-                  <a
-                    href={detail.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                  >
-                    เปิดแหล่งข่าว <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
+                <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-none">{detail.title}</h1>
+                
+                <div className="flex items-center justify-between gap-4 pt-2">
+                  {Array.isArray(detail.relatedSymbols) && detail.relatedSymbols.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {detail.relatedSymbols.slice(0, 6).map((s, i) => (
+                        <Badge key={i} className="bg-primary/10 text-primary hover:bg-primary/20 border-none text-[11px] px-3 py-1 font-black uppercase tracking-wider">
+                          {s.symbol}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {detail.link && (
+                    <Button variant="ghost" asChild className="btn-pill bg-[#1f1f1f] text-white hover:scale-105 active:scale-95">
+                      <a href={detail.link} target="_blank" rel="noreferrer" className="flex items-center gap-2">
+                        View Source <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </Button>
+                  )}
+                </div>
               </header>
 
+              <div className="h-px bg-white/5 w-full" />
+
               {detail.shortDescription && (
-                <p className="text-sm text-muted-foreground ml-0 pl-0">{detail.shortDescription}</p>
+                <p className="text-lg text-[#b3b3b3] font-medium leading-relaxed italic border-l-4 border-primary/20 pl-6">{detail.shortDescription}</p>
               )}
 
               {detail.astDescription && (
-                <div className="prose prose-invert max-w-none ml-0 pl-0">
+                <div className="prose prose-invert max-w-none text-[#cbcbcb] leading-relaxed text-[15px]">
                   {renderAst(detail.astDescription)}
                 </div>
               )}
 
               {Array.isArray(detail.tags) && detail.tags.length > 0 && (
-                <div className="pt-2 flex flex-wrap gap-2 ml-0 pl-0">
+                <div className="pt-8 flex flex-wrap gap-2">
                   {detail.tags.map((t: any, i: number) => (
-                    <Badge key={i} variant="secondary" className="text-[11px] px-2 py-0.5">
-                      {t?.title ?? "Tag"}
+                    <Badge key={i} className="bg-[#282828] text-[#b3b3b3] hover:text-white border-none text-[10px] px-3 py-1 font-bold uppercase">
+                      #{t?.title ?? "Tag"}
                     </Badge>
                   ))}
                 </div>
@@ -302,24 +321,25 @@ function Pagination({
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   return (
     <>
-      <div className="text-xs text-muted-foreground">รวม {total} ข่าว • {totalPages} หน้า</div>
-      <div className="flex items-center gap-1">
+      <div className="text-xs text-spotify-muted font-bold uppercase tracking-widest">
+        {total} News • Page {page}/{totalPages}
+      </div>
+      <div className="flex items-center gap-3">
         <button
-          className="px-2 py-1 rounded border border-border text-card-foreground hover:border-primary disabled:opacity-40 transition"
+          className="h-8 w-8 flex items-center justify-center rounded-full bg-[#1f1f1f] text-[#b3b3b3] hover:text-white hover:bg-[#2a2a2a] disabled:opacity-20 transition-all active:scale-90"
           onClick={() => setPage(Math.max(1, page - 1))}
           disabled={page <= 1}
           aria-label="Previous page"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-5 h-5" />
         </button>
-        <span className="text-xs text-card-foreground px-2">หน้า {page} / {totalPages}</span>
         <button
-          className="px-2 py-1 rounded border border-border text-card-foreground hover:border-primary disabled:opacity-40 transition"
+          className="h-8 w-8 flex items-center justify-center rounded-full bg-[#1f1f1f] text-[#b3b3b3] hover:text-white hover:bg-[#2a2a2a] disabled:opacity-20 transition-all active:scale-90"
           onClick={() => setPage(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
           aria-label="Next page"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-5 h-5" />
         </button>
       </div>
     </>

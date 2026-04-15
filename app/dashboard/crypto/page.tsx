@@ -7,6 +7,7 @@ import NewsFlowPanel from "@/components/crypto/NewsTab"
 import BinanceThCampaigns from "@/components/crypto/HomeTab"
 import { TradingTab } from "@/components/crypto/TradingTab"
 import TradingViewWidget from "@/components/crypto/TradingViewWidget"
+import { DualInvestmentTab } from "@/components/dual-investment/DualInvestmentTab"
 import { ScannerFilters } from "@/types/crypto"
 
 export default function CryptoPage() {
@@ -22,35 +23,35 @@ export default function CryptoPage() {
   const [tradingPeriod, setTradingPeriod] = useState("60")
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Crypto Dashboard</h1>
-        <p className="text-muted-foreground mt-2">ติดตามข่าวสาร ราคา และวิเคราะห์ตลาด Cryptocurrency</p>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-spotify-title">Crypto Dashboard</h1>
+        <p className="text-spotify-muted mt-2">ติดตามข่าวสาร ราคา และวิเคราะห์ตลาด Cryptocurrency</p>
       </div>
 
       <Tabs defaultValue="BinanceThCampaigns" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-card border border-border">
-          <TabsTrigger value="BinanceThCampaigns" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Search className="w-4 h-4" />
-            Home
-          </TabsTrigger>
-          <TabsTrigger value="Calendar" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Newspaper className="w-4 h-4" />
-            Calendar
-          </TabsTrigger>
-          <TabsTrigger value="NewsFlowPanel" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <DollarSign className="w-4 h-4" />
-            News
-          </TabsTrigger>
-          <TabsTrigger value="trading" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <BarChart3 className="w-4 h-4" />
-            Trading Trend
-          </TabsTrigger>
-          <TabsTrigger value="chart" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <TrendingUp className="w-4 h-4" />
-            Chart
-          </TabsTrigger>
+        <div className="sticky top-0 bg-background/80 backdrop-blur-md z-20 pt-2 pb-4">
+          <TabsList className="flex w-fit bg-transparent p-0 gap-2 border-none">
+            <TabsTrigger value="BinanceThCampaigns" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-4 py-1.5 h-auto transition-all duration-300">
+              Home
+            </TabsTrigger>
+            <TabsTrigger value="Calendar" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-4 py-1.5 h-auto transition-all duration-300">
+              Calendar
+            </TabsTrigger>
+            <TabsTrigger value="NewsFlowPanel" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-4 py-1.5 h-auto transition-all duration-300">
+              News
+            </TabsTrigger>
+            <TabsTrigger value="trading" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-4 py-1.5 h-auto transition-all duration-300">
+              Trading Trend
+            </TabsTrigger>
+            <TabsTrigger value="dual-investment" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-6 py-2 h-auto transition-all duration-300">
+              Dual Investment
+            </TabsTrigger>
+            <TabsTrigger value="chart" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-4 py-1.5 h-auto transition-all duration-300">
+              Chart
+            </TabsTrigger>
           </TabsList>
+        </div>
 
         <TabsContent value="Calendar" className="mt-6">
           <Calendar />
@@ -72,6 +73,10 @@ export default function CryptoPage() {
             onSymbolChange={setTradingSymbol}
             onPeriodChange={setTradingPeriod}
           />
+        </TabsContent>
+
+        <TabsContent value="dual-investment" className="mt-6">
+          <DualInvestmentTab />
         </TabsContent>
 
         <TabsContent value="chart" className="mt-6">

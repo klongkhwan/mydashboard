@@ -2,16 +2,12 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { MemoryLogDialog } from "./memory-log-dialog"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { ReusableDataTable } from "@/components/ui/reusable-data-table"
+import { type ColumnDef, type Row } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { th } from "date-fns/locale"
 import { Edit, Trash2, MapPin, Calendar, BookHeart, ChevronLeft, ChevronRight, Image as ImageIcon, Eye, X, ZoomIn, Video, FileAudio } from "lucide-react"
@@ -25,6 +21,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
 import { MemoryLog, getMediaType } from "../schema"
 
 export function MemoryLogManager() {
@@ -87,61 +92,154 @@ export function MemoryLogManager() {
         }
     }
 
+    const columns = useMemo<ColumnDef<MemoryLog>[]>(() => [
+        {
+            accessorKey: "title",
+            header: "หัวข้อ",
+            cell: ({ row }: { row: Row<MemoryLog> }) => (
+                <div className="font-bold text-white group-hover:text-primary transition-colors py-2 pl-6">
+                    {row.original.title}
+                </div>
+            )
+        },
+        {
+            accessorKey: "date",
+            header: "วันที่",
+            cell: ({ row }: { row: Row<MemoryLog> }) => (
+                <div className="text-spotify-muted group-hover:text-white tabular-nums">
+                    {format(new Date(row.original.date), "d MMM yyyy", { locale: th })}
+                </div>
+            )
+        },
+        {
+            accessorKey: "location",
+            header: "สถานที่",
+            cell: ({ row }: { row: Row<MemoryLog> }) => (
+                <div className="text-spotify-muted group-hover:text-white">
+                    {row.original.location ? (
+                        <span className="flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5 text-primary" />
+                            {row.original.location}
+                        </span>
+                    ) : "-"}
+                </div>
+            )
+        },
+        {
+            accessorKey: "mood",
+            header: "อารมณ์",
+            cell: ({ row }: { row: Row<MemoryLog> }) => (
+                <div>
+                    {row.original.mood ? (
+                        <Badge className="bg-[#282828] text-[#b3b3b3] border-none text-[10px] font-bold uppercase px-2 py-0.5">
+                            {row.original.mood}
+                        </Badge>
+                    ) : "-"}
+                </div>
+            )
+        },
+        {
+            accessorKey: "media",
+            header: "สื่อแนบ",
+            cell: ({ row }: { row: Row<MemoryLog> }) => (
+                <div className="text-spotify-muted font-bold tabular-nums">
+                    {row.original.memory_photos?.length > 0 ? (
+                        <span className="flex items-center gap-1.5">
+                            <ImageIcon className="h-4 w-4" />
+                            {row.original.memory_photos.length}
+                        </span>
+                    ) : "-"}
+                </div>
+            )
+        },
+        {
+            id: "actions",
+            header: () => <div className="text-right pr-6">จัดการ</div>,
+            cell: ({ row }: { row: Row<MemoryLog> }) => (
+                <div className="flex justify-end gap-1 transition-opacity pr-6">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-[#b3b3b3] hover:text-white"
+                        title="ดูรายละเอียด"
+                        onClick={() => setViewLog(row.original)}
+                    >
+                        <Eye className="h-4 w-4" />
+                    </Button>
+
+                    <MemoryLogDialog
+                        memoryLog={row.original}
+                        onSuccess={fetchMemoryLogs}
+                        trigger={
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#b3b3b3] hover:text-white" title="แก้ไข">
+                                <Edit className="h-4 w-4" />
+                            </Button>
+                        }
+                    />
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-[#b3b3b3] hover:text-destructive"
+                        title="ลบ"
+                        onClick={() => setDeleteLogId(row.original.id)}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            )
+        }
+    ], [fetchMemoryLogs])
+
     if (loading) {
         return <ModernPageLoading />
     }
 
     return (
         <>
-            <div className="space-y-6">
+            <div className="space-y-8">
                 {/* Stats Cards */}
-                <div className="grid gap-4 md:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">ความทรงจำทั้งหมด</CardTitle>
-                            <BookHeart className="h-4 w-4 text-muted-foreground" />
+                <div className="grid gap-6 md:grid-cols-4">
+                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
+                            <CardTitle className="text-spotify-label">ความทรงจำทั้งหมด</CardTitle>
+                            <BookHeart className="h-4 w-4 text-[#b3b3b3] group-hover:text-primary transition-colors" />
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{memoryLogs.length}</div>
-                            <p className="text-xs text-muted-foreground">
-                                รายการที่บันทึกไว้
-                            </p>
+                        <CardContent className="px-4 pb-4">
+                            <div className="text-3xl font-bold text-white">{memoryLogs.length}</div>
+                            <p className="text-spotify-muted mt-1">รายการที่บันทึกไว้</p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">สื่อ (รูป/วิดีโอ/เสียง)</CardTitle>
-                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
+                            <CardTitle className="text-spotify-label">สื่อแนบ</CardTitle>
+                            <ImageIcon className="h-4 w-4 text-[#b3b3b3] group-hover:text-white transition-colors" />
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-blue-500">{totalMedia}</div>
-                            <p className="text-xs text-muted-foreground">
-                                ไฟล์แนบทั้งหมด
-                            </p>
+                        <CardContent className="px-4 pb-4">
+                            <div className="text-3xl font-bold text-white">{totalMedia}</div>
+                            <p className="text-spotify-muted mt-1">รูป/วิดีโอ/เสียง</p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">สถานที่</CardTitle>
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
+                            <CardTitle className="text-spotify-label">สถานที่</CardTitle>
+                            <MapPin className="h-4 w-4 text-[#b3b3b3] group-hover:text-primary transition-colors" />
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-green-500">{uniqueLocations}</div>
-                            <p className="text-xs text-muted-foreground">
-                                สถานที่ที่บันทึกไว้
-                            </p>
+                        <CardContent className="px-4 pb-4">
+                            <div className="text-3xl font-bold text-white">{uniqueLocations}</div>
+                            <p className="text-spotify-muted mt-1">พิกัดความทรงจำ</p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">ล่าสุด</CardTitle>
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
+                            <CardTitle className="text-spotify-label">ล่าสุด</CardTitle>
+                            <Calendar className="h-4 w-4 text-[#b3b3b3] group-hover:text-white transition-colors" />
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-lg font-bold truncate">
+                        <CardContent className="px-4 pb-4 min-w-0">
+                            <div className="text-[15px] font-bold text-white truncate">
                                 {latestMemory ? latestMemory.title : "-"}
                             </div>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-spotify-muted mt-1">
                                 {latestMemory ? format(new Date(latestMemory.date), "d MMM yyyy", { locale: th }) : "ยังไม่มีบันทึก"}
                             </p>
                         </CardContent>
@@ -149,184 +247,80 @@ export function MemoryLogManager() {
                 </div>
 
                 {/* Action Button */}
-                <div className="flex justify-end items-center gap-2">
+                <div className="flex justify-end items-center gap-3">
                     <MemoryLogDialog onSuccess={fetchMemoryLogs} />
                 </div>
 
-                {/* Memory Logs Table */}
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>หัวข้อ</TableHead>
-                                <TableHead>วันที่</TableHead>
-                                <TableHead>สถานที่</TableHead>
-                                <TableHead>อารมณ์</TableHead>
-                                <TableHead>สื่อแนบ</TableHead>
-                                <TableHead className="text-right">จัดการ</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedLogs.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <BookHeart className="h-8 w-8 text-muted-foreground" />
-                                            <span className="text-muted-foreground">ยังไม่มีความทรงจำ</span>
-                                            <MemoryLogDialog onSuccess={fetchMemoryLogs} />
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                paginatedLogs.map((log) => (
-                                    <TableRow key={log.id}>
-                                        <TableCell className="font-medium">{log.title}</TableCell>
-                                        <TableCell>
-                                            {format(new Date(log.date), "d MMM yyyy", { locale: th })}
-                                        </TableCell>
-                                        <TableCell>
-                                            {log.location ? (
-                                                <span className="flex items-center gap-1">
-                                                    <MapPin className="h-3 w-3" />
-                                                    {log.location}
-                                                </span>
-                                            ) : "-"}
-                                        </TableCell>
-                                        <TableCell>{log.mood || "-"}</TableCell>
-                                        <TableCell>
-                                            {log.memory_photos?.length > 0 ? (
-                                                <span className="flex items-center gap-1">
-                                                    <ImageIcon className="h-3 w-3" />
-                                                    {log.memory_photos.length}
-                                                </span>
-                                            ) : "-"}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-1">
-                                                {/* View */}
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    title="ดูรายละเอียด"
-                                                    onClick={() => setViewLog(log)}
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-
-                                                {/* Edit */}
-                                                <MemoryLogDialog
-                                                    memoryLog={log}
-                                                    onSuccess={fetchMemoryLogs}
-                                                    trigger={
-                                                        <Button variant="ghost" size="icon" title="แก้ไข">
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                    }
-                                                />
-
-                                                {/* Delete */}
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive hover:text-destructive/80"
-                                                    title="ลบ"
-                                                    onClick={() => setDeleteLogId(log.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-2">
-                        <div className="text-sm text-muted-foreground">
-                            หน้า {currentPage} จาก {totalPages} ({memoryLogs.length} รายการ)
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
+                {/* Memory Logs Table using ReusableDataTable */}
+                <ReusableDataTable
+                    columns={columns}
+                    data={memoryLogs}
+                    page={currentPage}
+                    pageSize={PAGE_SIZE}
+                    onPageChange={setCurrentPage}
+                    onPageSizeChange={() => {}} // Could add logic if needed
+                    manualPagination={false} // Frontend pagination for now
+                />
             </div>
 
             {/* View Detail Dialog */}
             <Dialog open={!!viewLog} onOpenChange={(open) => !open && setViewLog(null)}>
-                <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl">{viewLog?.title}</DialogTitle>
-                        <DialogDescription className="flex items-center gap-4 text-base">
-                            <span className="flex items-center gap-1">
+                <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-[#181818] border-none shadow-heavy text-white">
+                    <DialogHeader className="border-b border-white/5 pb-6">
+                        <DialogTitle className="text-3xl font-black tracking-tighter">{viewLog?.title}</DialogTitle>
+                        <div className="flex flex-wrap items-center gap-4 mt-4">
+                            <span className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
                                 <Calendar className="h-4 w-4" />
-                                {viewLog && format(new Date(viewLog.date), "EEEE ที่ d MMMM yyyy", { locale: th })}
+                                {viewLog && format(new Date(viewLog.date), "EEEE d MMMM yyyy", { locale: th })}
                             </span>
                             {viewLog?.location && (
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-2 text-[#b3b3b3] font-bold text-sm uppercase tracking-wider">
                                     <MapPin className="h-4 w-4" />
                                     {viewLog.location}
                                 </span>
                             )}
-                        </DialogDescription>
+                        </div>
                     </DialogHeader>
 
                     {viewLog && (
-                        <div className="space-y-6 py-4">
+                        <div className="space-y-8 py-6">
                             {/* Mood */}
                             {viewLog.mood && (
-                                <div className="bg-muted/50 rounded-lg p-4">
-                                    <span className="text-sm text-muted-foreground block mb-1">อารมณ์/ความรู้สึก</span>
-                                    <p className="text-lg">{viewLog.mood}</p>
+                                <div className="bg-[#121212] rounded-lg p-6 shadow-inset">
+                                    <span className="text-spotify-label mb-2 block">อารมณ์และความรู้สึก</span>
+                                    <p className="text-xl font-bold text-white">{viewLog.mood}</p>
                                 </div>
                             )}
 
                             {/* Description */}
                             {viewLog.description && (
-                                <div className="bg-muted/30 rounded-lg p-4 border">
-                                    <span className="text-sm text-muted-foreground block mb-2">รายละเอียด</span>
-                                    <p className="whitespace-pre-wrap text-base leading-relaxed">{viewLog.description}</p>
+                                <div className="space-y-3">
+                                    <span className="text-spotify-label">บันทึกรายละเอียด</span>
+                                    <p className="whitespace-pre-wrap text-lg font-medium text-[#b3b3b3] leading-relaxed italic border-l-4 border-primary/20 pl-6">
+                                        {viewLog.description}
+                                    </p>
                                 </div>
                             )}
 
                             {/* Media Gallery */}
                             {viewLog.memory_photos?.length > 0 && (
-                                <div>
-                                    <span className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                                <div className="space-y-4">
+                                    <span className="text-spotify-label flex items-center gap-2">
                                         <ImageIcon className="h-4 w-4" />
-                                        สื่อแนบ ({viewLog.memory_photos.length})
+                                        คอลเลกชันสื่อ ({viewLog.memory_photos.length})
                                     </span>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                         {viewLog.memory_photos.map((photo) => {
                                             const type = getMediaType(photo.photo_url)
 
                                             // Video
                                             if (type === 'video') {
                                                 return (
-                                                    <div key={photo.id} className="aspect-square rounded-lg bg-black overflow-hidden flex items-center justify-center relative group">
+                                                    <div key={photo.id} className="aspect-square rounded-lg bg-black overflow-hidden relative group hover:shadow-play transition-all">
                                                         <video
                                                             src={photo.photo_url}
                                                             controls
-                                                            className="w-full h-full object-contain"
+                                                            className="w-full h-full object-cover"
                                                             preload="metadata"
                                                         />
                                                     </div>
@@ -336,9 +330,11 @@ export function MemoryLogManager() {
                                             // Audio
                                             if (type === 'audio') {
                                                 return (
-                                                    <div key={photo.id} className="aspect-square rounded-lg bg-orange-100 flex flex-col items-center justify-center p-2 relative group">
-                                                        <FileAudio className="h-10 w-10 text-orange-500 mb-2" />
-                                                        <audio src={photo.photo_url} controls className="w-full max-w-[150px]" />
+                                                    <div key={photo.id} className="aspect-square rounded-lg bg-[#282828] flex flex-col items-center justify-center p-4 relative group hover:bg-[#333333] transition-all">
+                                                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                                                            <FileAudio className="h-6 w-6 text-primary" />
+                                                        </div>
+                                                        <audio src={photo.photo_url} controls className="w-full" />
                                                     </div>
                                                 )
                                             }
@@ -347,28 +343,18 @@ export function MemoryLogManager() {
                                             return (
                                                 <div
                                                     key={photo.id}
-                                                    className="relative group cursor-pointer"
+                                                    className="relative group cursor-pointer aspect-square rounded-lg overflow-hidden bg-[#282828]"
                                                     onClick={() => setLightboxImage(photo.photo_url)}
                                                 >
-                                                    <div className="aspect-square rounded-lg overflow-hidden bg-muted relative">
-                                                        {/* Loading placeholder */}
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
-                                                            <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
-                                                        </div>
-                                                        <img
-                                                            src={photo.photo_url}
-                                                            alt="Memory info"
-                                                            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300 relative z-10"
-                                                            loading="lazy"
-                                                            onLoad={(e) => {
-                                                                const target = e.target as HTMLImageElement
-                                                                target.style.opacity = "1"
-                                                            }}
-                                                            style={{ opacity: 0, transition: "opacity 0.3s ease-in-out" }}
-                                                        />
-                                                    </div>
-                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center z-20">
-                                                        <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                                    <img
+                                                        src={photo.photo_url}
+                                                        alt="Memory"
+                                                        className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                                                        loading="lazy"
+                                                        referrerPolicy="no-referrer"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                                                        <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-all transform scale-50 group-hover:scale-100" />
                                                     </div>
                                                 </div>
                                             )
@@ -379,9 +365,9 @@ export function MemoryLogManager() {
                         </div>
                     )}
 
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setViewLog(null)}>
-                            ปิด
+                    <DialogFooter className="border-t border-white/5 pt-6">
+                        <Button variant="ghost" onClick={() => setViewLog(null)} className="btn-pill bg-white text-black hover:bg-white/90">
+                            ปิดหน้าต่าง
                         </Button>
                     </DialogFooter>
                 </DialogContent>
