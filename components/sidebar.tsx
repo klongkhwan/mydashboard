@@ -17,6 +17,8 @@ import {
   ChevronDown,
   Folder,
   BookHeart,
+  Search,
+  LayoutGrid,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { logout } from "@/app/login/actions"
@@ -45,10 +47,16 @@ const menuItems = [
     allowedRoles: ["user", "admin"],
   },
   {
-    title: "Crypto",
-    icon: Bitcoin,
-    href: "/dashboard/crypto",
+    title: "Investment",
+    icon: Activity,
     allowedRoles: ["user", "admin"],
+    subItems: [
+      { title: "Market Overview", icon: Activity, href: "/dashboard/investment" },
+      { title: "Crypto", icon: Bitcoin, href: "/dashboard/investment/crypto" },
+      { title: "Stocks", icon: LayoutGrid, href: "/dashboard/investment/stocks" },
+      { title: "Calendar", icon: Clock, href: "/dashboard/investment/calendar" },
+      { title: "Chart", icon: TrendingUp, href: "/dashboard/investment/chart" },
+    ],
   },
   {
     title: "API Scheduler",
@@ -81,6 +89,16 @@ const menuItems = [
     ],
   },
 ]
+
+const isPathMatch = (pathname: string, href: string) =>
+  pathname === href || pathname.startsWith(href + "/")
+
+// Only the deepest matching href in a group stays active, so a parent index route
+// (e.g. /dashboard/investment) doesn't stay highlighted on its child pages.
+const getActiveHref = (pathname: string, hrefs: string[]) =>
+  hrefs
+    .filter(href => isPathMatch(pathname, href))
+    .sort((a, b) => b.length - a.length)[0]
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const router = useRouter()
@@ -190,49 +208,56 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           filteredMenuItems.map((item) => {
             // Check if this is a menu with sub-items
             if (item.subItems) {
-              const isSubActive = item.subItems.some(sub => pathname === sub.href || pathname.startsWith(sub.href))
+              const activeSubHref = getActiveHref(pathname, item.subItems.map(sub => sub.href))
+              const isSubActive = Boolean(activeSubHref)
               const isExpanded = expandedMenus.includes(item.title)
 
               return (
-                <div key={item.title}>
+                <div key={item.title} className="space-y-1 px-2">
                   <Button
                     variant={isSubActive ? "default" : "ghost"}
                     onClick={() => toggleMenu(item.title)}
                     className={cn(
-                      "w-full justify-start gap-3 h-9",
-                      isCollapsed && "justify-center px-2",
+                      "w-full justify-start gap-4 h-11 px-3 transition-all duration-200 group rounded-md",
+                      isCollapsed && "justify-center px-0",
                       isSubActive
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        ? "text-white bg-[#282828]"
+                        : "text-[#b3b3b3] hover:text-white hover:bg-transparent",
                     )}
                   >
-                    <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                    <item.icon className={cn(
+                      "w-6 h-6 flex-shrink-0 transition-colors",
+                      isSubActive ? "text-primary" : "text-[#b3b3b3] group-hover:text-white"
+                    )} />
                     {!isCollapsed && (
                       <>
-                        <span className="text-sm font-medium flex-1 text-left">{item.title}</span>
-                        <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isExpanded && "rotate-180")} />
+                        <span className="text-sm font-bold tracking-tight flex-1 text-left">{item.title}</span>
+                        <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
                       </>
                     )}
                   </Button>
 
-                  {/* Sub-menu items */}
+                  {/* Sub-menu items shown at the same visual level */}
                   {!isCollapsed && isExpanded && (
-                    <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border/50 pl-2">
+                    <div className="ml-6 mt-1 space-y-1 pl-2">
                       {item.subItems.map((subItem) => {
-                        const isActive = pathname === subItem.href || pathname.startsWith(subItem.href)
+                        const isActive = subItem.href === activeSubHref
                         return (
-                          <Link key={subItem.href} href={subItem.href}>
+                          <Link key={subItem.href} href={subItem.href} className="block">
                             <Button
                               variant="ghost"
                               className={cn(
-                                "w-full justify-start gap-3 h-9",
+                                "w-full justify-start gap-4 h-11 px-3 transition-all duration-200 group rounded-md",
                                 isActive
-                                  ? "bg-sidebar-primary/70 text-sidebar-primary-foreground hover:bg-sidebar-primary/80"
-                                  : "text-sidebar-foreground/90 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                                  ? "text-white bg-[#282828]"
+                                  : "text-[#b3b3b3] hover:text-white hover:bg-transparent",
                               )}
                             >
-                              <subItem.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                              <span className="text-sm">{subItem.title}</span>
+                              <subItem.icon className={cn(
+                                "w-6 h-6 flex-shrink-0 transition-colors",
+                                isActive ? "text-primary" : "text-[#b3b3b3] group-hover:text-white"
+                              )} />
+                              <span className="text-sm font-bold tracking-tight">{subItem.title}</span>
                             </Button>
                           </Link>
                         )
@@ -244,7 +269,9 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             }
 
             // Regular menu item
-            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href!))
+            const isActive = item.href === "/dashboard"
+              ? pathname === item.href
+              : isPathMatch(pathname, item.href!)
 
             return (
               <div key={item.href} className="px-2">

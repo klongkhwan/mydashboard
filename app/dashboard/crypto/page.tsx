@@ -2,11 +2,9 @@
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Newspaper, DollarSign, Search, BarChart3, TrendingUp } from "lucide-react"
-import { Calendar } from "@/components/crypto/calendartab"
 import NewsFlowPanel from "@/components/crypto/NewsTab"
 import BinanceThCampaigns from "@/components/crypto/HomeTab"
 import { TradingTab } from "@/components/crypto/TradingTab"
-import TradingViewWidget from "@/components/crypto/TradingViewWidget"
 import { DualInvestmentTab } from "@/components/dual-investment/DualInvestmentTab"
 import { ScannerFilters } from "@/types/crypto"
 
@@ -35,9 +33,6 @@ export default function CryptoPage() {
             <TabsTrigger value="BinanceThCampaigns" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-4 py-1.5 h-auto transition-all duration-300">
               Home
             </TabsTrigger>
-            <TabsTrigger value="Calendar" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-4 py-1.5 h-auto transition-all duration-300">
-              Calendar
-            </TabsTrigger>
             <TabsTrigger value="NewsFlowPanel" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-4 py-1.5 h-auto transition-all duration-300">
               News
             </TabsTrigger>
@@ -47,15 +42,9 @@ export default function CryptoPage() {
             <TabsTrigger value="dual-investment" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-6 py-2 h-auto transition-all duration-300">
               Dual Investment
             </TabsTrigger>
-            <TabsTrigger value="chart" className="btn-pill data-[state=active]:bg-primary data-[state=active]:text-black border-none px-4 py-1.5 h-auto transition-all duration-300">
-              Chart
-            </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="Calendar" className="mt-6">
-          <Calendar />
-        </TabsContent>
 
         <TabsContent value="NewsFlowPanel" className="mt-6">
           <NewsFlowPanel />
@@ -79,11 +68,6 @@ export default function CryptoPage() {
           <DualInvestmentTab />
         </TabsContent>
 
-        <TabsContent value="chart" className="mt-6">
-          <div className="h-[600px] w-full">
-            <TradingViewWidget />
-          </div>
-        </TabsContent>
 
         </Tabs>
     </div>

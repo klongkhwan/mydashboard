@@ -1,12 +1,13 @@
 import { createClient } from "@/utils/supabase/server"
+import { requireAdminApi } from "@/lib/auth"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET() {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { error: authError, user } = await requireAdminApi()
 
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (authError) {
+        return authError
     }
 
     const { data, error } = await supabase
@@ -31,10 +32,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { error: authError, user } = await requireAdminApi()
 
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (authError) {
+        return authError
     }
 
     const body = await request.json()

@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server"
+import { requireAdminApi } from "@/lib/auth"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(
@@ -7,10 +8,10 @@ export async function POST(
 ) {
     const { id: memoryLogId } = await params
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { error: authError, user } = await requireAdminApi()
 
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (authError) {
+        return authError
     }
 
     // Verify the memory log belongs to the user

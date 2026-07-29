@@ -14,11 +14,11 @@ import {
   Bell,
   Shield,
   Lock,
-  Upload,
-  BookHeart
+  Upload
 } from "lucide-react"
 import Link from "next/link"
 import { CoinSelectionTable } from "@/components/coin-selection-table"
+import { isAdminRole } from "@/lib/roles"
 import { useSettings } from "@/hooks/use-settings"
 import { getProfile, updateProfile, updatePassword } from "./actions"
 import { useEffect, useState } from "react"
@@ -183,9 +183,18 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
             <h3 className="text-3xl font-black text-white mb-2 tracking-tighter">{profile.full_name || "New User"}</h3>
             <p className="text-sm text-spotify-muted mb-8 font-bold uppercase tracking-widest">{profile.email}</p>
 
-            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.2em] bg-primary text-black shadow-play">
-              <Shield className="w-4 h-4" />
-              {profile.role || "User"}
+            <div className="inline-block">
+              <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.2em] bg-primary text-black shadow-play">
+                <Shield className="w-4 h-4" />
+                {profile.role || "User"}
+              </div>
+              {isAdminRole(profile.role) && (
+                <Link
+                  href="/dashboard/memories"
+                  aria-label="Open Memory"
+                  className="mx-auto mt-3 block h-2 w-2 rounded-full bg-transparent"
+                />
+              )}
             </div>
           </CardContent>
 
