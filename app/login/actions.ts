@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createClient } from "@/utils/supabase/server"
+import { getSiteUrl } from "@/lib/site-url"
 import { z } from "zod"
 
 const loginSchema = z.object({
@@ -54,14 +55,18 @@ export async function signup(formData: FormData) {
     }
 
     const supabase = await createClient()
+    const siteUrl = await getSiteUrl()
 
     // Sign up the user
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+            // Without this Supabase uses the dashboard "Site URL", which sends the
+            // confirmation link to localhost. See lib/site-url.ts.
+            emailRedirectTo: `${siteUrl}/auth/confirm`,
             // Optional: Add metadata like full name here if you add it to the form
-            // data: { full_name: 'John Doe' } 
+            // data: { full_name: 'John Doe' }
         }
     })
 

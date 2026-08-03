@@ -26,3 +26,23 @@ export type EditorFormat = {
     watermark: { enabled: boolean; text: string; position: string; opacity: number }
     quality: '720p' | '1080p' | 'original'
 }
+
+/** Everything undo/redo restores. Keep this in sync with the controls that call snapshotState(). */
+export type EditorSnapshot = {
+    trimStart: number
+    trimEnd: number
+    filter: string
+    brightness: number
+    contrast: number
+    saturation: number
+    transition: string
+    subtitles: Subtitle[]
+    segments: ClipSegment[]
+    outputName: string
+}
+
+export type UploadState = 'idle' | 'uploading' | 'ready' | 'error'
+
+export type UploadedMedia = { path: string; name: string; url: string; size: number }
+
+export type ExportResult = { outputFile: string; downloadUrl: string }

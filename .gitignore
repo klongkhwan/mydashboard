@@ -46,6 +46,9 @@ desktop.ini
 # Local SQL dumps
 *.sql
 
+# Uploaded / generated media (video editor working files)
+/tmp/
+
 # Logs
 logs
 *.log

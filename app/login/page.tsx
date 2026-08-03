@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -17,6 +17,17 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
+
+  // /auth/confirm sends the user back here with ?error=... when an email link
+  // is expired or already used.
+  useEffect(() => {
+    const message = new URLSearchParams(window.location.search).get("error")
+    if (!message) return
+
+    setError(message)
+    toast.error("ยืนยันอีเมลไม่สำเร็จ", { description: message })
+    window.history.replaceState(null, "", window.location.pathname)
+  }, [])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()

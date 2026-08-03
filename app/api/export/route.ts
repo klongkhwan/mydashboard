@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import * as fs from 'fs'
 import * as path from 'path'
-import { spawn } from 'child_process'
-import * as os from 'os'
+import { spawn, spawnSync } from 'child_process'
+import { EXPORT_DIR, ensureWatermarkFont, resolveFFmpegBinary, safeMediaPath } from '@/lib/media-paths'
 
 type ExportRequest = {
     videoId?: string
@@ -37,25 +37,25 @@ type ExportRequest = {
     outputName?: string
 }
 
+type JobState = {
+    status: 'queued' | 'processing' | 'done' | 'error'
+    progress: number
+    outputFile?: string
+    downloadUrl?: string
+    error?: string
+}
+
 const enc = new TextEncoder()
-const jobs = new Map<string, { status: 'queued' | 'processing' | 'done' | 'error'; progress: number; outputFile?: string; error?: string }>()
+const jobs = new Map<string, JobState>()
 
 function sse(data: object) {
     return enc.encode(`data: ${JSON.stringify(data)}\n\n`)
 }
 
-function getFFmpegPath(): string {
-    if (os.platform() === 'win32') {
-        const wingetPath = `${process.env.LOCALAPPDATA}\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.0.1-full_build\\bin\\ffmpeg.exe`
-        if (fs.existsSync(wingetPath)) return wingetPath
-    }
-    return 'ffmpeg'
-}
-
-function validateInputPath(videoId?: string) {
-    if (!videoId) return null
-    if (!fs.existsSync(videoId)) return null
-    return videoId
+function sseError(error: string) {
+    return new Response(sse({ done: true, status: 'error', error }), {
+        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+    })
 }
 
 function formatSrtTime(seconds: number) {
@@ -82,7 +82,8 @@ function filterToFFmpeg(filter: string) {
         Cool: 'eq=saturation=1.1,hue=h=-10',
         Fade: 'eq=contrast=0.9:saturation=0.85',
         Cinematic: 'eq=contrast=1.2:saturation=1.1',
-        Vintage: 'sepia',
+        // there is no "sepia" filter in ffmpeg — it has to be a channel mix
+        Vintage: 'colorchannelmixer=.393:.769:.189:0:.349:.686:.168:0:.272:.534:.131',
         Neon: 'eq=contrast=1.2:saturation=1.5',
     }
     return map[filter] || ''
@@ -91,10 +92,65 @@ function filterToFFmpeg(filter: string) {
 function escapeDrawtext(text: string) {
     return text
         .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'")
+        // a literal ' cannot be escaped inside a single-quoted filter argument
+        .replace(/'/g, '’')
         .replace(/:/g, '\\:')
         .replace(/%/g, '\\%')
-        .replace(/\n/g, ' ')
+        .replace(/\r?\n/g, ' ')
+}
+
+function even(value: number) {
+    return Math.max(2, Math.round(value / 2) * 2)
+}
+
+type Probe = { width: number; height: number; hasAudio: boolean; duration: number }
+
+function probeInput(input: string): Probe {
+    const fallback: Probe = { width: 0, height: 0, hasAudio: false, duration: 0 }
+    try {
+        const result = spawnSync(
+            resolveFFmpegBinary('ffprobe'),
+            ['-v', 'error', '-print_format', 'json', '-show_streams', '-show_format', input],
+            { encoding: 'utf8' }
+        )
+        if (result.status !== 0 || !result.stdout) return fallback
+        const parsed = JSON.parse(result.stdout) as {
+            streams?: Array<{ codec_type?: string; width?: number; height?: number }>
+            format?: { duration?: string }
+        }
+        const video = parsed.streams?.find((stream) => stream.codec_type === 'video')
+        return {
+            width: Number(video?.width) || 0,
+            height: Number(video?.height) || 0,
+            hasAudio: Boolean(parsed.streams?.some((stream) => stream.codec_type === 'audio')),
+            duration: Number(parsed.format?.duration) || 0,
+        }
+    } catch {
+        return fallback
+    }
+}
+
+function targetSize(aspectRatio: '9:16' | '1:1' | '16:9', quality: '720p' | '1080p' | 'original', probe: Probe) {
+    const shortSide =
+        quality === '720p' ? 720 : quality === '1080p' ? 1080 : even(Math.min(probe.width || 1080, probe.height || 1080))
+    if (aspectRatio === '1:1') return { width: shortSide, height: shortSide }
+    if (aspectRatio === '16:9') return { width: even((shortSide * 16) / 9), height: shortSide }
+    return { width: shortSide, height: even((shortSide * 16) / 9) }
+}
+
+function watermarkPosition(position: string) {
+    switch (position) {
+        case 'top-left':
+            return 'x=24:y=24'
+        case 'top-right':
+            return 'x=w-tw-24:y=24'
+        case 'bottom-left':
+            return 'x=24:y=h-th-24'
+        case 'center':
+            return 'x=(w-tw)/2:y=(h-th)/2'
+        default:
+            return 'x=w-tw-24:y=h-th-24'
+    }
 }
 
 export async function POST(request: NextRequest) {
@@ -102,131 +158,199 @@ export async function POST(request: NextRequest) {
     try {
         body = await request.json()
     } catch {
-        return new Response(sse({ done: true, error: 'Invalid JSON' }), {
-            headers: { 'Content-Type': 'text/event-stream' },
-        })
+        return sseError('Invalid JSON')
     }
 
-    const inputPath = validateInputPath(body.videoId)
+    const inputPath = safeMediaPath(body.videoId)
     if (!inputPath) {
-        return new Response(sse({ done: true, error: 'ไม่พบวิดีโอสำหรับ export' }), {
-            headers: { 'Content-Type': 'text/event-stream' },
-        })
+        return sseError('ไม่พบวิดีโอสำหรับ export — กรุณารออัปโหลดให้เสร็จก่อน')
     }
 
-    const inputDir = path.dirname(inputPath)
-    const ext = path.extname(inputPath) || '.mp4'
-    const outputName = body.outputName ? body.outputName.replace(/[\\/:*?"<>|]/g, '_') : `export_${Date.now()}`
-    const outputPath = path.join(inputDir, `${outputName}${ext}`)
+    const probe = probeInput(inputPath)
+    const start = Math.max(0, body.trimStart ?? 0)
+    let end = body.trimEnd && body.trimEnd > start ? body.trimEnd : probe.duration || start + 0.1
+    const durationLimit = body.format?.durationLimit
+    if (durationLimit && durationLimit !== 'unlimited') {
+        const limit = Number(durationLimit)
+        if (Number.isFinite(limit) && limit > 0) end = Math.min(end, start + limit)
+    }
+    end = Math.max(start + 0.1, end)
+    const clipDuration = end - start
+
+    const musicPath = safeMediaPath(body.audio?.musicUrl)
+    const voicePath = safeMediaPath(body.audio?.voiceoverUrl)
+
+    const aspectRatio = body.format?.aspectRatio ?? '9:16'
+    const quality = body.format?.quality ?? '1080p'
+    const { width, height } = targetSize(aspectRatio, quality, probe)
+    const backgroundMode = body.effects?.background?.mode ?? 'Blur'
+
+    fs.mkdirSync(EXPORT_DIR, { recursive: true })
+    const outputName = body.outputName
+        ? body.outputName.replace(/[\\/:*?"<>|]/g, '_').slice(0, 80)
+        : `export_${Date.now()}`
+    const outputPath = path.join(EXPORT_DIR, `${outputName || 'export'}.mp4`)
     const jobId = crypto.randomUUID()
     jobs.set(jobId, { status: 'queued', progress: 0 })
 
     const stream = new ReadableStream({
         start(controller) {
-            const ffmpeg = getFFmpegPath()
-            const start = Math.max(0, body.trimStart ?? 0)
-            const end = Math.max(start + 0.1, body.trimEnd ?? 0)
-            const tempDir = path.join(process.cwd(), 'tmp', 'exports')
-            fs.mkdirSync(tempDir, { recursive: true })
-            const subtitlePath = path.join(tempDir, `${jobId}.srt`)
-            const audioInputs: string[] = []
-            if (body.audio?.musicUrl) audioInputs.push(body.audio.musicUrl)
-            if (body.audio?.voiceoverUrl) audioInputs.push(body.audio.voiceoverUrl)
-            const hasExtraAudio = audioInputs.length > 0
-            const hasWatermark = Boolean(body.format?.watermark?.enabled && body.format.watermark.text)
-            const aspectRatio = body.format?.aspectRatio ?? '9:16'
-            const bgColor = body.effects?.background?.color ?? '#000000'
+            const warnings: string[] = []
+            let closed = false
+            const emit = (data: object) => {
+                if (!closed) controller.enqueue(sse(data))
+            }
+            const finish = (state: JobState, extra: object = {}) => {
+                if (closed) return
+                jobs.set(jobId, state)
+                emit({ jobId, done: true, warnings, ...state, ...extra })
+                closed = true
+                controller.close()
+            }
 
-            if (body.burnSubtitles && body.subtitles?.length) {
-                const srt = body.subtitles
+            // ---- subtitles: rebased onto the trimmed timeline -------------------
+            const subtitlePath = path.join(EXPORT_DIR, `${jobId}.srt`)
+            const visibleSubtitles = (body.subtitles ?? [])
+                .filter((sub) => sub.endTime > start && sub.startTime < end)
+                .map((sub) => ({
+                    ...sub,
+                    startTime: Math.max(0, sub.startTime - start),
+                    endTime: Math.min(clipDuration, sub.endTime - start),
+                }))
+                .filter((sub) => sub.endTime > sub.startTime)
+            const burnSubtitles = Boolean(body.burnSubtitles && visibleSubtitles.length)
+            if (burnSubtitles) {
+                const srt = visibleSubtitles
                     .map((sub, idx) => `${idx + 1}\n${formatSrtTime(sub.startTime)} --> ${formatSrtTime(sub.endTime)}\n${sub.text}\n`)
                     .join('\n')
                 fs.writeFileSync(subtitlePath, srt, 'utf8')
             }
 
+            // ---- video graph ----------------------------------------------------
+            const chains: string[] = []
+            if (backgroundMode === 'Blur') {
+                // blur belongs to the padding, not the picture: fill the frame with a
+                // blurred copy and lay the untouched video on top of it
+                chains.push('[0:v]split=2[bgsrc][fgsrc]')
+                chains.push(`[bgsrc]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},boxblur=20:2[bg]`)
+                chains.push(`[fgsrc]scale=${width}:${height}:force_original_aspect_ratio=decrease[fg]`)
+                chains.push('[bg][fg]overlay=(W-w)/2:(H-h)/2[base]')
+            } else {
+                const color = backgroundMode === 'Black' ? 'black' : normalizeColor(body.effects?.background?.color)
+                chains.push(`[0:v]scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:${color}[base]`)
+            }
+
+            const post: string[] = []
+            const preset = body.effects?.filter && body.effects.filter !== 'None' ? filterToFFmpeg(body.effects.filter) : ''
+            if (preset) post.push(preset)
+            if (body.effects?.brightness || body.effects?.contrast || body.effects?.saturation) {
+                post.push(
+                    `eq=brightness=${(body.effects.brightness ?? 0) / 100}:contrast=${1 + (body.effects.contrast ?? 0) / 100}:saturation=${1 + (body.effects.saturation ?? 0) / 100}`
+                )
+            }
+            if (body.effects?.transition === 'Fade') {
+                const fade = Math.min(0.5, clipDuration / 4)
+                post.push(`fade=t=in:st=0:d=${fade.toFixed(2)},fade=t=out:st=${Math.max(0, clipDuration - fade).toFixed(2)}:d=${fade.toFixed(2)}`)
+            } else if (body.effects?.transition === 'Zoom in') {
+                post.push(`zoompan=z='min(zoom+0.0015,1.15)':d=1:s=${width}x${height}:fps=30`)
+            }
+            if (burnSubtitles) {
+                // relative path keeps the filter free of drive-letter colons
+                post.push(`subtitles=${path.relative(process.cwd(), subtitlePath).replace(/\\/g, '/')}`)
+            }
+            if (body.format?.watermark?.enabled && body.format.watermark.text) {
+                const fontFile = ensureWatermarkFont()
+                if (fontFile) {
+                    const opacity = Math.min(1, Math.max(0.05, (body.format.watermark.opacity ?? 55) / 100))
+                    post.push(
+                        `drawtext=fontfile=${fontFile}:text='${escapeDrawtext(body.format.watermark.text)}':${watermarkPosition(body.format.watermark.position ?? 'bottom-right')}:fontsize=${Math.round(height / 40)}:fontcolor=white@${opacity}:box=1:boxcolor=black@0.35:boxborderw=16`
+                    )
+                } else {
+                    warnings.push('ไม่พบฟอนต์สำหรับลายน้ำบนเครื่องนี้ — export โดยไม่มีลายน้ำ')
+                }
+            }
+            chains.push(`[base]${post.length ? post.join(',') : 'null'}[vout]`)
+
+            // ---- audio graph ----------------------------------------------------
+            const audioInputs: string[] = []
+            const audioChains: string[] = []
+            const mixLabels: string[] = []
+            const originalVolume = body.audio?.originalMuted ? 0 : (body.audio?.originalVolume ?? 100) / 100
+            if (probe.hasAudio && originalVolume > 0) {
+                audioChains.push(`[0:a]volume=${originalVolume.toFixed(2)}[orig]`)
+                mixLabels.push('[orig]')
+            }
+            if (musicPath) {
+                audioInputs.push(musicPath)
+                audioChains.push(`[${audioInputs.length}:a]volume=${((body.audio?.bgmVolume ?? 30) / 100).toFixed(2)}[music]`)
+                mixLabels.push('[music]')
+            }
+            if (voicePath) {
+                audioInputs.push(voicePath)
+                audioChains.push(`[${audioInputs.length}:a]volume=1.0[voice]`)
+                mixLabels.push('[voice]')
+            }
+            if (body.audio?.musicUrl && !musicPath) warnings.push('ข้ามเพลงพื้นหลัง — ไฟล์ยังไม่ได้อัปโหลด')
+            if (body.audio?.voiceoverUrl && !voicePath) warnings.push('ข้าม voiceover — ไฟล์ยังไม่ได้อัปโหลด')
+
+            const hasAudioOut = mixLabels.length > 0
+            if (mixLabels.length === 1) {
+                audioChains[0] = audioChains[0].replace(/\[[a-z]+\]$/, '[aout]')
+            } else if (mixLabels.length > 1) {
+                audioChains.push(`${mixLabels.join('')}amix=inputs=${mixLabels.length}:duration=longest:dropout_transition=2[aout]`)
+            }
+
+            // ---- run ------------------------------------------------------------
             const args = ['-y', '-ss', String(start), '-to', String(end), '-i', inputPath]
             for (const audioInput of audioInputs) args.push('-i', audioInput)
-
-            const filters: string[] = []
-            if (aspectRatio === '9:16') filters.push('scale=1080:1920:force_original_aspect_ratio=decrease', 'pad=1080:1920:(ow-iw)/2:(oh-ih)/2:' + normalizeColor(bgColor))
-            if (aspectRatio === '1:1') filters.push('scale=1080:1080:force_original_aspect_ratio=decrease', 'pad=1080:1080:(ow-iw)/2:(oh-ih)/2:' + normalizeColor(bgColor))
-            if (aspectRatio === '16:9') filters.push('scale=1920:1080:force_original_aspect_ratio=decrease', 'pad=1920:1080:(ow-iw)/2:(oh-ih)/2:' + normalizeColor(bgColor))
-            if (body.effects?.filter && body.effects.filter !== 'None') filters.push(filterToFFmpeg(body.effects.filter))
-            if (body.effects?.brightness || body.effects?.contrast || body.effects?.saturation) {
-                filters.push(`eq=brightness=${(body.effects.brightness ?? 0) / 100}:contrast=${1 + (body.effects.contrast ?? 0) / 100}:saturation=${1 + (body.effects.saturation ?? 0) / 100}`)
-            }
-            if (body.burnSubtitles && body.subtitles?.length) filters.push(`subtitles=${subtitlePath.replace(/\\/g, '/')}`)
-            if (hasWatermark) filters.push(`drawtext=text='${escapeDrawtext(String(body.format?.watermark?.text ?? ''))}':x=w-tw-24:y=h-th-24:fontsize=28:fontcolor=white@${(body.format?.watermark?.opacity ?? 100) / 100}:box=1:boxcolor=black@0.35:boxborderw=16`)
-            if (body.effects?.background?.mode === 'Blur') filters.push('boxblur=10:1')
-            if (body.effects?.transition && body.effects.transition !== 'None') {
-                const transitionMap: Record<string, string> = {
-                    Fade: 'fade=t=in:st=0:d=0.5,fade=t=out:st=0.5:d=0.5',
-                    'Slide left': 'scale=iw*1.03:ih*1.03,crop=iw:ih:x=4:y=0',
-                    'Slide right': 'scale=iw*1.03:ih*1.03,crop=iw:ih:x=0:y=0',
-                    'Zoom in': 'zoompan=z=min(zoom+0.0015,1.5):d=1',
-                }
-                const transitionFilter = transitionMap[body.effects.transition]
-                if (transitionFilter) filters.push(transitionFilter)
-            }
-
-            const hasExtraVideoFilter = filters.length > 0
-            if (hasExtraVideoFilter) {
-                args.push('-vf', filters.join(','))
-            }
-
-            if (hasExtraAudio) {
-                const audioFilters: string[] = []
-                const amixInputs: string[] = ['[0:a]']
-                let inputIndex = 1
-                if (body.audio?.musicUrl) {
-                    audioFilters.push(`[${inputIndex}:a]volume=${body.audio?.bgmVolume ? body.audio.bgmVolume / 100 : 0.3}[music]`)
-                    amixInputs.push('[music]')
-                    inputIndex += 1
-                }
-                if (body.audio?.voiceoverUrl) {
-                    audioFilters.push(`[${inputIndex}:a]volume=1.0[voice]`)
-                    amixInputs.push('[voice]')
-                }
-                const amix = `${amixInputs.join('')}amix=inputs=${amixInputs.length}:duration=longest:dropout_transition=2[aout]`
-                args.push('-filter_complex', [...audioFilters, amix].join(';'))
-                args.push('-map', '0:v', '-map', '[aout]', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac')
-            } else {
-                args.push('-map', '0:v', '-map', '0:a?', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac')
-            }
+            args.push('-filter_complex', [...chains, ...audioChains].join(';'))
+            args.push('-map', '[vout]')
+            if (hasAudioOut) args.push('-map', '[aout]', '-c:a', 'aac', '-b:a', '192k')
+            else args.push('-an')
+            args.push('-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-movflags', '+faststart')
+            if (audioInputs.length) args.push('-shortest')
             args.push(outputPath)
 
             jobs.set(jobId, { status: 'processing', progress: 0 })
-            controller.enqueue(sse({ jobId, progress: 1, status: 'processing' }))
+            emit({ jobId, progress: 1, status: 'processing' })
 
-            const child = spawn(ffmpeg, args)
+            const child = spawn(resolveFFmpegBinary('ffmpeg'), args, { cwd: process.cwd() })
+            let stderrTail = ''
 
             child.stderr.on('data', (data: Buffer) => {
                 const text = data.toString()
+                stderrTail = (stderrTail + text).slice(-4000)
                 const match = text.match(/time=(\d+):(\d+):(\d+\.\d+)/)
                 if (match) {
                     const elapsed = parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseFloat(match[3])
-                    const duration = end - start
-                    const pct = Math.min(Math.max(Math.round((elapsed / duration) * 100), 1), 99)
+                    const pct = Math.min(Math.max(Math.round((elapsed / clipDuration) * 100), 1), 99)
                     jobs.set(jobId, { status: 'processing', progress: pct })
-                    controller.enqueue(sse({ jobId, progress: pct, status: 'processing' }))
+                    emit({ jobId, progress: pct, status: 'processing' })
                 }
             })
+
+            const cleanup = () => {
+                if (burnSubtitles) fs.rm(subtitlePath, { force: true }, () => {})
+            }
 
             child.on('close', (code) => {
+                cleanup()
                 if (code === 0) {
-                    jobs.set(jobId, { status: 'done', progress: 100, outputFile: outputPath })
-                    controller.enqueue(sse({ jobId, progress: 100, status: 'done', done: true, outputFile: outputPath }))
+                    finish({
+                        status: 'done',
+                        progress: 100,
+                        outputFile: outputPath,
+                        downloadUrl: `/api/video/stream?path=${encodeURIComponent(outputPath)}&download=1`,
+                    })
                 } else {
-                    jobs.set(jobId, { status: 'error', progress: 100, error: 'FFmpeg export failed' })
-                    controller.enqueue(sse({ jobId, done: true, status: 'error', error: 'FFmpeg export failed' }))
+                    const reason = stderrTail.split('\n').filter(Boolean).slice(-2).join(' ')
+                    finish({ status: 'error', progress: 100, error: `FFmpeg export failed${reason ? `: ${reason}` : ''}` })
                 }
-                controller.close()
             })
 
-            child.on('error', (err) => {
-                jobs.set(jobId, { status: 'error', progress: 100, error: err.message })
-                controller.enqueue(sse({ jobId, done: true, status: 'error', error: 'ไม่สามารถเรียกใช้ FFmpeg ได้' }))
-                controller.close()
+            child.on('error', () => {
+                cleanup()
+                finish({ status: 'error', progress: 100, error: 'ไม่สามารถเรียกใช้ FFmpeg ได้ — ตรวจสอบว่าติดตั้ง ffmpeg แล้ว' })
             })
         },
     })

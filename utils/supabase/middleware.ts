@@ -1,6 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+/** Video-editor endpoints that touch the filesystem or spawn FFmpeg. */
+const MEDIA_API_PREFIXES = ['/api/video', '/api/export', '/api/transcribe']
+
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
         request,
@@ -37,6 +40,13 @@ export async function updateSession(request: NextRequest) {
     const {
         data: { user },
     } = await supabase.auth.getUser()
+
+    // Middleware Security: Protect the media APIs. These read and write files under
+    // tmp/ and spawn FFmpeg jobs, so they must never be reachable without a session.
+    // Answer with 401 instead of a redirect — the callers are fetch(), not navigations.
+    if (!user && MEDIA_API_PREFIXES.some((prefix) => request.nextUrl.pathname.startsWith(prefix))) {
+        return NextResponse.json({ success: false, error: 'ต้องเข้าสู่ระบบก่อนใช้งาน' }, { status: 401 })
+    }
 
     // Middleware Security: Protect the dashboard
     if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
