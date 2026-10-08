@@ -21,11 +21,15 @@ export function isInsideMediaRoot(candidate: string) {
 
 /** Resolves a media path from the client, or null if it escapes tmp/ or does not exist. */
 export function safeMediaPath(candidate?: string | null) {
-    if (!candidate) return null
+    if (typeof candidate !== 'string' || !candidate) return null
     if (!isInsideMediaRoot(candidate)) return null
-    const resolved = path.resolve(candidate)
-    if (!fs.existsSync(resolved)) return null
-    return resolved
+    try {
+        const resolved = fs.realpathSync(path.resolve(candidate))
+        if (!isInsideMediaRoot(resolved) || !fs.statSync(resolved).isFile()) return null
+        return resolved
+    } catch {
+        return null
+    }
 }
 
 function findWingetBinary(name: 'ffmpeg' | 'ffprobe') {

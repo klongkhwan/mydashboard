@@ -265,7 +265,7 @@ export function MemoryLogManager() {
 
             {/* View Detail Dialog */}
             <Dialog open={!!viewLog} onOpenChange={(open) => !open && setViewLog(null)}>
-                <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-[#181818] border-none shadow-heavy text-white">
+                <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader className="border-b border-white/5 pb-6">
                         <DialogTitle className="text-3xl font-black tracking-tighter">{viewLog?.title}</DialogTitle>
                         <div className="flex flex-wrap items-center gap-4 mt-4">
@@ -296,9 +296,10 @@ export function MemoryLogManager() {
                             {viewLog.description && (
                                 <div className="space-y-3">
                                     <span className="text-spotify-label">บันทึกรายละเอียด</span>
-                                    <p className="whitespace-pre-wrap text-lg font-medium text-[#b3b3b3] leading-relaxed italic border-l-4 border-primary/20 pl-6">
+                                    <p className="whitespace-pre-wrap text-lg font-medium text-[#b3b3b3] leading-relaxed italic border-l-2 border-primary/40 pl-4">
                                         {viewLog.description}
                                     </p>
+
                                 </div>
                             )}
 

@@ -80,9 +80,10 @@ function renderAst(node: any, key?: string | number): any {
         {node.children?.map((c: any, i: number) => renderAst(c, i)) ?? node.href}
       </a>
     case "blockquote":
-      return <blockquote key={k} className="border-l-4 border-border pl-3 italic text-muted-foreground ml-0">
+      return <blockquote key={k} className="border-l-2 border-white/20 pl-3 italic text-muted-foreground ml-0">
         {node.children?.map((c: any, i: number) => renderAst(c, i))}
       </blockquote>
+
     default:
       return node.children?.map((c: any, i: number) => renderAst(c, i)) ?? null
   }
@@ -289,8 +290,9 @@ export default function NewsFlowPanel() {
               <div className="h-px bg-white/5 w-full" />
 
               {detail.shortDescription && (
-                <p className="text-lg text-[#b3b3b3] font-medium leading-relaxed italic border-l-4 border-primary/20 pl-6">{detail.shortDescription}</p>
+                <p className="text-lg text-[#b3b3b3] font-medium leading-relaxed italic border-l-2 border-primary/40 pl-4">{detail.shortDescription}</p>
               )}
+
 
               {detail.astDescription && (
                 <div className="prose prose-invert max-w-none text-[#cbcbcb] leading-relaxed text-[15px]">

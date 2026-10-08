@@ -35,7 +35,7 @@ export function useSettings() {
         const parsed = JSON.parse(savedSettings)
 
         // Migrate old settings to new format
-        let updatedSettings = { ...defaultSettings, ...parsed }
+        const updatedSettings = { ...defaultSettings, ...parsed }
 
         // If old format (dashboardCoins only), convert to new format
         if (!parsed.coinDisplays && parsed.dashboardCoins) {

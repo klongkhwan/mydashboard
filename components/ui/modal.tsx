@@ -105,10 +105,10 @@ export function Modal({
                 className={cn(
                     sizeClasses[size],
                     "p-0 gap-0 overflow-hidden flex flex-col max-h-[85vh]",
-                    "bg-card",
-                    "shadow-lg shadow-black/20",
-                    "border",
-                    variantStyle.border,
+                    
+                    
+                    
+                    
                     className
                 )}
             >

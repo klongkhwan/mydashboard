@@ -11,7 +11,7 @@ export type EditClipStore = {
 
 export const createInitialEditClipStore = (): EditClipStore => ({
     projects: [],
-    subtitles: [{ id: 's1', startTime: 1.2, endTime: 3.8, text: 'Hook the viewer in the first second' }],
+    subtitles: [],
     segments: [{ id: 'seg-1', start: 0, end: 0 }],
     captionIdeas: [],
     hashtagIdeas: [],

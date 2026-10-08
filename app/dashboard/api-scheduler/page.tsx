@@ -46,8 +46,10 @@ import { supabase } from "@/lib/supabase"
 import { PageLoading, Loading } from "@/components/ui/loading"
 
 import { ReusableDataTable } from "@/components/ui/reusable-data-table"
+import { PageHeader } from "@/components/ui/page-header"
 import { type ColumnDef, type Row } from "@tanstack/react-table"
 import { useMemo } from "react"
+
 
 export default function ApiSchedulerPage() {
   const [schedules, setSchedules] = useState<ApiSchedule[]>([])
@@ -588,31 +590,33 @@ export default function ApiSchedulerPage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-spotify-title">API Scheduler</h2>
-          <p className="text-spotify-muted mt-2">Manage your scheduled API calls and automations</p>
-        </div>
-        <div className="flex gap-3">
-          <Button
-            onClick={() => handleCheckSchedules(false)}
-            disabled={checkLoading}
-            variant="ghost"
-            className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
-          >
-            {checkLoading ? <Loading variant="spinner" size="sm" className="mr-2" /> : <Clock className="w-4 h-4 mr-2 text-primary" />}
-            Check Now
-          </Button>
-          <Button
-            onClick={handleAddSchedule}
-            className="btn-pill-primary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Schedule
-          </Button>
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-[1600px] p-6 lg:p-8 space-y-8">
+      <PageHeader
+        eyebrow="System & Automation"
+        title="API Scheduler"
+        description="Manage your scheduled API calls, crons, and background automations."
+        action={
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => handleCheckSchedules(false)}
+              disabled={checkLoading}
+              variant="ghost"
+              className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
+            >
+              {checkLoading ? <Loading variant="spinner" size="sm" className="mr-2" /> : <Clock className="w-4 h-4 mr-2 text-primary" />}
+              Check Now
+            </Button>
+            <Button
+              onClick={handleAddSchedule}
+              className="btn-pill-primary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Schedule
+            </Button>
+          </div>
+        }
+      />
+
 
       <ReusableDataTable
         columns={columns}
@@ -626,7 +630,7 @@ export default function ApiSchedulerPage() {
       />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-[#181818] border-none shadow-heavy text-white">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
               {editingSchedule ? "Edit Schedule" : "Add New Schedule"}

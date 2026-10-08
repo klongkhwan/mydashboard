@@ -27,19 +27,24 @@ export type EditorFormat = {
     quality: '720p' | '1080p' | 'original'
 }
 
-/** Everything undo/redo restores. Keep this in sync with the controls that call snapshotState(). */
-export type EditorSnapshot = {
+export type EditorProject = {
     trimStart: number
     trimEnd: number
-    filter: string
-    brightness: number
-    contrast: number
-    saturation: number
-    transition: string
-    subtitles: Subtitle[]
-    segments: ClipSegment[]
+    volume: number
+    originalMuted: boolean
+    aspectRatio: '9:16' | '1:1' | '16:9'
     outputName: string
+    filter?: string
+    brightness?: number
+    contrast?: number
+    saturation?: number
+    transition?: string
+    subtitles?: Subtitle[]
+    segments?: ClipSegment[]
 }
+
+/** Everything undo/redo restores. Keep this in sync with the controls that call snapshotState(). */
+export type EditorSnapshot = EditorProject
 
 export type UploadState = 'idle' | 'uploading' | 'ready' | 'error'
 

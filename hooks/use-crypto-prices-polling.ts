@@ -14,10 +14,10 @@ interface CryptoPrices {
 }
 
 // Global state to share data between components
-let globalPrices: CryptoPrices = {}
-let globalListeners: (() => void)[] = []
+const globalPrices: CryptoPrices = {}
+const globalListeners: (() => void)[] = []
 let globalSocket: WebSocket | null = null
-let activeSymbols: Set<string> = new Set()
+const activeSymbols: Set<string> = new Set()
 let connectionAttempts = 0
 let reconnectTimeout: NodeJS.Timeout | null = null
 let isInitialized = false

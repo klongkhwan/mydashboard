@@ -56,67 +56,69 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-muted/20 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <Card className="border-border/50 shadow-2xl bg-card/95 backdrop-blur-sm overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-primary/80 to-primary/50" />
-                    <CardHeader className="text-center space-y-4 pb-2 pt-8">
+                <Card className="card-spotify border border-white/10 shadow-heavy bg-[#181818] overflow-hidden">
+                    <CardHeader className="text-center space-y-3 pb-2 pt-8">
+                        <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-play">
+                            <UserPlus className="w-6 h-6" />
+                        </div>
                         <div>
-                            <CardTitle className="text-3xl font-bold gradient-text">
+                            <CardTitle className="text-3xl font-bold text-white tracking-tight">
                                 สมัครสมาชิก
                             </CardTitle>
-                            <CardDescription className="text-muted-foreground mt-2 text-base">
-                                สร้างบัญชีผู้ใช้ใหม่เพื่อใช้งานระบบ
+                            <CardDescription className="text-spotify-muted mt-2 text-sm">
+                                สร้างบัญชีผู้ใช้ใหม่เพื่อเข้าสู่ระบบ
                             </CardDescription>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6 pt-4">
                         {success ? (
                             <div className="flex flex-col items-center justify-center space-y-4 py-6 text-center">
-                                <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+                                <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center shadow-play">
                                     <CheckCircle2 className="w-6 h-6 text-primary" />
                                 </div>
                                 <div className="space-y-2">
-                                    <h3 className="font-semibold text-lg">สมัครสมาชิกสำเร็จ!</h3>
-                                    <p className="text-muted-foreground text-sm">{success}</p>
+                                    <h3 className="font-bold text-lg text-white">สมัครสมาชิกสำเร็จ!</h3>
+                                    <p className="text-spotify-muted text-sm">{success}</p>
                                 </div>
                                 <Link href="/login">
-                                    <Button variant="outline" className="mt-4">กลับไปหน้าเข้าสู่ระบบ</Button>
+                                    <Button className="btn-pill-primary mt-4">กลับไปหน้าเข้าสู่ระบบ</Button>
                                 </Link>
                             </div>
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">อีเมล</Label>
+                                <div className="space-y-2 text-left">
+                                    <Label htmlFor="email" className="text-spotify-label">อีเมล</Label>
                                     <div className="relative">
-                                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-spotify-muted" />
                                         <Input
                                             id="email"
                                             name="email"
                                             type="email"
                                             placeholder="name@example.com"
-                                            className="pl-9"
+                                            className="spotify-input pl-10"
                                             required
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="password">รหัสผ่าน</Label>
+                                <div className="space-y-2 text-left">
+                                    <Label htmlFor="password" className="text-spotify-label">รหัสผ่าน</Label>
                                     <div className="relative">
-                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-spotify-muted" />
                                         <Input
                                             id="password"
                                             name="password"
                                             type={showPassword ? "text" : "password"}
                                             placeholder="••••••••"
-                                            className="pl-9 pr-10"
+                                            className="spotify-input pl-10 pr-10"
                                             required
                                             minLength={6}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-3 text-muted-foreground/60 hover:text-foreground transition-colors"
+                                            className="absolute right-3.5 top-3.5 text-spotify-muted hover:text-white transition-colors"
                                         >
                                             {showPassword ? (
                                                 <EyeOff className="h-4 w-4" />
@@ -126,23 +128,23 @@ export default function RegisterPage() {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="confirmPassword">ยืนยันรหัสผ่าน</Label>
+                                <div className="space-y-2 text-left">
+                                    <Label htmlFor="confirmPassword" className="text-spotify-label">ยืนยันรหัสผ่าน</Label>
                                     <div className="relative">
-                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-spotify-muted" />
                                         <Input
                                             id="confirmPassword"
                                             name="confirmPassword"
                                             type={showConfirmPassword ? "text" : "password"}
                                             placeholder="••••••••"
-                                            className="pl-9 pr-10"
+                                            className="spotify-input pl-10 pr-10"
                                             required
                                             minLength={6}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            className="absolute right-3 top-3 text-muted-foreground/60 hover:text-foreground transition-colors"
+                                            className="absolute right-3.5 top-3.5 text-spotify-muted hover:text-white transition-colors"
                                         >
                                             {showConfirmPassword ? (
                                                 <EyeOff className="h-4 w-4" />
@@ -154,13 +156,13 @@ export default function RegisterPage() {
                                 </div>
 
                                 {error && (
-                                    <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-lg border border-destructive/20 animate-in fade-in slide-in-from-top-1">
+                                    <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-lg border border-destructive/20 text-left">
                                         <AlertCircle className="w-4 h-4 flex-shrink-0" />
                                         <span>{error}</span>
                                     </div>
                                 )}
 
-                                <Button type="submit" className="w-full h-11 text-base font-medium shadow-lg shadow-primary/20" disabled={isLoading}>
+                                <Button type="submit" className="btn-pill-primary w-full h-11 text-xs" disabled={isLoading}>
                                     {isLoading ? (
                                         <>
                                             <Loading className="mr-2 h-4 w-4" /> กำลังดำเนินการ...
@@ -172,10 +174,10 @@ export default function RegisterPage() {
                             </form>
                         )}
                     </CardContent>
-                    <CardFooter className="flex justify-center bg-muted/30 py-4 border-t border-border/50">
-                        <p className="text-sm text-muted-foreground">
+                    <CardFooter className="flex justify-center bg-white/[0.02] py-4 border-t border-white/5">
+                        <p className="text-sm text-spotify-muted">
                             มีบัญชีอยู่แล้ว?{" "}
-                            <Link href="/login" className="text-primary font-semibold hover:underline">
+                            <Link href="/login" className="text-primary font-bold hover:underline ml-1">
                                 เข้าสู่ระบบ
                             </Link>
                         </p>
@@ -185,3 +187,4 @@ export default function RegisterPage() {
         </div>
     )
 }
+

@@ -1,15 +1,17 @@
 "use client"
 
+import { redirect } from "next/navigation"
 import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PageHeader } from "@/components/ui/page-header"
 import { TradeModal } from "@/components/trading/trade-modal"
 import { TradeList } from "@/components/trading/trade-list"
 import { TradeStats } from "@/components/trading/trade-stats"
 import { TradingCalculator } from "@/components/trading/trading-calculator"
 import { PlusCircle, TrendingUp, ListTodo, BarChart3, Calculator } from "lucide-react"
 
-export default function MyTradePage() {
+function LegacyMyTradePage() {
   const [activeTab, setActiveTab] = useState("overview")
   const [showNewTradeModal, setShowNewTradeModal] = useState(false)
   const [editingTradeId, setEditingTradeId] = useState<string | null>(null)
@@ -46,33 +48,32 @@ export default function MyTradePage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
-      {/* Header with Prominent Add Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-spotify-title">My Trade</h1>
-          <p className="text-spotify-muted mt-2">
-            บันทึกและติดตามการเทรดของคุณ
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setShowCalculatorModal(true)}
-            variant="ghost"
-            className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
-          >
-            <Calculator className="w-4 h-4 mr-2 text-primary" />
-            Calculate
-          </Button>
-          <Button
-            onClick={() => setShowNewTradeModal(true)}
-            className="btn-pill-primary"
-          >
-            <PlusCircle className="w-4 h-4 mr-2" />
-            บันทึกการเทรด
-          </Button>
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-[1600px] p-6 lg:p-8 space-y-8">
+      <PageHeader
+        eyebrow="Trading Journal"
+        title="My Trade"
+        description="บันทึก ติดตาม และวิเคราะห์ผลการเทรดของคุณ"
+        action={
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setShowCalculatorModal(true)}
+              variant="ghost"
+              className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
+            >
+              <Calculator className="w-4 h-4 mr-2 text-primary" />
+              Calculate
+            </Button>
+            <Button
+              onClick={() => setShowNewTradeModal(true)}
+              className="btn-pill-primary"
+            >
+              <PlusCircle className="w-4 h-4 mr-2" />
+              บันทึกการเทรด
+            </Button>
+          </div>
+        }
+      />
+
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
@@ -129,4 +130,7 @@ export default function MyTradePage() {
       />
     </div>
   )
+}
+export default function MyTradePage() {
+  redirect("/dashboard/my-wealth")
 }

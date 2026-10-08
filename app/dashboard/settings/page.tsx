@@ -26,10 +26,11 @@ import { toast } from "sonner"
 import { th } from "date-fns/locale"
 
 import { ReusableDataTable } from "@/components/ui/reusable-data-table"
+import { PageHeader } from "@/components/ui/page-header"
 import { type ColumnDef } from "@tanstack/react-table"
 import { useMemo } from "react"
 
-export default function SubscriptionsPage() {
+export default function SettingsPage() {
   const { isLoading: isSettingsLoading } = useSettings()
   const [profile, setProfile] = useState<any>(null)
   
@@ -62,11 +63,13 @@ export default function SubscriptionsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div>
-        <h2 className="text-spotify-title">Settings</h2>
-        <p className="text-spotify-muted mt-2">Manage your application settings and preferences</p>
-      </div>
+    <div className="mx-auto w-full max-w-[1600px] p-6 lg:p-8 space-y-8">
+      <PageHeader
+        eyebrow="Account & Preferences"
+        title="Settings"
+        description="Manage your application settings, profile preferences, and watchlist configurations."
+      />
+
 
       <Tabs defaultValue="profile" className="space-y-8">
         <div className="sticky top-0 bg-background/80 backdrop-blur-md z-20 pt-2 pb-4">

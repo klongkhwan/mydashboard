@@ -41,11 +41,18 @@ const menuItems = [
     allowedRoles: ["user", "admin"],
   },
   {
-    title: "My Trade",
+    title: "My Wealth",
     icon: TrendingUp,
-    href: "/dashboard/my-trade",
     allowedRoles: ["user", "admin"],
+    subItems: [
+      { title: "Overview", icon: LayoutDashboard, href: "/dashboard/my-wealth" },
+      { title: "Investments", icon: TrendingUp, href: "/dashboard/my-wealth/investments" },
+      { title: "Income", icon: CreditCard, href: "/dashboard/my-wealth/income" },
+      { title: "Expenses", icon: CreditCard, href: "/dashboard/my-wealth/expenses" },
+      { title: "Categories", icon: Settings, href: "/dashboard/my-wealth/categories" },
+    ],
   },
+
   {
     title: "Investment",
     icon: Activity,

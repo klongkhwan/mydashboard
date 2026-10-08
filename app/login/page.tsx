@@ -51,18 +51,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-muted/20 flex items-center justify-center p-4">
-
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card className="border-border/50 shadow-2xl bg-card/95 backdrop-blur-sm overflow-hidden text-center">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-primary/80 to-primary/50" />
-
-          <CardHeader className="text-center space-y-4 pb-2 pt-8">
+        <Card className="card-spotify border border-white/10 shadow-heavy bg-[#181818] overflow-hidden text-center">
+          <CardHeader className="text-center space-y-3 pb-2 pt-8">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-play">
+              <Shield className="w-6 h-6" />
+            </div>
             <div>
-              <CardTitle className="text-3xl font-bold gradient-text">
+              <CardTitle className="text-3xl font-bold text-white tracking-tight">
                 ยินดีต้อนรับ
               </CardTitle>
-              <CardDescription className="text-muted-foreground mt-2 text-base">
+              <CardDescription className="text-spotify-muted mt-2 text-sm">
                 เข้าสู่ระบบเพื่อจัดการข้อมูลของคุณ
               </CardDescription>
             </div>
@@ -70,41 +70,41 @@ export default function LoginPage() {
 
           <CardContent className="space-y-6 pt-4">
             <form onSubmit={handleSubmit} method="POST" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-foreground/80">อีเมล</Label>
+              <div className="space-y-2 text-left">
+                <Label htmlFor="email" className="text-spotify-label">อีเมล</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
+                  <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-spotify-muted" />
                   <Input
                     id="email"
                     name="email"
                     type="email"
                     placeholder="name@example.com"
-                    className="pl-9"
+                    className="spotify-input pl-10"
                     required
                   />
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 text-left">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-foreground/80">รหัสผ่าน</Label>
-                  <Link href="#" className="text-xs text-primary hover:text-accent hover:underline transition-colors">
+                  <Label htmlFor="password" className="text-spotify-label">รหัสผ่าน</Label>
+                  <Link href="#" className="text-xs text-primary hover:underline transition-colors">
                     ลืมรหัสผ่าน?
                   </Link>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
+                  <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-spotify-muted" />
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-9 pr-10"
+                    className="spotify-input pl-10 pr-10"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground/60 hover:text-foreground transition-colors"
+                    className="absolute right-3.5 top-3.5 text-spotify-muted hover:text-white transition-colors"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -116,7 +116,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 text-red-300 text-sm bg-red-500/20 backdrop-blur-sm p-3 rounded-lg border border-red-500/30 animate-in fade-in slide-in-from-top-1">
+                <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-lg border border-destructive/20 text-left">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -124,7 +124,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 text-base font-medium"
+                className="btn-pill-primary w-full h-11 text-xs"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -136,10 +136,10 @@ export default function LoginPage() {
             </form>
           </CardContent>
 
-          <CardFooter className="flex justify-center bg-white/5 py-4 border-t border-border/50">
-            <p className="text-sm text-muted-foreground">
+          <CardFooter className="flex justify-center bg-white/[0.02] py-4 border-t border-white/5">
+            <p className="text-sm text-spotify-muted">
               ยังไม่มีบัญชี?{" "}
-              <Link href="/register" className="text-primary font-semibold hover:text-accent hover:underline transition-colors">
+              <Link href="/register" className="text-primary font-bold hover:underline transition-colors ml-1">
                 สมัครสมาชิก
               </Link>
             </p>
@@ -149,3 +149,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

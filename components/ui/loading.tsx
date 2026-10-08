@@ -24,9 +24,9 @@ const LoadingSpinner = ({ size = "md", className = "" }: { size?: "sm" | "md" | 
   return (
     <div className={cn("relative", sizeClasses[size], className)}>
       {/* Track */}
-      <div className="absolute inset-0 rounded-full border-2 border-secondary/30" />
+      <div className="absolute inset-0 rounded-full border-2 border-white/10" />
       {/* Spinner */}
-      <div className="absolute inset-0 rounded-full border-2 border-t-[#39FF14] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+      <div className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
     </div>
   )
 }
@@ -40,20 +40,21 @@ const LoadingDots = ({ size = "md", className = "" }: { size?: "sm" | "md" | "lg
   }
 
   return (
-    <div className={cn("flex gap-1", className)}>
+    <div className={cn("flex gap-1 items-center", className)}>
       {[0, 1, 2].map((i) => (
         <div
           key={i}
           className={cn(
-            "bg-current rounded-full animate-bounce",
+            "bg-primary rounded-full animate-pulse",
             sizeClasses[size]
           )}
-          style={{ animationDelay: `${i * 0.1}s` }}
+          style={{ animationDelay: `${i * 0.15}s`, animationDuration: "1s" }}
         />
       ))}
     </div>
   )
 }
+
 
 const LoadingPulse = ({ size = "md", className = "" }: { size?: "sm" | "md" | "lg" | "xl", className?: string }) => {
   const sizeClasses = {

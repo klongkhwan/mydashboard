@@ -1,10 +1,9 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { heatmapWidgets } from "@/lib/stock-heatmap-widget-config.js"
 
 type HeatmapKind = "stock" | "crypto"
-
-const { heatmapWidgets } = require("@/lib/stock-heatmap-widget-config.js")
 
 interface TradingViewHeatmapProps {
   kind: HeatmapKind

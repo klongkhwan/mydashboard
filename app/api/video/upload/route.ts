@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as fs from 'fs'
 import * as path from 'path'
+import { randomUUID } from 'crypto'
 import { AUDIO_DIR, VIDEO_DIR } from '@/lib/media-paths'
 
 const VIDEO_EXTENSIONS = [
@@ -15,10 +16,10 @@ const MAX_AUDIO_BYTES = 50 * 1024 * 1024
 export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData()
-        const file = formData.get('file') as File | null
+        const file = formData.get('file')
         const kind = formData.get('kind') === 'audio' ? 'audio' : 'video'
 
-        if (!file) {
+        if (!(file instanceof File) || file.size === 0) {
             return NextResponse.json({ success: false, error: 'ไม่พบไฟล์ที่อัปโหลด' }, { status: 400 })
         }
 
@@ -52,17 +53,14 @@ export async function POST(request: NextRequest) {
 
         // Sanitize filename — strip path components and special chars
         const safeName = path.basename(file.name).replace(/[^a-zA-Z0-9._\-ก-๙]/g, '_')
-        let outputPath = path.join(uploadDir, safeName)
-
-        // Handle filename conflict
-        if (fs.existsSync(outputPath)) {
-            const base = safeName.slice(0, safeName.length - ext.length)
-            outputPath = path.join(uploadDir, `${base}_${Date.now()}${ext}`)
-        }
+        // Every upload has its own path, including simultaneous uploads of the
+        // same filename. Checking exists before awaiting arrayBuffer is racy.
+        const base = safeName.slice(0, safeName.length - ext.length)
+        const outputPath = path.join(uploadDir, `${base}_${randomUUID()}${ext}`)
 
         // Write file
         const buffer = Buffer.from(await file.arrayBuffer())
-        fs.writeFileSync(outputPath, buffer)
+        fs.writeFileSync(outputPath, buffer, { flag: 'wx' })
 
         const stats = fs.statSync(outputPath)
 

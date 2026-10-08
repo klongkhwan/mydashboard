@@ -5,8 +5,12 @@
   "scripts": {
     "build": "next build --webpack",
     "dev": "next dev",
-    "lint": "next lint",
-    "start": "next start"
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/my-wealth-calculations.test.js tests/stock-heatmap-widget-config.test.js tests/pdf-editor-utils.test.mjs tests/edit-clip-milestone-a.test.mjs tests/my-wealth-actions.test.cjs tests/media-routes.test.cjs",
+    "test:video": "node --experimental-loader ./tests/resolve-aliases.mjs tests/edit-clip-export.test.mjs",
+    "start": "next start",
+    "test:pdf": "node tests/pdf-editor-utils.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -78,6 +82,8 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.21",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.0.10",
     "postcss": "^8.5.6",
     "stylelint": "^16.25.0",
     "stylelint-config-standard": "^39.0.0",

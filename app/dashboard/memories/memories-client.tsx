@@ -17,6 +17,8 @@ import { ModernPageLoading } from "@/components/ui/modern-loader"
 const PASSWORD = "pwsn"
 const SESSION_KEY = "memories_unlocked"
 
+import { PageHeader } from "@/components/ui/page-header"
+
 export function MemoriesClient() {
     const [isLoading, setIsLoading] = useState(true)
     const [isUnlocked, setIsUnlocked] = useState(false)
@@ -103,12 +105,14 @@ export function MemoriesClient() {
     }
 
     return (
-        <div className="p-8 space-y-8">
-            <div>
-                <h1 className="text-spotify-title">Memories</h1>
-                <p className="text-spotify-muted mt-2">บันทึกความทรงจำและเรื่องราวสำคัญของคุณ</p>
-            </div>
+        <div className="mx-auto w-full max-w-[1600px] p-6 lg:p-8 space-y-8">
+            <PageHeader
+                eyebrow="Personal"
+                title="Memories"
+                description="บันทึกความทรงจำ เรื่องราว และรูปภาพสำคัญของคุณ"
+            />
             <MemoryLogManager />
         </div>
     )
 }
+

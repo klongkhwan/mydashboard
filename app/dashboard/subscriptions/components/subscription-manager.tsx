@@ -456,7 +456,7 @@ export function SubscriptionManager() {
                     <DialogHeader>
                         <DialogTitle>ต่ออายุ Subscription?</DialogTitle>
                         <DialogDescription>
-                            รายการเดิมจะเปลี่ยนสถานะเป็น "จบครบ" และระบบจะสร้าง subscription ใหม่จากวันที่วันนี้
+                            รายการเดิมจะเปลี่ยนสถานะเป็น &quot;จบครบ&quot; และระบบจะสร้าง subscription ใหม่จากวันที่วันนี้
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

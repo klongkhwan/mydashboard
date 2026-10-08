@@ -35,13 +35,25 @@ export async function GET(request: NextRequest) {
 
     const headers: Record<string, string> = { 'Content-Type': mime }
     if (request.nextUrl.searchParams.get('download')) {
-        headers['Content-Disposition'] = `attachment; filename="${encodeURIComponent(path.basename(filePath))}"`
+        const customName = request.nextUrl.searchParams.get('filename')
+        const downloadName = customName ? path.basename(customName) : path.basename(filePath)
+        headers['Content-Disposition'] = `attachment; filename="${encodeURIComponent(downloadName)}"`
     }
 
-    if (range) {
-        const parts = range.replace(/bytes=/, '').split('-')
-        const start = Math.min(Math.max(parseInt(parts[0], 10) || 0, 0), Math.max(stat.size - 1, 0))
-        const end = Math.min(parts[1] ? parseInt(parts[1], 10) : stat.size - 1, stat.size - 1)
+    // Unsupported/malformed ranges are ignored. Handle a single range,
+    // including suffix requests such as bytes=-1024 used by media players.
+    const match = range?.match(/^bytes=(\d*)-(\d*)$/)
+    if (match && (match[1] || match[2])) {
+        const suffixLength = match[1] ? null : Number(match[2])
+        const start = suffixLength === null ? Number(match[1]) : Math.max(stat.size - suffixLength, 0)
+        const requestedEnd = suffixLength === null && match[2] ? Number(match[2]) : stat.size - 1
+        if (stat.size === 0 || start >= stat.size || requestedEnd < start || suffixLength === 0) {
+            return new Response(null, {
+                status: 416,
+                headers: { ...headers, 'Content-Range': `bytes */${stat.size}`, 'Accept-Ranges': 'bytes' },
+            })
+        }
+        const end = Math.min(requestedEnd, stat.size - 1)
         const chunksize = end - start + 1
         const file = fs.createReadStream(filePath, { start, end })
 

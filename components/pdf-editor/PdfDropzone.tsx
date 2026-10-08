@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from 'react'
 import { FilePlus2, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
 
@@ -21,15 +22,28 @@ export function PdfDropzone({ onFiles, busy, compact, label, hint, withImages }:
     const pattern = withImages ? /\.(pdf|png|jpe?g)$/i : /\.pdf$/i
 
     const handleFiles = (list: FileList | null) => {
+        if (busy) return
         const files = Array.from(list ?? []).filter((file) => pattern.test(file.name))
+        const rejected = (list?.length ?? 0) - files.length
+        if (rejected) toast.error(`ไฟล์ที่ไม่รองรับ ${rejected} ไฟล์ — ใช้ ${withImages ? 'PDF, JPG หรือ PNG' : 'PDF'}`)
         if (files.length) onFiles(files)
     }
 
     return (
         <div
+            role="button"
+            tabIndex={busy ? -1 : 0}
+            aria-disabled={busy}
+            aria-label={label ?? (withImages ? 'เลือกไฟล์ PDF หรือรูป' : 'เลือกไฟล์ PDF')}
+            onKeyDown={(event) => {
+                if (!busy && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault()
+                    inputRef.current?.click()
+                }
+            }}
             onDragOver={(event) => {
                 event.preventDefault()
-                setDragging(true)
+                if (!busy) setDragging(true)
             }}
             onDragLeave={() => setDragging(false)}
             onDrop={(event) => {
@@ -37,10 +51,11 @@ export function PdfDropzone({ onFiles, busy, compact, label, hint, withImages }:
                 setDragging(false)
                 handleFiles(event.dataTransfer.files)
             }}
-            onClick={() => inputRef.current?.click()}
+            onClick={() => !busy && inputRef.current?.click()}
             className={cn(
-                'flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed text-center transition-colors',
-                compact ? 'gap-1 px-4 py-4' : 'gap-2 px-6 py-12',
+                'flex flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                busy ? 'cursor-wait opacity-70' : 'cursor-pointer',
+                compact ? 'gap-1 px-4 py-4' : 'gap-3 px-6 py-14',
                 dragging ? 'border-primary bg-primary/10' : 'border-border bg-muted/20 hover:border-primary/50 hover:bg-muted/40'
             )}
         >
@@ -49,6 +64,7 @@ export function PdfDropzone({ onFiles, busy, compact, label, hint, withImages }:
                 type="file"
                 accept={withImages ? 'application/pdf,image/png,image/jpeg' : 'application/pdf'}
                 multiple
+                disabled={busy}
                 className="hidden"
                 onChange={(event) => {
                     handleFiles(event.target.files)

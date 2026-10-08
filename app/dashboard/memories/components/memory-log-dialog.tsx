@@ -253,7 +253,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-[#181818] border-none shadow-heavy text-white">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold">{isEdit ? "แก้ไขความทรงจำ" : "เพิ่มความทรงจำใหม่"}</DialogTitle>
                     <DialogDescription className="text-spotify-muted">

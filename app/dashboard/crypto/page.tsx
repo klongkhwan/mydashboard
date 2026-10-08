@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PageHeader } from "@/components/ui/page-header"
 import { Newspaper, DollarSign, Search, BarChart3, TrendingUp } from "lucide-react"
 import NewsFlowPanel from "@/components/crypto/NewsTab"
 import BinanceThCampaigns from "@/components/crypto/HomeTab"
@@ -21,11 +22,13 @@ export default function CryptoPage() {
   const [tradingPeriod, setTradingPeriod] = useState("60")
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-spotify-title">Crypto Dashboard</h1>
-        <p className="text-spotify-muted mt-2">ติดตามข่าวสาร ราคา และวิเคราะห์ตลาด Cryptocurrency</p>
-      </div>
+    <div className="mx-auto w-full max-w-[1600px] p-6 lg:p-8 space-y-8">
+      <PageHeader
+        eyebrow="Investment · Crypto"
+        title="Crypto Dashboard"
+        description="ติดตามข่าวสาร ราคา และวิเคราะห์แนวโน้มตลาด Cryptocurrency"
+      />
+
 
       <Tabs defaultValue="BinanceThCampaigns" className="w-full">
         <div className="sticky top-0 bg-background/80 backdrop-blur-md z-20 pt-2 pb-4">

@@ -22,7 +22,7 @@ export async function getSchedules(): Promise<ApiSchedule[]> {
 export async function createSchedule(request: CreateScheduleRequest): Promise<ApiSchedule> {
   try {
     // Calculate initial next_run
-    let nextRun = request.status === 'ACTIVE'
+    const nextRun = request.status === 'ACTIVE'
       ? calculateNextRun(request.frequency, request.time, request.cron_expression)
       : null
 
@@ -139,7 +139,7 @@ function calculateNextRun(frequency: ApiSchedule['frequency'], timeStr: string, 
   const [hours, minutes] = timeStr.split(':').map(Number)
 
   // Create target date in Bangkok
-  let nextBangkokDate = new Date(bangkokNow)
+  const nextBangkokDate = new Date(bangkokNow)
   nextBangkokDate.setHours(hours, minutes, 0, 0)
 
   if (frequency === 'CUSTOM' && cronExpression) {

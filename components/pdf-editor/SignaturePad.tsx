@@ -5,6 +5,7 @@ import { Eraser, PenLine, Upload } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const STORAGE_KEY = 'edit-pdf-signatures'
 const CANVAS_WIDTH = 560
@@ -13,7 +14,8 @@ const CANVAS_HEIGHT = 200
 export function loadSavedSignatures(): string[] {
     try {
         const raw = localStorage.getItem(STORAGE_KEY)
-        return raw ? (JSON.parse(raw) as string[]) : []
+        const values: unknown = raw ? JSON.parse(raw) : []
+        return Array.isArray(values) ? values.filter((value): value is string => typeof value === 'string' && /^data:image\/(png|jpeg);base64,/.test(value)).slice(0, 5) : []
     } catch {
         return []
     }
@@ -38,6 +40,7 @@ export function SignaturePad({ onUse }: SignaturePadProps) {
     const drawingRef = useRef(false)
     const dirtyRef = useRef(false)
     const [saved, setSaved] = useState<string[]>([])
+    const [hasInk, setHasInk] = useState(false)
 
     useEffect(() => setSaved(loadSavedSignatures()), [])
 
@@ -67,9 +70,12 @@ export function SignaturePad({ onUse }: SignaturePadProps) {
         event.currentTarget.setPointerCapture(event.pointerId)
         drawingRef.current = true
         dirtyRef.current = true
+        setHasInk(true)
         const point = pointFromEvent(event)
         ctx.beginPath()
         ctx.moveTo(point.x, point.y)
+        ctx.lineTo(point.x + 0.01, point.y + 0.01)
+        ctx.stroke()
     }
 
     const move = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -91,24 +97,40 @@ export function SignaturePad({ onUse }: SignaturePadProps) {
         if (!canvas || !ctx) return
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         dirtyRef.current = false
+        setHasInk(false)
     }
 
     const use = () => {
         const canvas = canvasRef.current
         if (!canvas || !dirtyRef.current) return
-        const dataUrl = canvas.toDataURL('image/png')
+        // Trim transparent margins so a signature can be positioned and resized precisely.
+        const pixels = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height).data
+        if (!pixels) return
+        let left = canvas.width, top = canvas.height, right = -1, bottom = -1
+        for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) {
+            if (pixels[(y * canvas.width + x) * 4 + 3] > 0) { left = Math.min(left, x); top = Math.min(top, y); right = Math.max(right, x); bottom = Math.max(bottom, y) }
+        }
+        if (right < left) return
+        const cropped = document.createElement('canvas')
+        cropped.width = right - left + 9; cropped.height = bottom - top + 9
+        cropped.getContext('2d')?.drawImage(canvas, left, top, right - left + 1, bottom - top + 1, 4, 4, right - left + 1, bottom - top + 1)
+        const dataUrl = cropped.toDataURL('image/png')
         setSaved(persistSignature(dataUrl))
         onUse(dataUrl)
     }
 
     const onUploadSignature = async (file: File | undefined) => {
         if (!file) return
+        if (!['image/png', 'image/jpeg'].includes(file.type)) { toast.error('เลือกรูปลายเซ็น JPG หรือ PNG'); return }
         const reader = new FileReader()
         reader.onload = () => {
             const dataUrl = String(reader.result)
-            setSaved(persistSignature(dataUrl))
-            onUse(dataUrl)
+            const image = new Image()
+            image.onload = () => { setSaved(persistSignature(dataUrl)); onUse(dataUrl) }
+            image.onerror = () => toast.error('ไฟล์รูปลายเซ็นไม่สมบูรณ์')
+            image.src = dataUrl
         }
+        reader.onerror = () => toast.error('อ่านไฟล์ลายเซ็นไม่สำเร็จ')
         reader.readAsDataURL(file)
     }
 
@@ -121,13 +143,14 @@ export function SignaturePad({ onUse }: SignaturePadProps) {
                 onPointerDown={start}
                 onPointerMove={move}
                 onPointerUp={end}
+                onPointerCancel={end}
                 onPointerLeave={end}
                 className="w-full cursor-crosshair touch-none rounded-lg border border-dashed border-border bg-white"
             />
             <p className="text-xs text-muted-foreground">เซ็นด้วยเมาส์หรือนิ้วในกรอบด้านบน พื้นหลังจะโปร่งใสเมื่อวางลงเอกสาร</p>
 
             <div className="flex flex-wrap gap-2">
-                <Button size="sm" onClick={use} className="gap-2">
+                <Button size="sm" onClick={use} disabled={!hasInk} className="gap-2">
                     <PenLine className="h-4 w-4" />
                     ใช้ลายเซ็นนี้
                 </Button>

@@ -1,4 +1,3 @@
-import { NextRequest } from 'next/server'
 import * as fs from 'fs'
 import * as path from 'path'
 import { spawn, spawnSync } from 'child_process'
@@ -43,19 +42,23 @@ type JobState = {
     outputFile?: string
     downloadUrl?: string
     error?: string
+    createdAt: number
 }
 
 const enc = new TextEncoder()
 const jobs = new Map<string, JobState>()
 
-function sse(data: object) {
-    return enc.encode(`data: ${JSON.stringify(data)}\n\n`)
+function cleanupOldJobs() {
+    const now = Date.now()
+    for (const [id, job] of jobs.entries()) {
+        if (now - job.createdAt > 30 * 60 * 1000) {
+            jobs.delete(id)
+        }
+    }
 }
 
-function sseError(error: string) {
-    return new Response(sse({ done: true, status: 'error', error }), {
-        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
-    })
+function sse(data: object) {
+    return enc.encode(`data: ${JSON.stringify(data)}\n\n`)
 }
 
 function formatSrtTime(seconds: number) {
@@ -153,84 +156,135 @@ function watermarkPosition(position: string) {
     }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
+    cleanupOldJobs()
+
     let body: ExportRequest
     try {
         body = await request.json()
     } catch {
-        return sseError('Invalid JSON')
+        return Response.json({ success: false, error: 'Invalid JSON payload' }, { status: 400 })
+    }
+
+    if (!body || typeof body !== 'object') {
+        return Response.json({ success: false, error: 'Invalid request payload' }, { status: 400 })
+    }
+
+    if (!body.videoId || typeof body.videoId !== 'string') {
+        return Response.json({ success: false, error: 'กรุณาระบุ videoId ที่ถูกต้อง' }, { status: 400 })
     }
 
     const inputPath = safeMediaPath(body.videoId)
     if (!inputPath) {
-        return sseError('ไม่พบวิดีโอสำหรับ export — กรุณารออัปโหลดให้เสร็จก่อน')
+        return Response.json({ success: false, error: 'ไม่พบวิดีโอสำหรับ export — กรุณารออัปโหลดให้เสร็จก่อน' }, { status: 400 })
     }
 
     const probe = probeInput(inputPath)
-    const start = Math.max(0, body.trimStart ?? 0)
-    let end = body.trimEnd && body.trimEnd > start ? body.trimEnd : probe.duration || start + 0.1
+    if (probe.duration <= 0 || probe.width <= 0 || probe.height <= 0) {
+        return Response.json({ success: false, error: 'ไฟล์ที่ระบุไม่มีข้อมูลวิดีโอ (Video Stream)' }, { status: 400 })
+    }
+
+    const start = Number(body.trimStart ?? 0)
+    let end = Number(body.trimEnd ?? probe.duration)
+
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+        return Response.json({ success: false, error: 'ช่วงเวลาที่ส่งมาต้องเป็นตัวเลขที่ถูกต้อง' }, { status: 400 })
+    }
+    if (start < 0) {
+        return Response.json({ success: false, error: 'เวลาเริ่มต้นต้องไม่ต่ำกว่า 0 วินาที' }, { status: 400 })
+    }
+    if (start >= end) {
+        return Response.json({ success: false, error: 'เวลาเริ่มต้นต้องน้อยกว่าเวลาสิ้นสุด' }, { status: 400 })
+    }
+    if (probe.duration > 0 && end > probe.duration + 0.1) {
+        return Response.json(
+            { success: false, error: `ช่วงเวลาสิ้นสุด (${end.toFixed(1)}s) เกินความยาวจริงของวิดีโอ (${probe.duration.toFixed(1)}s)` },
+            { status: 400 }
+        )
+    }
+
     const durationLimit = body.format?.durationLimit
     if (durationLimit && durationLimit !== 'unlimited') {
         const limit = Number(durationLimit)
         if (Number.isFinite(limit) && limit > 0) end = Math.min(end, start + limit)
     }
-    end = Math.max(start + 0.1, end)
     const clipDuration = end - start
 
     const musicPath = safeMediaPath(body.audio?.musicUrl)
     const voicePath = safeMediaPath(body.audio?.voiceoverUrl)
 
     const aspectRatio = body.format?.aspectRatio ?? '9:16'
-    const quality = body.format?.quality ?? '1080p'
+    const quality = body.format?.quality ?? '720p'
     const { width, height } = targetSize(aspectRatio, quality, probe)
-    const backgroundMode = body.effects?.background?.mode ?? 'Blur'
+    const backgroundMode = body.effects?.background?.mode ?? 'Black'
 
     fs.mkdirSync(EXPORT_DIR, { recursive: true })
+    const jobId = crypto.randomUUID()
+    const diskFilename = `${jobId}.mp4`
+    const outputPath = path.join(EXPORT_DIR, diskFilename)
+
     const outputName = body.outputName
         ? body.outputName.replace(/[\\/:*?"<>|]/g, '_').slice(0, 80)
-        : `export_${Date.now()}`
-    const outputPath = path.join(EXPORT_DIR, `${outputName || 'export'}.mp4`)
-    const jobId = crypto.randomUUID()
-    jobs.set(jobId, { status: 'queued', progress: 0 })
+        : `clip_${Date.now()}`
+    const downloadFilename = `${outputName || 'clip'}.mp4`
+    const downloadUrl = `/api/video/stream?path=${encodeURIComponent(outputPath)}&download=1&filename=${encodeURIComponent(downloadFilename)}`
+
+    jobs.set(jobId, { status: 'queued', progress: 0, createdAt: Date.now() })
+
+    let childProcess: ReturnType<typeof spawn> | null = null
+    let isClosed = false
+    const subtitlePath = path.join(EXPORT_DIR, `${jobId}.srt`)
+    const burnSubtitles = Boolean(body.burnSubtitles && (body.subtitles ?? []).length > 0)
+
+    const cleanup = () => {
+        if (burnSubtitles) fs.rm(subtitlePath, { force: true }, () => {})
+    }
 
     const stream = new ReadableStream({
         start(controller) {
             const warnings: string[] = []
-            let closed = false
             const emit = (data: object) => {
-                if (!closed) controller.enqueue(sse(data))
+                if (isClosed) return
+                try {
+                    controller.enqueue(sse(data))
+                } catch {
+                    isClosed = true
+                }
             }
-            const finish = (state: JobState, extra: object = {}) => {
-                if (closed) return
-                jobs.set(jobId, state)
-                emit({ jobId, done: true, warnings, ...state, ...extra })
-                closed = true
-                controller.close()
+            const finish = (state: Omit<JobState, 'createdAt'>, extra: object = {}) => {
+                if (isClosed) return
+                isClosed = true
+                const fullState: JobState = { ...state, createdAt: Date.now() }
+                jobs.set(jobId, fullState)
+                try {
+                    controller.enqueue(sse({ jobId, done: true, warnings, ...fullState, ...extra }))
+                    controller.close()
+                } catch {
+                    // Controller already closed
+                }
             }
 
             // ---- subtitles: rebased onto the trimmed timeline -------------------
-            const subtitlePath = path.join(EXPORT_DIR, `${jobId}.srt`)
-            const visibleSubtitles = (body.subtitles ?? [])
-                .filter((sub) => sub.endTime > start && sub.startTime < end)
-                .map((sub) => ({
-                    ...sub,
-                    startTime: Math.max(0, sub.startTime - start),
-                    endTime: Math.min(clipDuration, sub.endTime - start),
-                }))
-                .filter((sub) => sub.endTime > sub.startTime)
-            const burnSubtitles = Boolean(body.burnSubtitles && visibleSubtitles.length)
             if (burnSubtitles) {
-                const srt = visibleSubtitles
-                    .map((sub, idx) => `${idx + 1}\n${formatSrtTime(sub.startTime)} --> ${formatSrtTime(sub.endTime)}\n${sub.text}\n`)
-                    .join('\n')
-                fs.writeFileSync(subtitlePath, srt, 'utf8')
+                const visibleSubtitles = (body.subtitles ?? [])
+                    .filter((sub) => sub.endTime > start && sub.startTime < end)
+                    .map((sub) => ({
+                        ...sub,
+                        startTime: Math.max(0, sub.startTime - start),
+                        endTime: Math.min(clipDuration, sub.endTime - start),
+                    }))
+                    .filter((sub) => sub.endTime > sub.startTime)
+                if (visibleSubtitles.length) {
+                    const srt = visibleSubtitles
+                        .map((sub, idx) => `${idx + 1}\n${formatSrtTime(sub.startTime)} --> ${formatSrtTime(sub.endTime)}\n${sub.text}\n`)
+                        .join('\n')
+                    fs.writeFileSync(subtitlePath, srt, 'utf8')
+                }
             }
 
             // ---- video graph ----------------------------------------------------
             const chains: string[] = []
             if (backgroundMode === 'Blur') {
-                // blur belongs to the padding, not the picture: fill the frame with a
-                // blurred copy and lay the untouched video on top of it
                 chains.push('[0:v]split=2[bgsrc][fgsrc]')
                 chains.push(`[bgsrc]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},boxblur=20:2[bg]`)
                 chains.push(`[fgsrc]scale=${width}:${height}:force_original_aspect_ratio=decrease[fg]`)
@@ -254,8 +308,7 @@ export async function POST(request: NextRequest) {
             } else if (body.effects?.transition === 'Zoom in') {
                 post.push(`zoompan=z='min(zoom+0.0015,1.15)':d=1:s=${width}x${height}:fps=30`)
             }
-            if (burnSubtitles) {
-                // relative path keeps the filter free of drive-letter colons
+            if (burnSubtitles && fs.existsSync(subtitlePath)) {
                 post.push(`subtitles=${path.relative(process.cwd(), subtitlePath).replace(/\\/g, '/')}`)
             }
             if (body.format?.watermark?.enabled && body.format.watermark.text) {
@@ -311,47 +364,57 @@ export async function POST(request: NextRequest) {
             if (audioInputs.length) args.push('-shortest')
             args.push(outputPath)
 
-            jobs.set(jobId, { status: 'processing', progress: 0 })
+            jobs.set(jobId, { status: 'processing', progress: 0, createdAt: Date.now() })
             emit({ jobId, progress: 1, status: 'processing' })
 
-            const child = spawn(resolveFFmpegBinary('ffmpeg'), args, { cwd: process.cwd() })
+            childProcess = spawn(resolveFFmpegBinary('ffmpeg'), args, { cwd: process.cwd() })
             let stderrTail = ''
 
-            child.stderr.on('data', (data: Buffer) => {
+            childProcess.stderr?.on('data', (data: Buffer) => {
+                if (isClosed) return
                 const text = data.toString()
                 stderrTail = (stderrTail + text).slice(-4000)
                 const match = text.match(/time=(\d+):(\d+):(\d+\.\d+)/)
                 if (match) {
                     const elapsed = parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseFloat(match[3])
                     const pct = Math.min(Math.max(Math.round((elapsed / clipDuration) * 100), 1), 99)
-                    jobs.set(jobId, { status: 'processing', progress: pct })
+                    jobs.set(jobId, { status: 'processing', progress: pct, createdAt: Date.now() })
                     emit({ jobId, progress: pct, status: 'processing' })
                 }
             })
 
-            const cleanup = () => {
-                if (burnSubtitles) fs.rm(subtitlePath, { force: true }, () => {})
-            }
-
-            child.on('close', (code) => {
+            childProcess.on('close', (code) => {
                 cleanup()
+                if (isClosed) return
                 if (code === 0) {
                     finish({
                         status: 'done',
                         progress: 100,
                         outputFile: outputPath,
-                        downloadUrl: `/api/video/stream?path=${encodeURIComponent(outputPath)}&download=1`,
+                        downloadUrl,
                     })
                 } else {
                     const reason = stderrTail.split('\n').filter(Boolean).slice(-2).join(' ')
-                    finish({ status: 'error', progress: 100, error: `FFmpeg export failed${reason ? `: ${reason}` : ''}` })
+                    finish({ status: 'error', progress: 0, error: `FFmpeg export failed${reason ? `: ${reason}` : ''}` })
                 }
             })
 
-            child.on('error', () => {
+            childProcess.on('error', () => {
                 cleanup()
-                finish({ status: 'error', progress: 100, error: 'ไม่สามารถเรียกใช้ FFmpeg ได้ — ตรวจสอบว่าติดตั้ง ffmpeg แล้ว' })
+                if (isClosed) return
+                finish({ status: 'error', progress: 0, error: 'ไม่สามารถเรียกใช้ FFmpeg ได้ — ตรวจสอบว่าติดตั้ง ffmpeg แล้ว' })
             })
+        },
+        cancel() {
+            isClosed = true
+            if (childProcess && !childProcess.killed) {
+                try {
+                    childProcess.kill('SIGTERM')
+                } catch {
+                    // process already dead
+                }
+            }
+            cleanup()
         },
     })
 
@@ -365,8 +428,9 @@ export async function POST(request: NextRequest) {
     })
 }
 
-export async function GET(request: NextRequest) {
-    const jobId = request.nextUrl.searchParams.get('jobId')
+export async function GET(request: Request) {
+    const url = new URL(request.url)
+    const jobId = url.searchParams.get('jobId')
     if (!jobId || !jobs.has(jobId)) {
         return Response.json({ success: false, error: 'ไม่พบ job ที่ระบุ' }, { status: 404 })
     }
