@@ -7,7 +7,7 @@
     "dev": "next dev",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/my-wealth-calculations.test.js tests/stock-heatmap-widget-config.test.js tests/pdf-editor-utils.test.mjs tests/edit-clip-milestone-a.test.mjs tests/my-wealth-actions.test.cjs tests/media-routes.test.cjs",
+    "test": "node --test tests/dashboard-summary.test.js tests/my-wealth-calculations.test.js tests/stock-heatmap-widget-config.test.js tests/pdf-editor-utils.test.mjs tests/edit-clip-milestone-a.test.mjs tests/my-wealth-actions.test.cjs tests/media-routes.test.cjs",
     "test:video": "node --experimental-loader ./tests/resolve-aliases.mjs tests/edit-clip-export.test.mjs",
     "start": "next start",
     "test:pdf": "node tests/pdf-editor-utils.test.mjs"
