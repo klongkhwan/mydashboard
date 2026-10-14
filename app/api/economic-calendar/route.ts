@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server"
 
+interface CacheEntry {
+  data: any
+  expiresAt: number
+}
+
+const cache = new Map<string, CacheEntry>()
+const CACHE_TTL_MS = 60 * 1000 // 60 seconds
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
@@ -14,6 +22,18 @@ export async function GET(req: Request) {
       )
     }
 
+    const cacheKey = `${from}_${to}_${countries}`
+    const cached = cache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      return NextResponse.json(cached.data, {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+          "X-Cache": "HIT",
+        },
+      })
+    }
+
     const upstream = new URL("https://economic-calendar.tradingview.com/events")
     upstream.searchParams.set("from", from)
     upstream.searchParams.set("to", to)
@@ -22,7 +42,6 @@ export async function GET(req: Request) {
     const res = await fetch(upstream.toString(), {
       // สำคัญ: ใส่ origin เป็น tradingview (ฝั่ง server เท่านั้นถึงตั้งได้)
       headers: { origin: "https://th.tradingview.com" },
-      // ปรับ timeout ตามต้องการ
       cache: "no-store",
     })
 
@@ -35,7 +54,21 @@ export async function GET(req: Request) {
     }
 
     const data = await res.json()
-    return NextResponse.json(data, { status: 200 })
+
+    // Store in cache
+    if (cache.size > 100) {
+      const oldestKey = cache.keys().next().value
+      if (oldestKey) cache.delete(oldestKey)
+    }
+    cache.set(cacheKey, { data, expiresAt: Date.now() + CACHE_TTL_MS })
+
+    return NextResponse.json(data, {
+      status: 200,
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        "X-Cache": "MISS",
+      },
+    })
   } catch (err: any) {
     return NextResponse.json(
       { error: "Proxy failed", detail: String(err?.message || err) },

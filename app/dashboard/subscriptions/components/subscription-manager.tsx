@@ -352,9 +352,6 @@ export function SubscriptionManager() {
         return ''
     }
 
-    if (loading) {
-        return <ModernPageLoading />
-    }
 
     return (
         <>
@@ -366,7 +363,9 @@ export function SubscriptionManager() {
                             <CreditCard className="h-4 w-4 text-[#b3b3b3] group-hover:text-primary transition-colors" />
                         </CardHeader>
                         <CardContent className="px-4 pb-4">
-                            <div className="text-3xl font-bold text-white">{activeSubscriptions.length}</div>
+                            <div className="text-3xl font-bold text-white">
+                                {loading ? <span className="inline-block h-8 w-12 rounded bg-white/10 animate-pulse" /> : activeSubscriptions.length}
+                            </div>
                             <p className="text-spotify-muted mt-1">รายการที่กำลัง active</p>
                         </CardContent>
                     </Card>
@@ -378,7 +377,9 @@ export function SubscriptionManager() {
                             </div>
                         </CardHeader>
                         <CardContent className="px-4 pb-4">
-                            <div className="text-3xl font-bold text-primary">฿{totalMonthlyCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div className="text-3xl font-bold text-primary">
+                                {loading ? <span className="inline-block h-8 w-28 rounded bg-white/10 animate-pulse" /> : `฿${totalMonthlyCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                            </div>
                             <p className="text-spotify-muted mt-1">ประมาณการต่อเดือน</p>
                         </CardContent>
                     </Card>
@@ -388,7 +389,9 @@ export function SubscriptionManager() {
                             <History className="h-4 w-4 text-[#b3b3b3] group-hover:text-white transition-colors" />
                         </CardHeader>
                         <CardContent className="px-4 pb-4">
-                            <div className="text-3xl font-bold text-[#b3b3b3]">฿{totalPastCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div className="text-3xl font-bold text-[#b3b3b3]">
+                                {loading ? <span className="inline-block h-8 w-28 rounded bg-white/10 animate-pulse" /> : `฿${totalPastCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                            </div>
                             <p className="text-spotify-muted mt-1">จาก {historySubscriptions.length} รายการที่จบไปแล้ว</p>
                         </CardContent>
                     </Card>

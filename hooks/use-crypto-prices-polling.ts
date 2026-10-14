@@ -153,8 +153,14 @@ const unsubscribeFromSymbols = (symbols: string[]) => {
   globalSocket.send(JSON.stringify(msg))
 }
 
+let notifyTimer: ReturnType<typeof setTimeout> | null = null
+
 const notifyListeners = () => {
-  globalListeners.forEach(listener => listener())
+  if (notifyTimer) return
+  notifyTimer = setTimeout(() => {
+    notifyTimer = null
+    globalListeners.forEach(listener => listener())
+  }, 300)
 }
 
 export function useCryptoPricesPolling() {

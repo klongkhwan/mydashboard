@@ -1,8 +1,28 @@
 import { NextResponse } from "next/server"
 
+interface CacheEntry {
+  data: any
+  expiresAt: number
+}
+
+const cache = new Map<string, CacheEntry>()
+const CACHE_TTL_MS = 60 * 1000 // 60 seconds
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url)
+    const cacheKey = url.searchParams.toString() || "default"
+
+    const cached = cache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      return NextResponse.json(cached.data, {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+          "X-Cache": "HIT",
+        },
+      })
+    }
+
     // สร้าง upstream URL (ถ้าคลายอยากเปลี่ยน filter ให้ส่งผ่าน query มาก็ได้)
     const upstream = new URL("https://news-mediator.tradingview.com/news-flow/v2/news")
 
@@ -32,7 +52,19 @@ export async function GET(req: Request) {
     if (Array.isArray(data?.items)) {
       data.items = data.items.slice(0, 100)
     }
-    return NextResponse.json(data)
+
+    if (cache.size > 50) {
+      const oldestKey = cache.keys().next().value
+      if (oldestKey) cache.delete(oldestKey)
+    }
+    cache.set(cacheKey, { data, expiresAt: Date.now() + CACHE_TTL_MS })
+
+    return NextResponse.json(data, {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        "X-Cache": "MISS",
+      },
+    })
   } catch (e: any) {
     return NextResponse.json({ error: "proxy-failed", detail: String(e?.message || e) }, { status: 500 })
   }

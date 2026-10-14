@@ -54,13 +54,13 @@ export async function getDashboardData(): Promise<DashboardDataResult> {
 
   const investmentsOpenedPromise = supabase
     .from("wealth_investments")
-    .select("*")
+    .select("id, opened_at, opened_amount_thb, entry_fee_thb, status, closed_at, closed_amount_thb, exit_fee_thb")
     .eq("user_id", user.id)
     .gte("opened_at", since)
 
   const investmentsClosedPromise = supabase
     .from("wealth_investments")
-    .select("*")
+    .select("id, opened_at, opened_amount_thb, entry_fee_thb, status, closed_at, closed_amount_thb, exit_fee_thb")
     .eq("user_id", user.id)
     .eq("status", "closed")
     .gte("closed_at", since)

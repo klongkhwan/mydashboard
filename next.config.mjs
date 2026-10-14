@@ -2,6 +2,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'date-fns', 'recharts'],
+  },
   transpilePackages: ['recharts'],
   turbopack: {
     resolveAlias: {

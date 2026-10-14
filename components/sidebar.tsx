@@ -110,10 +110,25 @@ const getActiveHref = (pathname: string, hrefs: string[]) =>
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const [userRole, setUserRole] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string>("user")
   const [userProfile, setUserProfile] = useState<{ full_name: string | null; email: string | null; avatar_url: string | null } | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [expandedMenus, setExpandedMenus] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(() => {
+    const activeParent = menuItems.find(item =>
+      item.subItems?.some(sub => isPathMatch(pathname, sub.href))
+    )
+    return activeParent ? [activeParent.title] : []
+  })
+
+  // Auto-expand group when navigating to a child page
+  useEffect(() => {
+    const activeParent = menuItems.find(item =>
+      item.subItems?.some(sub => isPathMatch(pathname, sub.href))
+    )
+    if (activeParent) {
+      setExpandedMenus(prev => prev.includes(activeParent.title) ? prev : [...prev, activeParent.title])
+    }
+  }, [pathname])
 
   const toggleMenu = (title: string) => {
     setExpandedMenus(prev =>
@@ -250,23 +265,25 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                       {item.subItems.map((subItem) => {
                         const isActive = subItem.href === activeSubHref
                         return (
-                          <Link key={subItem.href} href={subItem.href} className="block">
-                            <Button
-                              variant="ghost"
-                              className={cn(
-                                "w-full justify-start gap-4 h-11 px-3 transition-all duration-200 group rounded-md",
-                                isActive
-                                  ? "text-white bg-[#282828]"
-                                  : "text-[#b3b3b3] hover:text-white hover:bg-transparent",
-                              )}
-                            >
+                          <Button
+                            key={subItem.href}
+                            asChild
+                            variant="ghost"
+                            className={cn(
+                              "w-full justify-start gap-4 h-11 px-3 transition-all duration-200 group rounded-md",
+                              isActive
+                                ? "text-white bg-[#282828]"
+                                : "text-[#b3b3b3] hover:text-white hover:bg-transparent",
+                            )}
+                          >
+                            <Link href={subItem.href}>
                               <subItem.icon className={cn(
                                 "w-6 h-6 flex-shrink-0 transition-colors",
                                 isActive ? "text-primary" : "text-[#b3b3b3] group-hover:text-white"
                               )} />
                               <span className="text-sm font-bold tracking-tight">{subItem.title}</span>
-                            </Button>
-                          </Link>
+                            </Link>
+                          </Button>
                         )
                       })}
                     </div>
@@ -282,17 +299,18 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
             return (
               <div key={item.href} className="px-2">
-                <Link href={item.href!}>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "w-full justify-start gap-4 h-11 px-3 transition-all duration-200 group rounded-md",
-                      isCollapsed && "justify-center px-0",
-                      isActive
-                        ? "text-white bg-[#282828]"
-                        : "text-[#b3b3b3] hover:text-white hover:bg-transparent",
-                    )}
-                  >
+                <Button
+                  asChild
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start gap-4 h-11 px-3 transition-all duration-200 group rounded-md",
+                    isCollapsed && "justify-center px-0",
+                    isActive
+                      ? "text-white bg-[#282828]"
+                      : "text-[#b3b3b3] hover:text-white hover:bg-transparent",
+                  )}
+                >
+                  <Link href={item.href!}>
                     <item.icon className={cn(
                       "w-6 h-6 flex-shrink-0 transition-colors",
                       isActive ? "text-primary" : "text-[#b3b3b3] group-hover:text-white"
@@ -300,8 +318,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     {!isCollapsed && (
                       <span className="text-sm font-bold tracking-tight">{item.title}</span>
                     )}
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             )
           })
@@ -311,14 +329,15 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       {/* Footer / User Profile */}
       <div className="mt-auto p-4 space-y-2 bg-gradient-to-t from-black/40 to-transparent">
         {/* User Profile (Links to Settings) */}
-        <Link href="/dashboard/settings" className="block">
-          <Button
-            variant="ghost"
-            className={cn(
-              "w-full justify-start gap-3 h-14 hover:bg-[#282828] group transition-all rounded-md px-3",
-              isCollapsed && "justify-center px-0"
-            )}
-          >
+        <Button
+          asChild
+          variant="ghost"
+          className={cn(
+            "w-full justify-start gap-3 h-14 hover:bg-[#282828] group transition-all rounded-md px-3",
+            isCollapsed && "justify-center px-0"
+          )}
+        >
+          <Link href="/dashboard/settings">
             <Avatar className="h-8 w-8 border-none ring-2 ring-white/5 group-hover:ring-white/20 transition-all">
               <AvatarImage src={userProfile?.avatar_url || ""} />
               <AvatarFallback className="bg-[#282828] text-white text-xs font-bold">{userProfile?.full_name?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
@@ -327,15 +346,15 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             {!isCollapsed && (
               <div className="flex flex-col items-start text-left overflow-hidden">
                 <span className="text-sm font-bold text-white truncate w-32 group-hover:text-primary transition-colors">
-                  {userProfile?.full_name}
+                  {userProfile?.full_name || "User"}
                 </span>
                 <span className="text-spotify-label text-[#b3b3b3] truncate w-32">
                   {userProfile?.email}
                 </span>
               </div>
             )}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
 
         {/* Logout */}
         <Button

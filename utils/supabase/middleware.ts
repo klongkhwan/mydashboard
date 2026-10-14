@@ -4,7 +4,24 @@ import { NextResponse, type NextRequest } from 'next/server'
 /** Video-editor endpoints that touch the filesystem or spawn FFmpeg. */
 const MEDIA_API_PREFIXES = ['/api/video', '/api/export', '/api/transcribe']
 
+/** Public market data endpoints that do not require user session validation */
+const PUBLIC_API_PREFIXES = [
+    '/api/economic-calendar',
+    '/api/news-flow',
+    '/api/news-story',
+    '/api/binance-campaigns',
+    '/api/binance',
+    '/api/crypto-prices',
+    '/api/dual-investment',
+    '/api/stocks',
+]
+
 export async function updateSession(request: NextRequest) {
+    // Fast path: bypass auth check for public market data proxy APIs
+    if (PUBLIC_API_PREFIXES.some((prefix) => request.nextUrl.pathname.startsWith(prefix))) {
+        return NextResponse.next({ request })
+    }
+
     let supabaseResponse = NextResponse.next({
         request,
     })

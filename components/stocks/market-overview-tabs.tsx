@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { MarketOverviewWidgets } from "@/components/stocks/market-overview-widgets"
 import { TradingViewHeatmap } from "@/components/stocks/trading-view-heatmap"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -14,8 +15,10 @@ interface MarketOverviewTabsProps {
 }
 
 export function MarketOverviewTabs({ defaultTab = "overview" }: MarketOverviewTabsProps) {
+  const [tab, setTab] = useState<MarketOverviewTab>(defaultTab)
+
   return (
-    <Tabs defaultValue={defaultTab} className="w-full">
+    <Tabs value={tab} onValueChange={(val) => setTab(val as MarketOverviewTab)} className="w-full">
       <TabsList className="mb-6 w-fit gap-2 border-none bg-transparent p-0">
         <TabsTrigger value="overview" className={pillClass}>
           Overview
@@ -26,27 +29,29 @@ export function MarketOverviewTabs({ defaultTab = "overview" }: MarketOverviewTa
       </TabsList>
 
       <TabsContent value="overview" className="mt-0">
-        <MarketOverviewWidgets />
+        {tab === "overview" && <MarketOverviewWidgets />}
       </TabsContent>
 
       <TabsContent value="heatmap" className="mt-0">
-        <Tabs defaultValue="stock" className="w-full">
-          <TabsList className="mb-4 w-fit gap-2 border-none bg-transparent p-0">
-            <TabsTrigger value="stock" className={pillClass}>
-              Stock
-            </TabsTrigger>
-            <TabsTrigger value="crypto" className={pillClass}>
-              Crypto
-            </TabsTrigger>
-          </TabsList>
+        {tab === "heatmap" && (
+          <Tabs defaultValue="stock" className="w-full">
+            <TabsList className="mb-4 w-fit gap-2 border-none bg-transparent p-0">
+              <TabsTrigger value="stock" className={pillClass}>
+                Stock
+              </TabsTrigger>
+              <TabsTrigger value="crypto" className={pillClass}>
+                Crypto
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="stock" className="mt-0">
-            <TradingViewHeatmap kind="stock" />
-          </TabsContent>
-          <TabsContent value="crypto" className="mt-0">
-            <TradingViewHeatmap kind="crypto" />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="stock" className="mt-0">
+              <TradingViewHeatmap kind="stock" />
+            </TabsContent>
+            <TabsContent value="crypto" className="mt-0">
+              <TradingViewHeatmap kind="crypto" />
+            </TabsContent>
+          </Tabs>
+        )}
       </TabsContent>
     </Tabs>
   )

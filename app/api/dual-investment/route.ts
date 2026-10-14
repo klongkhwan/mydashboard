@@ -1,15 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+interface CacheEntry {
+  data: any
+  expiresAt: number
+}
+
+const cache = new Map<string, CacheEntry>()
+const CACHE_TTL_MS = 60 * 1000 // 60 seconds
+
 export async function GET(request: NextRequest) {
   try {
     // Get query parameters from the request
     const { searchParams } = new URL(request.url);
+    const cacheKey = searchParams.toString() || 'default'
+
+    const cached = cache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      return NextResponse.json(cached.data, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+          'X-Cache': 'HIT',
+        },
+      })
+    }
 
     // Build the URL for Binance API
     const baseUrl = 'https://www.binance.com/bapi/earn/v5/friendly/pos/dc/project/list';
     const binanceUrl = `${baseUrl}?${searchParams.toString()}`;
-
-    console.log('Fetching from Binance API:', binanceUrl);
 
     // Make request to Binance API
     const response = await fetch(binanceUrl, {
@@ -31,10 +48,20 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('Binance API response received');
+
+    if (cache.size > 50) {
+      const oldestKey = cache.keys().next().value
+      if (oldestKey) cache.delete(oldestKey)
+    }
+    cache.set(cacheKey, { data, expiresAt: Date.now() + CACHE_TTL_MS })
 
     // Return the data from Binance API
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        'X-Cache': 'MISS',
+      },
+    });
 
   } catch (error) {
     console.error('Error in dual investment API route:', error);
