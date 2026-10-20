@@ -1,139 +1,520 @@
-import { MyWealthCashFlowChart } from "@/components/my-wealth/cash-flow-chart"
-import { MyWealthQuickActions } from "@/components/my-wealth/quick-actions"
+"use client"
+
+import { useMemo, useTransition, useState } from "react"
 import { PageHeader } from "@/components/ui/page-header"
-import { getMyWealthData } from "./actions"
+import { MyWealthCashFlowChart } from "@/components/my-wealth/cash-flow-chart"
+import { WealthApiStatus } from "@/components/my-wealth/wealth-status"
+import { useWealth } from "@/components/my-wealth/wealth-context"
+import { markWealthExpensePaid } from "@/app/dashboard/my-wealth/actions"
+import { formatDateDDMMYYYY } from "@/components/dashboard/format"
+import { Button } from "@/components/ui/button"
+import { Check, Clock, TrendingUp, ArrowUpRight, ArrowDownRight, Wallet, ReceiptText, PiggyBank, FolderCog } from "lucide-react"
+import { CategoryManagerDialog } from "@/components/my-wealth/category-manager-dialog"
 
-export const dynamic = "force-dynamic"
+export default function MyWealthOverviewPage() {
+  const {
+    categories,
+    transactions,
+    investments,
+    quotes,
+    usdThbRate,
+    displayCurrency,
+    setDisplayCurrency,
+    formatMoney,
+    selectedMonth,
+    setSelectedMonth,
+    refreshData,
+  } = useWealth()
+  const [pending, startTransition] = useTransition()
+  const [showCategoryManager, setShowCategoryManager] = useState(false)
 
-export default async function MyWealthPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
-  const params = await searchParams
-  const selectedMonth = /^\d{4}-\d{2}$/.test(params.month || "") ? params.month! : new Date().toISOString().slice(0, 7)
-  const data = await getMyWealthData()
+  const money = formatMoney
 
-  const isSelectedMonth = (date: string | null | undefined) => Boolean(date && date.startsWith(selectedMonth))
-  const monthTransactions = data.transactions.filter((item: any) => isSelectedMonth(item.transaction_date))
-  const income = monthTransactions.filter((item: any) => item.type === "income").reduce((sum: number, item: any) => sum + Number(item.amount_thb), 0)
-  const paidExpenses = monthTransactions.filter((item: any) => item.type === "expense" && item.payment_status === "paid").reduce((sum: number, item: any) => sum + Number(item.amount_thb), 0)
-  const pendingExpenses = monthTransactions.filter((item: any) => item.type === "expense" && item.payment_status === "pending").reduce((sum: number, item: any) => sum + Number(item.amount_thb), 0)
-  const investmentOutflow = data.investments.filter((item: any) => isSelectedMonth(item.opened_at)).reduce((sum: number, item: any) => sum + Number(item.opened_amount_thb) + Number(item.entry_fee_thb || 0), 0)
-  const investmentInflow = data.investments.filter((item: any) => item.status === "closed" && isSelectedMonth(item.closed_at)).reduce((sum: number, item: any) => sum + Number(item.closed_amount_thb || 0) - Number(item.exit_fee_thb || 0), 0)
-  const closedInvestmentPnl = data.investments.filter((item: any) => item.status === "closed" && isSelectedMonth(item.closed_at)).reduce((sum: number, item: any) => sum + Number(item.closed_amount_thb || 0) - Number(item.exit_fee_thb || 0) - Number(item.opened_amount_thb || 0) - Number(item.entry_fee_thb || 0), 0)
-  const dailySummary = new Map<string, { income: number; expenses: number; investmentOut: number; investmentIn: number }>()
-  const dayFor = (date: string) => {
-    const current = dailySummary.get(date) || { income: 0, expenses: 0, investmentOut: 0, investmentIn: 0 }
-    dailySummary.set(date, current)
-    return current
+  const isAllTime = selectedMonth === "all"
+  const isSelectedMonth = (date: string | null | undefined) => {
+    if (!date) return false
+    if (isAllTime) return true
+    return date.startsWith(selectedMonth)
   }
-  monthTransactions.forEach((item: any) => {
-    const day = dayFor(item.transaction_date)
-    if (item.type === "income") day.income += Number(item.amount_thb)
-    if (item.type === "expense" && item.payment_status === "paid") day.expenses += Number(item.amount_thb)
-  })
-  data.investments.filter((item: any) => isSelectedMonth(item.opened_at)).forEach((item: any) => {
-    dayFor(item.opened_at).investmentOut += Number(item.opened_amount_thb) + Number(item.entry_fee_thb || 0)
-  })
-  data.investments.filter((item: any) => item.status === "closed" && isSelectedMonth(item.closed_at)).forEach((item: any) => {
-    dayFor(item.closed_at).investmentIn += Number(item.closed_amount_thb || 0) - Number(item.exit_fee_thb || 0)
-  })
-  const dailyRows = [...dailySummary.entries()].sort(([left], [right]) => right.localeCompare(left))
-  const expenseByCategory = new Map<string, number>()
-  const expenseByMerchant = new Map<string, number>()
-  monthTransactions.filter((item: any) => item.type === "expense" && item.payment_status === "paid").forEach((item: any) => {
-    const category = item.wealth_categories?.name || "ไม่ระบุหมวด"
-    const merchant = item.merchant_or_payer || "ไม่ระบุร้านค้า"
-    expenseByCategory.set(category, (expenseByCategory.get(category) || 0) + Number(item.amount_thb))
-    expenseByMerchant.set(merchant, (expenseByMerchant.get(merchant) || 0) + Number(item.amount_thb))
-  })
-  const categoryBreakdown = [...expenseByCategory.entries()].sort(([, left], [, right]) => right - left)
-  const merchantBreakdown = [...expenseByMerchant.entries()].sort(([, left], [, right]) => right - left)
-  const net = income - paidExpenses - investmentOutflow + investmentInflow
-  const money = (amount: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(amount)
+
+  // Filter transactions and investments
+  const monthTransactions = useMemo(
+    () => transactions.filter((item) => isSelectedMonth(item.transaction_date)),
+    [transactions, selectedMonth, isAllTime]
+  )
+
+  const income = useMemo(
+    () => monthTransactions.filter((item) => item.type === "income").reduce((sum, item) => sum + Number(item.amount_thb), 0),
+    [monthTransactions]
+  )
+
+  const paidExpenses = useMemo(
+    () =>
+      monthTransactions
+        .filter((item) => item.type === "expense" && item.payment_status === "paid")
+        .reduce((sum, item) => sum + Number(item.amount_thb), 0),
+    [monthTransactions]
+  )
+
+  const pendingExpenses = useMemo(
+    () =>
+      monthTransactions
+        .filter((item) => item.type === "expense" && item.payment_status === "pending")
+        .reduce((sum, item) => sum + Number(item.amount_thb), 0),
+    [monthTransactions]
+  )
+
+  const investmentOutflow = useMemo(
+    () =>
+      investments
+        .filter((item) => isSelectedMonth(item.opened_at))
+        .reduce((sum, item) => sum + Number(item.opened_amount_thb) + Number(item.entry_fee_thb || 0), 0),
+    [investments, selectedMonth, isAllTime]
+  )
+
+  const investmentInflow = useMemo(
+    () =>
+      investments
+        .filter((item) => item.status === "closed" && isSelectedMonth(item.closed_at))
+        .reduce((sum, item) => sum + Number(item.closed_amount_thb || 0) - Number(item.exit_fee_thb || 0), 0),
+    [investments, selectedMonth, isAllTime]
+  )
+
+  const closedInvestmentPnl = useMemo(
+    () =>
+      investments
+        .filter((item) => item.status === "closed" && isSelectedMonth(item.closed_at))
+        .reduce(
+          (sum, item) =>
+            sum +
+            Number(item.closed_amount_thb || 0) -
+            Number(item.exit_fee_thb || 0) -
+            Number(item.opened_amount_thb || 0) -
+            Number(item.entry_fee_thb || 0),
+          0
+        ),
+    [investments, selectedMonth, isAllTime]
+  )
+
+  // Open investments value
+  const openInvestments = useMemo(() => investments.filter((i) => i.status === "open"), [investments])
+  const openCapitalThb = useMemo(
+    () =>
+      openInvestments.reduce((sum, item) => {
+        const isUsd = item.quote_asset === "USD" || item.quote_asset === "USDT"
+        const rate = usdThbRate > 0 ? usdThbRate : 34.0
+        const qty = Number(item.quantity || 0)
+        const price = Number(item.entry_price || 0)
+        const calcUsd = qty > 0 && price > 0 ? qty * price : 0
+        const raw = Number(item.opened_amount_thb || 0)
+        const deposit = Number(item.deposit_amount || 0)
+        if (isUsd) {
+          const usdVal = deposit > 0 ? deposit : (calcUsd > 0 && raw <= calcUsd * 1.5) ? calcUsd : (raw > 0 ? raw : calcUsd)
+          return sum + (usdVal * rate)
+        }
+        return sum + raw
+      }, 0),
+    [openInvestments, usdThbRate]
+  )
+
+  // Estimated unrealized PnL from live quotes
+  const estimatedUnrealizedPnlThb = useMemo(() => {
+    let est = 0
+    const rate = usdThbRate > 0 ? usdThbRate : 34.0
+    for (const item of openInvestments) {
+      const quote = quotes[item.asset_symbol?.toUpperCase()]
+      if (quote && Number(item.entry_price) > 0) {
+        const isUsdQuote = item.quote_asset === "USD" || item.quote_asset === "USDT"
+        let currentPrice = quote.price
+        if (!isUsdQuote && quote.source !== "fallback") {
+          currentPrice = currentPrice * rate
+        }
+        const qty = Number(item.quantity || 0)
+        const price = Number(item.entry_price || 0)
+        if (qty > 0 && price > 0) {
+          const diffNative = (currentPrice - price) * qty
+          est += isUsdQuote ? diffNative * rate : diffNative
+        } else {
+          const pnlPct = (currentPrice - price) / price
+          const calcUsd = qty > 0 && price > 0 ? qty * price : 0
+          const raw = Number(item.opened_amount_thb || 0)
+          const itemThb = isUsdQuote
+            ? ((calcUsd > 0 && raw <= calcUsd * 1.5 ? calcUsd : (raw > 0 ? raw : calcUsd)) * rate)
+            : raw
+          est += itemThb * pnlPct
+        }
+      }
+    }
+    return est
+  }, [openInvestments, quotes, usdThbRate])
+
+  const netCashFlow = income - paidExpenses
+  const savingsRate = income > 0 ? Math.round(((income - paidExpenses) / income) * 100) : 0
+
+  // Daily Chart rows: Only days with actual cash movement (income or paid expenses)
+  const dailySummary = useMemo(() => {
+    const map = new Map<string, { income: number; expenses: number }>()
+    const dayFor = (date: string) => {
+      const current = map.get(date) || { income: 0, expenses: 0 }
+      map.set(date, current)
+      return current
+    }
+
+    monthTransactions.forEach((item) => {
+      if (item.type === "income" || (item.type === "expense" && item.payment_status === "paid")) {
+        const day = dayFor(item.transaction_date)
+        if (item.type === "income") day.income += Number(item.amount_thb)
+        if (item.type === "expense" && item.payment_status === "paid") day.expenses += Number(item.amount_thb)
+      }
+    })
+
+    return [...map.entries()].sort(([left], [right]) => right.localeCompare(left))
+  }, [monthTransactions])
+
+  // Category breakdown with progress bars
+  const categoryBreakdown = useMemo(() => {
+    const map = new Map<string, { name: string; color: string; amount: number }>()
+    monthTransactions
+      .filter((item) => item.type === "expense" && item.payment_status === "paid")
+      .forEach((item) => {
+        const cat = categories.find((c) => c.id === item.category_id)
+        const name = cat?.name || item.wealth_categories?.name || "ไม่ระบุหมวด"
+        const color = cat?.color || item.wealth_categories?.color || "#1ed760"
+        const prev = map.get(name) || { name, color, amount: 0 }
+        prev.amount += Number(item.amount_thb)
+        map.set(name, prev)
+      })
+
+    return [...map.values()].sort((a, b) => b.amount - a.amount)
+  }, [monthTransactions, categories])
+
+  // Pending expenses that need action
+  const actionablePending = useMemo(
+    () => monthTransactions.filter((item) => item.type === "expense" && item.payment_status === "pending"),
+    [monthTransactions]
+  )
+
+  const handleMarkPaid = (id: string) => {
+    startTransition(async () => {
+      const today = new Date().toISOString().slice(0, 10)
+      await markWealthExpensePaid(id, today)
+      refreshData()
+    })
+  }
+
+  const currentMonthStr = new Date().toISOString().slice(0, 7)
+  const prevMonthStr = (() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - 1)
+    return d.toISOString().slice(0, 7)
+  })()
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] p-6 lg:p-8 space-y-8">
+    <div className="space-y-8">
       <PageHeader
         eyebrow="Personal Finance"
-        title="My Wealth"
+        title="My Wealth Overview"
         description="ภาพรวมกระแสเงินสด รายรับ รายจ่าย และพอร์ตการลงทุนของคุณ"
         action={
-          <div className="flex flex-wrap items-center justify-end gap-4">
-            <form action="/dashboard/my-wealth" className="flex items-center gap-2">
-              <label className="text-xs text-spotify-muted font-medium" htmlFor="month">Month</label>
+          <div className="flex flex-wrap items-center justify-end gap-2.5">
+            <WealthApiStatus showRate />
+
+            {/* Currency Switcher */}
+            <div className="flex items-center rounded-xl border border-white/10 bg-[#121212]/90 p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setDisplayCurrency("THB")}
+                className={`rounded-lg px-2.5 py-1 text-xs font-black transition-all ${
+                  displayCurrency === "THB" ? "bg-primary text-black shadow-play" : "text-spotify-muted hover:text-white"
+                }`}
+              >
+                THB
+              </button>
+              <button
+                type="button"
+                onClick={() => setDisplayCurrency("USD")}
+                className={`rounded-lg px-2.5 py-1 text-xs font-black transition-all ${
+                  displayCurrency === "USD" ? "bg-primary text-black shadow-play" : "text-spotify-muted hover:text-white"
+                }`}
+              >
+                USD
+              </button>
+            </div>
+
+            {/* Quick Month Filter Pills */}
+            <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-[#181818] p-1">
+              <button
+                type="button"
+                onClick={() => setSelectedMonth(currentMonthStr)}
+                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                  selectedMonth === currentMonthStr ? "bg-white text-black shadow-sm" : "text-spotify-muted hover:text-white"
+                }`}
+              >
+                เดือนนี้
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedMonth(prevMonthStr)}
+                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                  selectedMonth === prevMonthStr ? "bg-white text-black shadow-sm" : "text-spotify-muted hover:text-white"
+                }`}
+              >
+                เดือนก่อน
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedMonth("all")}
+                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                  selectedMonth === "all" ? "bg-white text-black shadow-sm" : "text-spotify-muted hover:text-white"
+                }`}
+              >
+                ทั้งหมด
+              </button>
               <input
-                id="month"
-                name="month"
                 type="month"
-                defaultValue={selectedMonth}
-                className="spotify-input py-1.5 px-3 text-xs"
+                value={selectedMonth === "all" ? "" : selectedMonth}
+                onChange={(e) => e.target.value && setSelectedMonth(e.target.value)}
+                className="spotify-input py-1 px-2 text-xs h-7 w-32 bg-transparent border-none text-white focus:ring-0"
               />
-              <button type="submit" className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white px-3 py-1.5 text-xs">Filter</button>
-            </form>
-            <MyWealthQuickActions categories={data.categories} />
+            </div>
           </div>
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {[["Income", income], ["Paid", -paidExpenses], ["Pending", pendingExpenses], ["Net Cash", net]].map(([label, value]) => (
-          <div key={String(label)} className="card-spotify p-5 border border-white/5 shadow-sm">
-            <p className="text-spotify-label">{label}</p>
-            <p className="text-2xl font-bold mt-2 text-white">{money(Number(value))}</p>
+      {/* 6 Executive KPI Cards Row */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {/* Net Cash Flow */}
+        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-spotify-label">Net Cash Flow</span>
+            <Wallet className="h-4 w-4 text-spotify-muted" />
           </div>
-        ))}
-        <div className="card-spotify p-5 border border-white/5 shadow-sm">
-          <p className="text-spotify-label">Realized PnL</p>
-          <p className={"text-2xl font-bold mt-2 " + (closedInvestmentPnl >= 0 ? "text-primary" : "text-destructive")}>
-            {money(closedInvestmentPnl)}
+          <p className={`text-2xl font-black mt-2 tabular-nums ${netCashFlow >= 0 ? "text-primary" : "text-[#f3727f]"}`}>
+            {netCashFlow >= 0 ? "+" : ""}{money(netCashFlow)}
+          </p>
+          <p className="text-[11px] text-spotify-muted mt-1">รายรับหักรายจ่ายจริง</p>
+        </div>
+
+        {/* Income */}
+        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-spotify-label">Income</span>
+            <ArrowUpRight className="h-4 w-4 text-primary" />
+          </div>
+          <p className="text-2xl font-black mt-2 text-primary tabular-nums">
+            +{money(income)}
+          </p>
+          <p className="text-[11px] text-spotify-muted mt-1">
+            {monthTransactions.filter((t) => t.type === "income").length} รายการ
           </p>
         </div>
-      </div>
 
-      <MyWealthCashFlowChart rows={dailyRows.map(([date, row]) => ({ date, ...row }))} />
-
-      <section className="card-spotify p-6 space-y-4 border border-white/5">
-        <h2 className="text-lg font-bold text-white">Daily Summary</h2>
-        <div className="max-h-80 space-y-2 overflow-y-auto pr-2">
-          {dailyRows.map(([date, row]) => {
-            const dayNet = row.income - row.expenses - row.investmentOut + row.investmentIn
-            return (
-              <div key={date} className="grid gap-2 border-b border-white/5 pb-3 text-sm md:grid-cols-[120px_1fr_auto]">
-                <span className="font-medium text-white">{date}</span>
-                <span className="text-spotify-muted">Income +{money(row.income)} · Expense -{money(row.expenses)} · Invest -{money(row.investmentOut)} · Return +{money(row.investmentIn)}</span>
-                <span className={dayNet >= 0 ? "text-primary font-bold" : "text-destructive font-bold"}>Net {money(dayNet)}</span>
-              </div>
-            )
-          })}
-          {dailyRows.length === 0 && <p className="text-spotify-muted">No records for the selected month</p>}
+        {/* Paid Expenses */}
+        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-spotify-label">Paid Expenses</span>
+            <ArrowDownRight className="h-4 w-4 text-[#f3727f]" />
+          </div>
+          <p className="text-2xl font-black mt-2 text-white tabular-nums">
+            -{money(paidExpenses)}
+          </p>
+          <p className="text-[11px] text-spotify-muted mt-1">
+            อัตราการออม {savingsRate}%
+          </p>
         </div>
-      </section>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <section className="card-spotify p-6 space-y-4 border border-white/5">
-          <h2 className="text-lg font-bold text-white">Expenses by Category</h2>
-          <div className="space-y-2">
-            {categoryBreakdown.map(([name, amount]) => (
-              <div key={name} className="flex justify-between border-b border-white/5 pb-2 text-sm">
-                <span className="text-white">{name}</span>
-                <span className="text-destructive font-bold">{money(amount)}</span>
+        {/* Pending Expenses */}
+        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-spotify-label">Pending</span>
+            <Clock className="h-4 w-4 text-amber-400" />
+          </div>
+          <p className={`text-2xl font-black mt-2 tabular-nums ${pendingExpenses > 0 ? "text-amber-400" : "text-white"}`}>
+            {money(pendingExpenses)}
+          </p>
+          <p className="text-[11px] text-spotify-muted mt-1">
+            {actionablePending.length} บิลรอชำระ
+          </p>
+        </div>
+
+        {/* Active Investments */}
+        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-spotify-label">Open Capital</span>
+            <TrendingUp className="h-4 w-4 text-sky-400" />
+          </div>
+          <p className="text-2xl font-black mt-2 text-white tabular-nums">
+            {money(openCapitalThb)}
+          </p>
+          <p className="text-[11px] text-spotify-muted mt-1">
+            {openInvestments.length} รายการถือครอง
+            {estimatedUnrealizedPnlThb !== 0 && (
+              <span className={estimatedUnrealizedPnlThb >= 0 ? " text-emerald-400 ml-1" : " text-rose-400 ml-1"}>
+                ({estimatedUnrealizedPnlThb >= 0 ? "+" : ""}{money(estimatedUnrealizedPnlThb)})
+              </span>
+            )}
+          </p>
+        </div>
+
+        {/* Realized PnL */}
+        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-spotify-label">Realized PnL</span>
+            <PiggyBank className="h-4 w-4 text-spotify-muted" />
+          </div>
+          <p className={`text-2xl font-black mt-2 tabular-nums ${closedInvestmentPnl >= 0 ? "text-primary" : "text-[#f3727f]"}`}>
+            {closedInvestmentPnl >= 0 ? "+" : ""}{money(closedInvestmentPnl)}
+          </p>
+          <p className="text-[11px] text-spotify-muted mt-1">กำไร/ขาดทุนที่ปิดดีลแล้ว</p>
+        </div>
+      </div>
+
+      {/* Middle Row: Cash Flow Chart + Actionable Pending Bills */}
+      <div className="grid gap-6 xl:grid-cols-3">
+        {/* Daily Cash Flow Bar Chart */}
+        <div className="xl:col-span-2">
+          <MyWealthCashFlowChart rows={dailySummary.map(([date, row]) => ({ date, ...row }))} />
+        </div>
+
+        {/* Actionable Pending Bills Box */}
+        <div className="card-spotify p-6 space-y-4 border border-white/5 bg-[#181818]/50">
+          <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <div>
+              <h2 className="font-bold text-white text-base flex items-center gap-2">
+                <Clock className="w-4 h-4 text-amber-400" />
+                รายการรอจ่าย (Pending)
+              </h2>
+              <p className="text-xs text-spotify-muted mt-0.5">คลิก &quot;จ่ายแล้ว&quot; เพื่อบันทึกการชำระได้ทันที</p>
+            </div>
+            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-400 border border-amber-500/20">
+              {actionablePending.length}
+            </span>
+          </div>
+
+          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+            {actionablePending.map((item) => (
+              <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-[#1f1f1f]/50 p-3 hover:bg-[#1f1f1f] transition-all">
+                <div className="min-w-0">
+                  <p className="font-bold text-sm text-white truncate">
+                    {item.description || item.merchant_or_payer || "ค่าใช้จ่ายรอชำระ"}
+                  </p>
+                  <p className="text-xs text-spotify-muted mt-0.5">
+                    {formatDateDDMMYYYY(item.transaction_date)} {item.merchant_or_payer ? `· ${item.merchant_or_payer}` : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="font-bold text-sm text-[#f3727f] tabular-nums">
+                    -{money(Number(item.amount_thb))}
+                  </span>
+                  <Button
+                    size="sm"
+                    disabled={pending}
+                    onClick={() => handleMarkPaid(item.id)}
+                    className="btn-pill-primary h-7 px-3 text-xs"
+                    title="บันทึกว่าจ่ายเงินแล้ว"
+                  >
+                    <Check className="w-3.5 h-3.5 mr-1" /> จ่ายแล้ว
+                  </Button>
+                </div>
               </div>
             ))}
-            {categoryBreakdown.length === 0 && <p className="text-spotify-muted">No paid expenses recorded</p>}
+            {actionablePending.length === 0 && (
+              <div className="py-12 text-center text-spotify-muted">
+                <ReceiptText className="w-8 h-8 mx-auto text-spotify-muted/50 mb-2" />
+                <p className="text-sm font-medium">ไม่มีรายการรอจ่ายในเดือนนี้</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Row: Category Breakdown Progress Bars & Daily Summary Ledger */}
+      <div className="grid gap-6 xl:grid-cols-2">
+        {/* Category Breakdown (Copilot / Monarch style) */}
+        <section className="card-spotify p-6 space-y-4 border border-white/5 bg-[#181818]/50">
+          <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <div>
+              <h2 className="font-bold text-white text-base">สัดส่วนค่าใช้จ่ายตามหมวดหมู่</h2>
+              <p className="text-xs text-spotify-muted mt-0.5">รวม {money(paidExpenses)}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCategoryManager(true)}
+                className="h-7 px-2 text-xs text-spotify-muted hover:text-white hover:bg-white/5"
+              >
+                <FolderCog className="w-3.5 h-3.5 mr-1 text-primary" /> จัดการหมวดหมู่
+              </Button>
+              <span className="text-xs text-spotify-muted font-bold">{categoryBreakdown.length} หมวด</span>
+            </div>
+          </div>
+
+          <div className="space-y-3.5">
+            {categoryBreakdown.map((cat) => {
+              const pct = paidExpenses > 0 ? Math.round((cat.amount / paidExpenses) * 100) : 0
+              return (
+                <div key={cat.name} className="space-y-1.5">
+                  <div className="flex justify-between text-sm">
+                    <span className="flex items-center gap-2 font-medium text-white">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                      {cat.name}
+                      <span className="text-xs text-spotify-muted font-normal">({pct}%)</span>
+                    </span>
+                    <span className="font-bold text-white tabular-nums">{money(cat.amount)}</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: cat.color }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+            {categoryBreakdown.length === 0 && (
+              <p className="text-spotify-muted text-sm py-8 text-center">ยังไม่มีข้อมูลค่าใช้จ่ายในเดือนนี้</p>
+            )}
           </div>
         </section>
-        <section className="card-spotify p-6 space-y-4 border border-white/5">
-          <h2 className="text-lg font-bold text-white">Expenses by Payee</h2>
-          <div className="space-y-2">
-            {merchantBreakdown.map(([name, amount]) => (
-              <div key={name} className="flex justify-between border-b border-white/5 pb-2 text-sm">
-                <span className="text-white">{name}</span>
-                <span className="text-destructive font-bold">{money(amount)}</span>
-              </div>
-            ))}
 
-            {merchantBreakdown.length === 0 && <p className="text-spotify-muted">No merchant records</p>}
+        {/* Daily Summary Ledger */}
+        <section className="card-spotify p-6 space-y-4 border border-white/5 bg-[#181818]/50">
+          <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <div>
+              <h2 className="font-bold text-white text-base">บันทึกรายวัน (Daily Activity)</h2>
+              <p className="text-xs text-spotify-muted mt-0.5">การเคลื่อนไหวของเงินเข้า-ออกในแต่ละวัน</p>
+            </div>
+            <span className="text-xs text-spotify-muted font-bold">{dailySummary.length} วันที่มีรายการ</span>
+          </div>
+
+          <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+            {dailySummary.map(([date, row]) => {
+              const dayNet = row.income - row.expenses
+              return (
+                <div key={date} className="grid gap-2 border-b border-white/5 pb-2.5 pt-1 text-xs md:grid-cols-[100px_1fr_auto] items-center">
+                  <span className="font-bold text-white tabular-nums">{formatDateDDMMYYYY(date)}</span>
+                  <span className="text-spotify-muted">
+                    {row.income > 0 && <span className="text-primary mr-2">+รับ {money(row.income)}</span>}
+                    {row.expenses > 0 && <span className="text-[#f3727f] mr-2">-จ่าย {money(row.expenses)}</span>}
+                  </span>
+                  <span className={`font-black tabular-nums text-right ${dayNet > 0 ? "text-primary" : dayNet < 0 ? "text-[#f3727f]" : "text-white"}`}>
+                    {dayNet > 0 ? "+" : ""}{money(dayNet)}
+                  </span>
+                </div>
+              )
+            })}
+            {dailySummary.length === 0 && (
+              <p className="text-spotify-muted text-sm py-8 text-center">ไม่มีรายการรับ-จ่ายในเดือนที่เลือก</p>
+            )}
           </div>
         </section>
       </div>
+
+      <CategoryManagerDialog
+        open={showCategoryManager}
+        onOpenChange={setShowCategoryManager}
+      />
     </div>
   )
 }

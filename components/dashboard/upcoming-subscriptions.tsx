@@ -6,6 +6,8 @@ import { money, formatThaiDate } from "./format"
 interface UpcomingSubscriptionsProps {
   data: SubscriptionsSummary
   className?: string
+  currency?: "THB" | "USD"
+  rate?: number
 }
 
 function getCycleLabel(cycle: string) {
@@ -21,8 +23,9 @@ function getCycleLabel(cycle: string) {
   }
 }
 
-export function UpcomingSubscriptions({ data, className }: UpcomingSubscriptionsProps) {
+export function UpcomingSubscriptions({ data, className, currency = "THB", rate = 34.0 }: UpcomingSubscriptionsProps) {
   const { monthlyCost, upcoming } = data
+  const formatM = (val: number) => money(val, currency, rate)
 
   return (
     <SectionPanel
@@ -36,7 +39,7 @@ export function UpcomingSubscriptions({ data, className }: UpcomingSubscriptions
       <div className="mb-4 rounded-lg border border-white/5 bg-[#181818] p-3">
         <span className="text-spotify-label">ค่าใช้จ่ายเฉลี่ยต่อเดือน</span>
         <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-white">{money(monthlyCost)}</span>
+          <span className="text-2xl font-bold text-white">{formatM(monthlyCost)}</span>
           <span className="text-xs text-spotify-muted">/ เดือน</span>
         </div>
       </div>
@@ -80,7 +83,7 @@ export function UpcomingSubscriptions({ data, className }: UpcomingSubscriptions
                   </div>
 
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className="font-bold text-white">{money(sub.price)}</span>
+                    <span className="font-bold text-white">{formatM(sub.price)}</span>
                     <span
                       className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badgeColor}`}
                     >

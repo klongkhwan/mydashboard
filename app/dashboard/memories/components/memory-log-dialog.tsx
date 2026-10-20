@@ -285,12 +285,12 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                     <FormItem>
                                         <FormLabel className="text-spotify-label">วันที่ *</FormLabel>
                                         <FormControl>
-                                            <div className="spotify-input flex items-center">
+
                                                 <DatePicker
                                                     value={field.value}
                                                     onChange={field.onChange}
                                                 />
-                                            </div>
+
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

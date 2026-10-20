@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
+import { formatDateDDMMYYYY } from "@/components/dashboard/format"
 import { Edit, Trash2, CreditCard, RefreshCw, History, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { Modal } from "@/components/ui/modal"
@@ -235,14 +236,14 @@ export function SubscriptionManager() {
         {
             accessorKey: "start_date",
             header: "วันเริ่ม",
-            cell: ({ row }) => <span className="text-spotify-muted">{row.original.start_date ? format(new Date(row.original.start_date), "d MMM yyyy") : "-"}</span>
+            cell: ({ row }) => <span className="text-spotify-muted">{row.original.start_date ? formatDateDDMMYYYY(row.original.start_date) : "-"}</span>
         },
         {
             accessorKey: "next_billing_date",
             header: "วันครบ",
             cell: ({ row }) => (
                 <span className={cn("tabular-nums font-bold", getDueDateWarning(row.original.next_billing_date) || "text-spotify-muted")}>
-                    {format(new Date(row.original.next_billing_date), "d MMM yyyy")}
+                    {formatDateDDMMYYYY(row.original.next_billing_date)}
                 </span>
             )
         },
@@ -316,12 +317,12 @@ export function SubscriptionManager() {
         {
             accessorKey: "start_date",
             header: "วันเริ่ม",
-            cell: ({ row }) => <span className="text-spotify-muted">{row.original.start_date ? format(new Date(row.original.start_date), "d MMM yyyy") : "-"}</span>
+            cell: ({ row }) => <span className="text-spotify-muted">{row.original.start_date ? formatDateDDMMYYYY(row.original.start_date) : "-"}</span>
         },
         {
             accessorKey: "next_billing_date",
             header: "วันครบ",
-            cell: ({ row }) => <span className="text-spotify-muted">{format(new Date(row.original.next_billing_date), "d MMM yyyy")}</span>
+            cell: ({ row }) => <span className="text-spotify-muted">{formatDateDDMMYYYY(row.original.next_billing_date)}</span>
         },
         {
             accessorKey: "status",

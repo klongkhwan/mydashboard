@@ -6,9 +6,12 @@ import { money, formatThaiDate } from "./format"
 interface RecentTransactionsProps {
   items: RecentTransactionItem[]
   className?: string
+  currency?: "THB" | "USD"
+  rate?: number
 }
 
-export function RecentTransactions({ items, className }: RecentTransactionsProps) {
+export function RecentTransactions({ items, className, currency = "THB", rate = 34.0 }: RecentTransactionsProps) {
+  const formatM = (val: number) => money(val, currency, rate)
   return (
     <SectionPanel
       title="ธุรกรรมล่าสุด"
@@ -64,7 +67,7 @@ export function RecentTransactions({ items, className }: RecentTransactionsProps
                       isIncome ? "text-primary" : "text-white"
                     }`}
                   >
-                    {isIncome ? `+${money(tx.amount_thb)}` : `-${money(tx.amount_thb)}`}
+                    {isIncome ? `+${formatM(tx.amount_thb)}` : `-${formatM(tx.amount_thb)}`}
                   </span>
                 </div>
               </div>

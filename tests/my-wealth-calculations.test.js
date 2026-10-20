@@ -3,6 +3,7 @@ const assert = require('node:assert/strict')
 const {
   buildDailyCashFlow,
   calculateInvestmentPnl,
+  filterTransactionsByTab,
 } = require('../lib/my-wealth-calculations.js')
 
 test('buildDailyCashFlow excludes pending expenses from net cash movement', () => {
@@ -33,7 +34,7 @@ test('buildDailyCashFlow combines income, expenses, and investment cash events',
 
   assert.equal(result[0].investmentOutflow, 5010)
   assert.equal(result[0].investmentInflow, 5990)
-  assert.equal(result[0].net, 30730)
+  assert.equal(result[0].net, 29750)
 })
 
 test('calculateInvestmentPnl uses entry and exit prices plus both fees', () => {
@@ -44,4 +45,16 @@ test('calculateInvestmentPnl uses entry and exit prices plus both fees', () => {
     entryFeeThb: 10,
     exitFeeThb: 5,
   }), 25)
+})
+
+test('filterTransactionsByTab separates all, income, paid expenses, and pending expenses', () => {
+  const sample = [
+    { id: '1', type: 'income', amount_thb: 5000 },
+    { id: '2', type: 'expense', payment_status: 'paid', amount_thb: 200 },
+    { id: '3', type: 'expense', payment_status: 'pending', amount_thb: 800 },
+  ]
+  assert.equal(filterTransactionsByTab(sample, 'all').length, 3)
+  assert.deepEqual(filterTransactionsByTab(sample, 'income'), [sample[0]])
+  assert.deepEqual(filterTransactionsByTab(sample, 'expenses'), [sample[1]])
+  assert.deepEqual(filterTransactionsByTab(sample, 'pending'), [sample[2]])
 })

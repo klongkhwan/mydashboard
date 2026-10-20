@@ -6,10 +6,13 @@ import { money, formatThaiDate } from "./format"
 interface PendingExpensesProps {
   data: PendingSummary
   className?: string
+  currency?: "THB" | "USD"
+  rate?: number
 }
 
-export function PendingExpenses({ data, className }: PendingExpensesProps) {
+export function PendingExpenses({ data, className, currency = "THB", rate = 34.0 }: PendingExpensesProps) {
   const { total, count, items } = data
+  const formatM = (val: number) => money(val, currency, rate)
 
   return (
     <SectionPanel
@@ -23,7 +26,7 @@ export function PendingExpenses({ data, className }: PendingExpensesProps) {
       <div className="mb-4 rounded-lg border border-white/5 bg-[#181818] p-3">
         <span className="text-spotify-label">ยอดค้างชำระทั้งหมด</span>
         <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-[#ffa42b]">{money(total)}</span>
+          <span className="text-2xl font-bold text-[#ffa42b]">{formatM(total)}</span>
           <span className="text-xs text-spotify-muted">({count} รายการ)</span>
         </div>
       </div>
@@ -60,7 +63,7 @@ export function PendingExpenses({ data, className }: PendingExpensesProps) {
                   </div>
 
                   <div className="shrink-0 text-right">
-                    <span className="font-bold text-[#f3727f]">{money(item.amount_thb)}</span>
+                    <span className="font-bold text-[#f3727f]">{formatM(item.amount_thb)}</span>
                   </div>
                 </div>
               )

@@ -4,16 +4,19 @@ import { DashboardSummary } from "@/lib/dashboard-summary"
 
 interface KpiCardsProps {
   summary: DashboardSummary
+  currency?: "THB" | "USD"
+  rate?: number
 }
 
-export function KpiCards({ summary }: KpiCardsProps) {
+export function KpiCards({ summary, currency = "THB", rate = 34.0 }: KpiCardsProps) {
   const { current, deltas, previousMonthKey } = summary
   const prevMonthLabel = formatThaiMonth(previousMonthKey)
+  const formatM = (val: number) => money(val, currency, rate)
 
   const cards = [
     {
       title: "รายรับ (Income)",
-      value: money(current.income),
+      value: formatM(current.income),
       icon: DollarSign,
       iconColor: "text-primary",
       iconBg: "bg-primary/10",
@@ -25,7 +28,7 @@ export function KpiCards({ summary }: KpiCardsProps) {
     },
     {
       title: "รายจ่าย (จ่ายแล้ว)",
-      value: money(current.paidExpenses),
+      value: formatM(current.paidExpenses),
       icon: Wallet,
       iconColor: "text-[#539df5]",
       iconBg: "bg-[#539df5]/10",
@@ -37,7 +40,7 @@ export function KpiCards({ summary }: KpiCardsProps) {
     },
     {
       title: "Net Cash (สุทธิ)",
-      value: money(current.net),
+      value: formatM(current.net),
       icon: current.net >= 0 ? TrendingUp : TrendingDown,
       iconColor: current.net >= 0 ? "text-primary" : "text-destructive",
       iconBg: current.net >= 0 ? "bg-primary/10" : "bg-destructive/10",
@@ -48,7 +51,7 @@ export function KpiCards({ summary }: KpiCardsProps) {
     },
     {
       title: "Realized PnL (กำไร/ขาดทุน)",
-      value: money(current.realizedPnl),
+      value: formatM(current.realizedPnl),
       icon: TrendingUp,
       iconColor: current.realizedPnl >= 0 ? "text-primary" : "text-destructive",
       iconBg: current.realizedPnl >= 0 ? "bg-primary/10" : "bg-destructive/10",
@@ -72,11 +75,11 @@ export function KpiCards({ summary }: KpiCardsProps) {
 
         if (card.isAmountDeltaOnly) {
           if (diff > 0) {
-            trendText = `+${money(diff)} vs ${prevMonthLabel}`
+            trendText = `+${formatM(diff)} vs ${prevMonthLabel}`
             trendColor = "text-primary"
             TrendIcon = ArrowUpRight
           } else if (diff < 0) {
-            trendText = `${money(diff)} vs ${prevMonthLabel}`
+            trendText = `${formatM(diff)} vs ${prevMonthLabel}`
             trendColor = "text-destructive"
             TrendIcon = ArrowDownRight
           } else {

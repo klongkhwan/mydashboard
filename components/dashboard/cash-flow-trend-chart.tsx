@@ -19,11 +19,16 @@ import { compactMoney, formatThaiMonth, money } from "./format"
 interface CashFlowTrendChartProps {
   months: MonthSummary[]
   className?: string
+  currency?: "THB" | "USD"
+  rate?: number
 }
 
-export function CashFlowTrendChart({ months, className }: CashFlowTrendChartProps) {
+export function CashFlowTrendChart({ months, className, currency = "THB", rate = 34.0 }: CashFlowTrendChartProps) {
+  const formatM = (val: number) => money(val, currency, rate)
+  const formatCompact = (val: number) => compactMoney(val, currency, rate)
+
   const chartData = months.map((m) => {
-    const totalOutflow = m.paidExpenses + m.investmentOutflow
+    const totalOutflow = m.paidExpenses
     return {
       monthKey: m.month,
       monthLabel: formatThaiMonth(m.month, true),
@@ -39,7 +44,7 @@ export function CashFlowTrendChart({ months, className }: CashFlowTrendChartProp
   return (
     <SectionPanel
       title="แนวโน้มกระแสเงินสด 6 เดือน"
-      description="เปรียบเทียบรายรับ รายจ่ายรวมการลงทุน และเงินคงเหลือสุทธิ"
+      description="เปรียบเทียบรายรับ รายจ่าย และกระแสเงินสดสุทธิ"
       icon={BarChart3}
       className={className}
       bodyClassName="p-4"
@@ -65,7 +70,7 @@ export function CashFlowTrendChart({ months, className }: CashFlowTrendChartProp
                 tick={{ fill: "#b3b3b3", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(val) => compactMoney(val)}
+                tickFormatter={(val) => formatCompact(val)}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -80,14 +85,14 @@ export function CashFlowTrendChart({ months, className }: CashFlowTrendChartProp
                             <span className="h-2 w-2 rounded-full bg-primary" />
                             รายรับ:
                           </span>
-                          <span className="font-semibold text-white">{money(data.income)}</span>
+                          <span className="font-semibold text-white">{formatM(data.income)}</span>
                         </div>
                         <div className="flex items-center justify-between gap-4">
                           <span className="flex items-center gap-1.5 text-[#f3727f]">
                             <span className="h-2 w-2 rounded-full bg-[#f3727f]" />
-                            จ่าย+ลงทุน:
+                            รายจ่าย:
                           </span>
-                          <span className="font-semibold text-white">{money(data.outflow)}</span>
+                          <span className="font-semibold text-white">{formatM(data.outflow)}</span>
                         </div>
                         <div className="flex items-center justify-between gap-4 border-t border-white/5 pt-1 mt-1">
                           <span className="flex items-center gap-1.5 text-[#539df5]">
@@ -97,7 +102,7 @@ export function CashFlowTrendChart({ months, className }: CashFlowTrendChartProp
                           <span
                             className={`font-bold ${data.net >= 0 ? "text-primary" : "text-destructive"}`}
                           >
-                            {money(data.net)}
+                            {formatM(data.net)}
                           </span>
                         </div>
                       </div>
@@ -113,7 +118,7 @@ export function CashFlowTrendChart({ months, className }: CashFlowTrendChartProp
                 wrapperStyle={{ paddingBottom: 8, fontSize: 12 }}
                 formatter={(val) => (
                   <span className="text-xs text-[#b3b3b3] mr-2">
-                    {val === "income" ? "รายรับ" : val === "outflow" ? "จ่าย+ลงทุน" : "สุทธิ (Net)"}
+                    {val === "income" ? "รายรับ" : val === "outflow" ? "รายจ่าย" : "สุทธิ (Net)"}
                   </span>
                 )}
               />

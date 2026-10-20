@@ -15,6 +15,7 @@ import { ModernPageLoading } from "@/components/ui/modern-loader"
 import { fetchDualInvestmentProjects, DualInvestmentProject, DualInvestmentFilters } from "@/lib/dual-investment"
 import { DualInvestmentCalculator } from "./DualInvestmentCalculator"
 import { ReusableDataTable } from "@/components/ui/reusable-data-table"
+import { formatDateDDMMYYYY } from "@/components/dashboard/format"
 import { type ColumnDef, type Row } from "@tanstack/react-table"
 import { cn } from "@/lib/utils"
 
@@ -155,7 +156,7 @@ export function DualInvestmentTab() {
       header: "Settlement Date",
       cell: ({ row }: { row: Row<DualInvestmentProject> }) => (
         <span className="text-spotify-muted tabular-nums">
-          {new Date(parseInt(row.original.settleTime)).toLocaleDateString('en-GB')}
+          {formatDateDDMMYYYY(new Date(parseInt(row.original.settleTime)))}
         </span>
       )
     },

@@ -1,3 +1,5 @@
-import { MyWealthSectionPage } from "../section-page"
+import { redirect } from "next/navigation"
 
-export default function Page() { return <MyWealthSectionPage section={"categories"} /> }
+export default function CategoriesPage() {
+  redirect("/dashboard/my-wealth/transactions?manageCategories=true")
+}

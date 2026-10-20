@@ -1,22 +1,42 @@
-const currencyFormatter = new Intl.NumberFormat("th-TH", {
-  style: "currency",
-  currency: "THB",
-  maximumFractionDigits: 0,
-})
+import { format } from "date-fns"
 
-const compactCurrencyFormatter = new Intl.NumberFormat("th-TH", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-})
-
-export function money(amount: number): string {
-  if (isNaN(amount) || amount == null) return "฿0"
-  return currencyFormatter.format(amount)
+export function formatMoney(amountThb: number, currency: "THB" | "USD" = "THB", rate = 34.0): string {
+  if (isNaN(amountThb) || amountThb == null) return currency === "USD" ? "$0.00" : "฿0"
+  if (currency === "USD") {
+    const r = rate > 0 ? rate : 34.0
+    const usdVal = amountThb / r
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(usdVal)
+  }
+  return new Intl.NumberFormat("th-TH", {
+    style: "currency",
+    currency: "THB",
+    maximumFractionDigits: 0,
+  }).format(amountThb)
 }
 
-export function compactMoney(amount: number): string {
-  if (isNaN(amount) || amount == null) return "0"
-  return compactCurrencyFormatter.format(amount)
+export function money(amount: number, currency: "THB" | "USD" = "THB", rate = 34.0): string {
+  return formatMoney(amount, currency, rate)
+}
+
+export function compactMoney(amountThb: number, currency: "THB" | "USD" = "THB", rate = 34.0): string {
+  if (isNaN(amountThb) || amountThb == null) return "0"
+  if (currency === "USD") {
+    const r = rate > 0 ? rate : 34.0
+    const usdVal = amountThb / r
+    return new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(usdVal)
+  }
+  return new Intl.NumberFormat("th-TH", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(amountThb)
 }
 
 const THAI_MONTHS_SHORT = [
@@ -66,3 +86,26 @@ export function formatPercent(val: number | null): string {
   const sign = val > 0 ? "+" : ""
   return `${sign}${val.toFixed(1)}%`
 }
+
+/**
+ * Format a Date object, ISO string, or YYYY-MM-DD string to DD/MM/YYYY
+ */
+export function formatDateDDMMYYYY(date: Date | string | null | undefined): string {
+  if (!date) return "-"
+  if (typeof date === "string") {
+    const trimmed = date.trim()
+    if (!trimmed) return "-"
+    const parts = trimmed.slice(0, 10).split("-")
+    if (parts.length === 3 && parts[0].length === 4) {
+      const [year, month, day] = parts
+      return `${day}/${month}/${year}`
+    }
+    const d = new Date(trimmed)
+    return isNaN(d.getTime()) ? trimmed : format(d, "dd/MM/yyyy")
+  }
+  if (date instanceof Date && !isNaN(date.getTime())) {
+    return format(date, "dd/MM/yyyy")
+  }
+  return "-"
+}
+

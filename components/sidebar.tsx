@@ -19,6 +19,7 @@ import {
   BookHeart,
   Search,
   LayoutGrid,
+  Dumbbell,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { logout } from "@/app/login/actions"
@@ -47,9 +48,8 @@ const menuItems = [
     subItems: [
       { title: "Overview", icon: LayoutDashboard, href: "/dashboard/my-wealth" },
       { title: "Investments", icon: TrendingUp, href: "/dashboard/my-wealth/investments" },
-      { title: "Income", icon: CreditCard, href: "/dashboard/my-wealth/income" },
-      { title: "Expenses", icon: CreditCard, href: "/dashboard/my-wealth/expenses" },
-      { title: "Categories", icon: Settings, href: "/dashboard/my-wealth/categories" },
+      { title: "Workouts", icon: Dumbbell, href: "/dashboard/my-wealth/workouts" },
+      { title: "Income & Expense", icon: CreditCard, href: "/dashboard/my-wealth/transactions" },
     ],
   },
 

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { TrendingUp, TrendingDown, Calculator, DollarSign, Calendar } from "lucide-react"
 import { DualInvestmentProject } from "@/lib/dual-investment"
+import { formatDateDDMMYYYY } from "@/components/dashboard/format"
 
 interface DualInvestmentCalculatorProps {
   isOpen: boolean
@@ -150,7 +151,7 @@ export function DualInvestmentCalculator({ isOpen, onClose, project }: DualInves
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Settlement Date</span>
                 <span className="font-semibold">
-                  {new Date(parseInt(project.settleTime)).toLocaleDateString('en-GB')}
+                  {formatDateDDMMYYYY(new Date(parseInt(project.settleTime)))}
                 </span>
               </div>
             </CardContent>

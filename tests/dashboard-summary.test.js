@@ -55,8 +55,8 @@ test('summarizeMonth excludes pending expenses and calculates net and realized P
   assert.equal(summary.pendingExpenses, 5000)
   assert.equal(summary.investmentOutflow, 10050)
   assert.equal(summary.investmentInflow, 11940)
-  // Net = 50000 - 20000 - 10050 + 11940 = 31890
-  assert.equal(summary.net, 31890)
+  // Net = 50000 - 20000 = 30000 (Income minus paid expenses)
+  assert.equal(summary.net, 30000)
   // Realized PnL = (12000 - 60) - (8000 + 40) = 11940 - 8040 = 3900
   assert.equal(summary.realizedPnl, 3900)
 })
