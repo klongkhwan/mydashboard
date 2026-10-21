@@ -64,22 +64,6 @@ export default function MyWealthOverviewPage() {
     [monthTransactions]
   )
 
-  const investmentOutflow = useMemo(
-    () =>
-      investments
-        .filter((item) => isSelectedMonth(item.opened_at))
-        .reduce((sum, item) => sum + Number(item.opened_amount_thb) + Number(item.entry_fee_thb || 0), 0),
-    [investments, selectedMonth, isAllTime]
-  )
-
-  const investmentInflow = useMemo(
-    () =>
-      investments
-        .filter((item) => item.status === "closed" && isSelectedMonth(item.closed_at))
-        .reduce((sum, item) => sum + Number(item.closed_amount_thb || 0) - Number(item.exit_fee_thb || 0), 0),
-    [investments, selectedMonth, isAllTime]
-  )
-
   const closedInvestmentPnl = useMemo(
     () =>
       investments
@@ -109,10 +93,11 @@ export default function MyWealthOverviewPage() {
         const raw = Number(item.opened_amount_thb || 0)
         const deposit = Number(item.deposit_amount || 0)
         if (isUsd) {
-          const usdVal = deposit > 0 ? deposit : (calcUsd > 0 && raw <= calcUsd * 1.5) ? calcUsd : (raw > 0 ? raw : calcUsd)
-          return sum + (usdVal * rate)
+          if (deposit > 0) return sum + (deposit * rate)
+          if (calcUsd > 0) return sum + (calcUsd * rate)
+          return sum + raw
         }
-        return sum + raw
+        return sum + (calcUsd > 0 ? calcUsd : raw)
       }, 0),
     [openInvestments, usdThbRate]
   )
@@ -122,11 +107,13 @@ export default function MyWealthOverviewPage() {
     let est = 0
     const rate = usdThbRate > 0 ? usdThbRate : 34.0
     for (const item of openInvestments) {
-      const quote = quotes[item.asset_symbol?.toUpperCase()]
+      const cleanBase = item.asset_symbol?.replace(/(USDT|BUSD|USDC|THB)$/i, "")?.toUpperCase() || ""
+      const quote = quotes[item.asset_symbol?.toUpperCase()] || (cleanBase ? quotes[cleanBase] : undefined)
       if (quote && Number(item.entry_price) > 0) {
         const isUsdQuote = item.quote_asset === "USD" || item.quote_asset === "USDT"
         let currentPrice = quote.price
-        if (!isUsdQuote && quote.source !== "fallback") {
+        // Only convert crypto quotes in USD if position is held in THB; Thai stocks are already in THB
+        if (!isUsdQuote && item.investment_type !== "thai_stock") {
           currentPrice = currentPrice * rate
         }
         const qty = Number(item.quantity || 0)
@@ -139,7 +126,7 @@ export default function MyWealthOverviewPage() {
           const calcUsd = qty > 0 && price > 0 ? qty * price : 0
           const raw = Number(item.opened_amount_thb || 0)
           const itemThb = isUsdQuote
-            ? ((calcUsd > 0 && raw <= calcUsd * 1.5 ? calcUsd : (raw > 0 ? raw : calcUsd)) * rate)
+            ? (calcUsd > 0 ? calcUsd * rate : raw)
             : raw
           est += itemThb * pnlPct
         }

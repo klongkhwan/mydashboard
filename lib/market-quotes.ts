@@ -71,47 +71,50 @@ export async function getAssetQuote(
     return null
   }
 
-  // 2. Try Binance (Crypto)
-  try {
-    const cryptoSymbol =
-      clean.endsWith("USDT") || clean.endsWith("BUSD") || clean.endsWith("USDC")
-        ? clean
-        : `${clean}USDT`
+  // 2. Try Binance Global & Binance US (Crypto)
+  const baseCrypto = clean.replace(/(USDT|BUSD|USDC)$/, "")
+  const cryptoSymbol = `${baseCrypto}USDT`
 
-    const res = await fetch(
-      `https://api.binance.com/api/v3/ticker/price?symbol=${cryptoSymbol}`,
-      {
+  for (const endpoint of [
+    `https://api.binance.com/api/v3/ticker/price?symbol=${cryptoSymbol}`,
+    `https://api.binance.us/api/v3/ticker/price?symbol=${cryptoSymbol}`,
+  ]) {
+    try {
+      const res = await fetch(endpoint, {
         next: { revalidate: 1800 }, // 30-minute cache
         signal: AbortSignal.timeout(3000),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const price = parseFloat(data.price)
+        if (!isNaN(price) && price > 0) {
+          return { symbol: clean, price, source: "binance" }
+        }
       }
-    )
-    if (res.ok) {
-      const data = await res.json()
-      const price = parseFloat(data.price)
-      if (!isNaN(price) && price > 0) {
-        return { symbol: clean, price, source: "binance" }
-      }
-    }
-  } catch {}
+    } catch {}
+  }
 
-  // 3. Fallback to Yahoo Finance
-  try {
-    const res = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${clean}?interval=1d&range=1d`,
-      {
-        headers: { "User-Agent": "Mozilla/5.0" },
-        next: { revalidate: 1800 },
-        signal: AbortSignal.timeout(3500),
+  // 3. Fallback to Yahoo Finance (Crypto: use BASE-USD e.g. SOL-USD, then raw clean)
+  const yahooCryptoSymbols = baseCrypto ? [`${baseCrypto}-USD`, clean] : [clean]
+  for (const sym of yahooCryptoSymbols) {
+    try {
+      const res = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`,
+        {
+          headers: { "User-Agent": "Mozilla/5.0" },
+          next: { revalidate: 1800 },
+          signal: AbortSignal.timeout(3500),
+        }
+      )
+      if (res.ok) {
+        const data = await res.json()
+        const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice
+        if (typeof price === "number" && price > 0) {
+          return { symbol: clean, price, source: "yahoo" }
+        }
       }
-    )
-    if (res.ok) {
-      const data = await res.json()
-      const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice
-      if (typeof price === "number" && price > 0) {
-        return { symbol: clean, price, source: "yahoo" }
-      }
-    }
-  } catch {}
+    } catch {}
+  }
 
   return null
 }
@@ -152,7 +155,16 @@ export async function getBatchAssetQuotes(
 
   results.forEach((res, index) => {
     if (res.status === "fulfilled" && res.value) {
-      map[unique[index][0]] = res.value
+      const sym = unique[index][0]
+      const invType = unique[index][1]
+      const isStock = invType === "thai_stock" || invType === "foreign_stock" || sym.includes(".BK")
+      map[sym] = res.value
+      const base = sym.replace(/(USDT|BUSD|USDC)$/, "")
+      if (base && base !== sym) {
+        map[base] = res.value
+      } else if (base && !isStock) {
+        map[`${base}USDT`] = res.value
+      }
     }
   })
 

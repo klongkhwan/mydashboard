@@ -4,6 +4,8 @@ const {
   buildDailyCashFlow,
   calculateInvestmentPnl,
   filterTransactionsByTab,
+  resolveQuotePrice,
+  calculateOpenPositionCapitalThb,
 } = require('../lib/my-wealth-calculations.js')
 
 test('buildDailyCashFlow excludes pending expenses from net cash movement', () => {
@@ -57,4 +59,32 @@ test('filterTransactionsByTab separates all, income, paid expenses, and pending 
   assert.deepEqual(filterTransactionsByTab(sample, 'income'), [sample[0]])
   assert.deepEqual(filterTransactionsByTab(sample, 'expenses'), [sample[1]])
   assert.deepEqual(filterTransactionsByTab(sample, 'pending'), [sample[2]])
+})
+
+test('resolveQuotePrice does not multiply Thai stock price by USD rate', () => {
+  // PTT.BK is already in THB
+  const thaiStockPrice = resolveQuotePrice(33.0, false, 'thai_stock', 34.0)
+  assert.equal(thaiStockPrice, 33.0)
+
+  // Crypto in USD held in THB position is converted to THB
+  const cryptoPrice = resolveQuotePrice(68000, false, 'crypto_holding', 34.0)
+  assert.equal(cryptoPrice, 68000 * 34.0)
+
+  // USD position stays in USD
+  const usdPrice = resolveQuotePrice(230.0, true, 'foreign_stock', 34.0)
+  assert.equal(usdPrice, 230.0)
+})
+
+test('calculateOpenPositionCapitalThb handles foreign investment without quantity and price', () => {
+  // Foreign investment with 34,000 THB entered, without quantity/price
+  const capital = calculateOpenPositionCapitalThb({
+    quoteAsset: 'USD',
+    openedAmountThb: 34000,
+    depositAmount: 0,
+    quantity: 0,
+    entryPrice: 0,
+    usdThbRate: 34.0,
+  })
+  // Must be 34,000 THB, NOT 34,000 * 34 = 1,156,000 THB
+  assert.equal(capital, 34000)
 })

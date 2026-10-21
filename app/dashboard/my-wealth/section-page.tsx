@@ -502,8 +502,8 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
             ? calculatedUsd
             : deposit > 0
               ? deposit
-              : (rawOpened > 0 ? (rawOpened <= calculatedUsd * 1.5 ? calculatedUsd : rawOpened) : calculatedUsd)
-          const thbVal = usdVal * rate
+              : (rawOpened > 0 ? rawOpened / rate : 0)
+          const thbVal = (qty > 0 && price > 0 || deposit > 0) ? usdVal * rate : rawOpened
           primaryDisplay = `$${usdVal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
           entryText = price > 0 ? `$${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} (≈ ฿${Math.round(thbVal).toLocaleString("th-TH")})` : `≈ ฿${Math.round(thbVal).toLocaleString("th-TH")}`
         } else {
@@ -527,7 +527,8 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
       header: () => <div className="text-right pr-6">การเปลี่ยนแปลง</div>,
       cell: ({ row }) => {
         const item = row.original
-        const quote = quotes[item.asset_symbol?.toUpperCase()]
+        const cleanBase = item.asset_symbol?.replace(/(USDT|BUSD|USDC|THB)$/i, "")?.toUpperCase() || ""
+        const quote = quotes[item.asset_symbol?.toUpperCase()] || (cleanBase ? quotes[cleanBase] : undefined)
         const isUsdQuote = item.quote_asset === "USD" || item.quote_asset === "USDT"
         const rate = usdThbRate > 0 ? usdThbRate : 34.0
         const prefix = isUsdQuote ? "$" : "฿"
@@ -572,7 +573,8 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
 
         if (item.status === "open") {
           let currentPrice = quote ? quote.price : null
-          if (currentPrice && !isUsdQuote && quote.source !== "fallback") {
+          // Only convert crypto quotes in USD if position is held in THB; Thai stocks are already in THB
+          if (currentPrice && !isUsdQuote && item.investment_type !== "thai_stock") {
             currentPrice = currentPrice * rate
           }
           const hasQuote = currentPrice !== null && price > 0
@@ -1379,8 +1381,8 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
             const calculatedUsd = qty > 0 && price > 0 ? qty * price : 0
             const rawOpened = Number(closeInv.opened_amount_thb || 0)
             const deposit = Number(closeInv.deposit_amount || 0)
-            const invUsd = deposit > 0 ? deposit : (calculatedUsd > 0 && rawOpened <= calculatedUsd * 1.5) ? calculatedUsd : (rawOpened > 0 ? rawOpened : calculatedUsd)
-            const invThb = isUsd ? invUsd * rate : rawOpened
+            const invUsd = deposit > 0 ? deposit : (calculatedUsd > 0) ? calculatedUsd : (rawOpened > 0 ? rawOpened / rate : 0)
+            const invThb = isUsd ? ((calculatedUsd > 0 || deposit > 0) ? invUsd * rate : rawOpened) : rawOpened
             const currencyCode = isUsd ? "USD" : "THB"
             const currencySymbol = isUsd ? "$" : "฿"
 

@@ -61,13 +61,7 @@ export default function WorkoutsPage() {
   }
 
   const handleOpenCreate = (dateStr?: string) => {
-    const targetDate = dateStr || new Date().toISOString().split("T")[0]
-    // If today or selected date already has a workout, open it to update instead of creating a duplicate
-    const existing = workouts.find((w) => w.workout_date === targetDate)
-    if (existing) {
-      handleOpenEdit(existing)
-      return
-    }
+    const targetDate = dateStr || new Date().toLocaleDateString("en-CA")
     setWorkoutToEdit(null)
     setInitialDate(targetDate)
     setSelectedPresetId("home_fullbody")

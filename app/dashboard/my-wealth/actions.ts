@@ -194,7 +194,7 @@ export async function getMyWorkouts() {
 
   if (error) {
     console.error("getMyWorkouts error:", error)
-    return []
+    throw new Error("ไม่สามารถโหลดข้อมูลประวัติการออกกำลังกายได้ กรุณาลองใหม่อีกครั้ง")
   }
   return data || []
 }
@@ -227,36 +227,7 @@ export async function createWealthWorkout(input: unknown) {
     return recentDuplicate
   }
 
-  // 2. Same-day routine deduplication: If a workout with this title already exists on the same day, update it instead of duplicating
-  const { data: existingSameDay } = await supabase
-    .from("wealth_workouts")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("workout_date", value.workout_date)
-    .eq("title", value.title)
-    .limit(1)
-    .maybeSingle()
-
-  if (existingSameDay) {
-    const { data: updated, error: updateErr } = await supabase
-      .from("wealth_workouts")
-      .update({
-        ...value,
-        total_volume_kg,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", existingSameDay.id)
-      .eq("user_id", user.id)
-      .select()
-      .single()
-
-    if (updateErr) throw new Error(updateErr.message)
-    revalidatePath("/dashboard/my-wealth/workouts")
-    revalidatePath("/dashboard/my-wealth", "layout")
-    return updated
-  }
-
-  // 3. Normal insert
+  // 2. Normal insert
   const { data, error } = await supabase
     .from("wealth_workouts")
     .insert({

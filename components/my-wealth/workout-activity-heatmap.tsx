@@ -48,6 +48,13 @@ const LEVEL_COLORS: Record<number, string> = {
   4: "bg-[#39d353] hover:bg-[#4df26b]", // >60 min
 }
 
+const formatYmd = (d: Date) => {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
 export function WorkoutActivityHeatmap({
   workouts,
   weeksCount: initialWeeksCount = 28,
@@ -96,7 +103,7 @@ export function WorkoutActivityHeatmap({
     const activeWeeks = fitWeeks
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().split("T")[0]
+    const todayStr = formatYmd(today)
 
     // Find the ending Saturday of current week to align columns
     const endOffset = 6 - today.getDay()
@@ -122,7 +129,7 @@ export function WorkoutActivityHeatmap({
     let currentWeekIdx = 0
 
     while (iter <= endDate) {
-      const dateStr = iter.toISOString().split("T")[0]
+      const dateStr = formatYmd(iter)
       const dayWorkouts = workoutsByDate.get(dateStr) || []
       const completedDayWorkouts = dayWorkouts.filter(isWorkoutCompleted)
       const dayMinutes = completedDayWorkouts.reduce((sum, w) => sum + (Number(w.duration_minutes) || 0), 0)

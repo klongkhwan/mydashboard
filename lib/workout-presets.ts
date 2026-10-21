@@ -710,12 +710,15 @@ export function calculateMuscleSets(
   if (timeRange === "week") {
     cutoffDate = new Date(now)
     cutoffDate.setDate(now.getDate() - 7)
+    cutoffDate.setHours(0, 0, 0, 0)
   } else if (timeRange === "30d") {
     cutoffDate = new Date(now)
     cutoffDate.setDate(now.getDate() - 30)
+    cutoffDate.setHours(0, 0, 0, 0)
   } else if (timeRange === "90d") {
     cutoffDate = new Date(now)
     cutoffDate.setDate(now.getDate() - 90)
+    cutoffDate.setHours(0, 0, 0, 0)
   }
 
   const result: MuscleSetsMap = {
@@ -826,6 +829,7 @@ export function calculate30dVolume(
   const now = new Date()
   const cutoff = new Date(now)
   cutoff.setDate(now.getDate() - 30)
+  cutoff.setHours(0, 0, 0, 0)
 
   return workouts.reduce((sum, w) => {
     if (!w.workout_date) return sum

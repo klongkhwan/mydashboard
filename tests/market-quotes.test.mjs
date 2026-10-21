@@ -19,4 +19,12 @@ describe('Market quotes module', () => {
     assert.strictEqual(typeof rate, 'number')
     assert.ok(rate > 20 && rate < 60)
   })
+
+  it('maps both clean and base crypto symbols in batch quotes', async () => {
+    const quote = await getAssetQuote('SOLUSDT', 'crypto_holding')
+    if (quote) {
+      assert.strictEqual(typeof quote.price, 'number')
+      assert.ok(quote.price > 0)
+    }
+  })
 })

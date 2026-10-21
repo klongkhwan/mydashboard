@@ -70,7 +70,7 @@ export function WorkoutDialog({
   const [pending, startTransition] = useTransition()
   const isSubmittingRef = useRef(false)
 
-  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0])
+  const [date, setDate] = useState(() => new Date().toLocaleDateString("en-CA"))
   const [title, setTitle] = useState("Home Full Body (ไร้อุปกรณ์)")
   const [duration, setDuration] = useState(30)
   const [notes, setNotes] = useState("")

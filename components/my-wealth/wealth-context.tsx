@@ -1,8 +1,9 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, useTransition, useCallback } from "react"
+import React, { createContext, useContext, useState, useEffect, useTransition, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { fetchLiveInvestmentQuotes } from "@/app/dashboard/my-wealth/actions"
+import { useCryptoPricesPolling } from "@/hooks/use-crypto-prices-polling"
 
 export interface WealthCategory {
   id: string
@@ -194,6 +195,29 @@ export function WealthProvider({
     }
   }, [initialData.investments])
 
+  const openCryptoSymbols = useMemo(() => {
+    return initialData.investments
+      .filter((inv) => inv.status === "open" && inv.investment_type !== "thai_stock" && inv.investment_type !== "foreign_stock")
+      .map((inv) => inv.asset_symbol)
+  }, [initialData.investments])
+
+  const { prices: liveCryptoPrices } = useCryptoPricesPolling(openCryptoSymbols)
+
+  const effectiveQuotes = useMemo(() => {
+    const combined = { ...quotes }
+    for (const [key, val] of Object.entries(liveCryptoPrices)) {
+      if (val && typeof val.price === "number" && val.price > 0) {
+        const entry = { symbol: key, price: val.price, source: "binance_ws" }
+        combined[key] = entry
+        const base = key.replace(/(USDT|BUSD|USDC)$/, "")
+        if (base && base !== key) {
+          combined[base] = entry
+        }
+      }
+    }
+    return combined
+  }, [quotes, liveCryptoPrices])
+
   const refreshData = useCallback(() => {
     startTransition(() => {
       router.refresh()
@@ -207,7 +231,7 @@ export function WealthProvider({
         categories,
         transactions,
         investments,
-        quotes,
+        quotes: effectiveQuotes,
         usdThbRate,
         quotesLoading,
         lastUpdated,

@@ -163,37 +163,43 @@ const notifyListeners = () => {
   }, 300)
 }
 
-export function useCryptoPricesPolling() {
+export function useCryptoPricesPolling(extraSymbols?: string[]) {
   const [prices, setPrices] = useState<CryptoPrices>({})
   const [isLoading, setIsLoading] = useState(true)
   const [symbols, setSymbols] = useState<string[]>(initialSymbols)
+  const extraSymbolsKey = (extraSymbols || []).slice().sort().join(",")
 
   // Get symbols from localStorage or use defaults
   const getSymbols = () => {
-    if (typeof window === 'undefined') return initialSymbols
+    let base = initialSymbols
+    if (typeof window !== 'undefined') {
+      try {
+        const savedSettings = localStorage.getItem('superlboard-settings')
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings)
 
-    try {
-      const savedSettings = localStorage.getItem('superlboard-settings')
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings)
-
-        // Check for new format (coinDisplays)
-        if (parsed.coinDisplays && parsed.coinDisplays.length > 0) {
-          return parsed.coinDisplays
-            .filter((coin: any) => coin.show)
-            .map((coin: any) => coin.symbol)
+          // Check for new format (coinDisplays)
+          if (parsed.coinDisplays && parsed.coinDisplays.length > 0) {
+            base = parsed.coinDisplays
+              .filter((coin: any) => coin.show)
+              .map((coin: any) => coin.symbol)
+          } else if (parsed.dashboardCoins && parsed.dashboardCoins.length > 0) {
+            base = parsed.dashboardCoins
+          }
         }
-
-        // Check for old format (dashboardCoins) - for migration
-        if (parsed.dashboardCoins && parsed.dashboardCoins.length > 0) {
-          return parsed.dashboardCoins
-        }
+      } catch (error) {
+        console.error('Error loading settings for symbols:', error)
       }
-    } catch (error) {
-      console.error('Error loading settings for symbols:', error)
     }
 
-    return initialSymbols
+    if (extraSymbols && extraSymbols.length > 0) {
+      const cleaned = extraSymbols
+        .map(s => (s || "").replace(/(USDT|BUSD|USDC)$/i, "").trim().toUpperCase())
+        .filter(Boolean)
+      return Array.from(new Set([...base, ...cleaned]))
+    }
+
+    return base
   }
 
   // Check for symbol changes
@@ -226,7 +232,7 @@ export function useCryptoPricesPolling() {
       clearInterval(interval)
       window.removeEventListener('settings-changed', handleSettingsChange)
     }
-  }, [symbols])
+  }, [symbols, extraSymbolsKey])
 
   // Manage WebSocket subscription
   useEffect(() => {
