@@ -77,7 +77,7 @@ export function CashFlowTrendChart({ months, className, currency = "THB", rate =
                   if (!active || !payload || !payload.length) return null
                   const data = payload[0].payload
                   return (
-                    <div className="rounded-lg border border-white/10 bg-[#181818] p-3 text-xs shadow-xl">
+                    <div className="rounded-lg border border-white/10 bg-card p-3 text-xs shadow-xl">
                       <p className="font-bold text-white mb-2">{data.monthLabel}</p>
                       <div className="space-y-1">
                         <div className="flex items-center justify-between gap-4">
@@ -88,15 +88,15 @@ export function CashFlowTrendChart({ months, className, currency = "THB", rate =
                           <span className="font-semibold text-white">{formatM(data.income)}</span>
                         </div>
                         <div className="flex items-center justify-between gap-4">
-                          <span className="flex items-center gap-1.5 text-[#f3727f]">
-                            <span className="h-2 w-2 rounded-full bg-[#f3727f]" />
+                          <span className="flex items-center gap-1.5 text-destructive">
+                            <span className="h-2 w-2 rounded-full bg-destructive" />
                             รายจ่าย:
                           </span>
                           <span className="font-semibold text-white">{formatM(data.outflow)}</span>
                         </div>
                         <div className="flex items-center justify-between gap-4 border-t border-white/5 pt-1 mt-1">
-                          <span className="flex items-center gap-1.5 text-[#539df5]">
-                            <span className="h-2 w-2 rounded-full bg-[#539df5]" />
+                          <span className="flex items-center gap-1.5 text-info">
+                            <span className="h-2 w-2 rounded-full bg-info" />
                             สุทธิ (Net):
                           </span>
                           <span
@@ -117,7 +117,7 @@ export function CashFlowTrendChart({ months, className, currency = "THB", rate =
                 iconType="circle"
                 wrapperStyle={{ paddingBottom: 8, fontSize: 12 }}
                 formatter={(val) => (
-                  <span className="text-xs text-[#b3b3b3] mr-2">
+                  <span className="text-xs text-muted-foreground mr-2">
                     {val === "income" ? "รายรับ" : val === "outflow" ? "รายจ่าย" : "สุทธิ (Net)"}
                   </span>
                 )}

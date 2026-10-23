@@ -20,6 +20,7 @@ import {
   Search,
   LayoutGrid,
   Dumbbell,
+  GraduationCap,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { logout } from "@/app/login/actions"
@@ -49,6 +50,7 @@ const menuItems = [
       { title: "Overview", icon: LayoutDashboard, href: "/dashboard/my-wealth" },
       { title: "Investments", icon: TrendingUp, href: "/dashboard/my-wealth/investments" },
       { title: "Workouts", icon: Dumbbell, href: "/dashboard/my-wealth/workouts" },
+      { title: "Personal Growth", icon: GraduationCap, href: "/dashboard/my-wealth/growth" },
       { title: "Income & Expense", icon: CreditCard, href: "/dashboard/my-wealth/transactions" },
     ],
   },
@@ -209,7 +211,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             <span className="text-spotify-label text-white tracking-[0.2em]">AllBoard</span>
           </div>
         )}
-        <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0 hover:bg-[#282828] rounded-full transition-all text-[#b3b3b3] hover:text-white">
+        <Button variant="ghost" size="sm" onClick={onToggle} aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"} className="h-8 w-8 p-0 hover:bg-surface-hover rounded-full transition-all text-muted-foreground hover:text-white">
           {isCollapsed ? (
             <ChevronRight className="w-5 h-5" />
           ) : (
@@ -237,19 +239,21 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               return (
                 <div key={item.title} className="space-y-1 px-2">
                   <Button
-                    variant={isSubActive ? "default" : "ghost"}
+                    variant="ghost"
+                    aria-label={item.title}
+                    aria-expanded={isExpanded && !isCollapsed}
                     onClick={() => toggleMenu(item.title)}
                     className={cn(
                       "w-full justify-start gap-4 h-11 px-3 transition-all duration-200 group rounded-md",
                       isCollapsed && "justify-center px-0",
                       isSubActive
-                        ? "text-white bg-[#282828]"
-                        : "text-[#b3b3b3] hover:text-white hover:bg-transparent",
+                        ? "text-white bg-surface-hover"
+                        : "text-muted-foreground hover:text-white hover:bg-transparent",
                     )}
                   >
                     <item.icon className={cn(
                       "w-6 h-6 flex-shrink-0 transition-colors",
-                      isSubActive ? "text-primary" : "text-[#b3b3b3] group-hover:text-white"
+                      isSubActive ? "text-primary" : "text-muted-foreground group-hover:text-white"
                     )} />
                     {!isCollapsed && (
                       <>
@@ -272,14 +276,14 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                             className={cn(
                               "w-full justify-start gap-4 h-11 px-3 transition-all duration-200 group rounded-md",
                               isActive
-                                ? "text-white bg-[#282828]"
-                                : "text-[#b3b3b3] hover:text-white hover:bg-transparent",
+                                ? "text-white bg-surface-hover"
+                                : "text-muted-foreground hover:text-white hover:bg-transparent",
                             )}
                           >
-                            <Link href={subItem.href}>
+                            <Link href={subItem.href} aria-current={isActive ? "page" : undefined}>
                               <subItem.icon className={cn(
                                 "w-6 h-6 flex-shrink-0 transition-colors",
-                                isActive ? "text-primary" : "text-[#b3b3b3] group-hover:text-white"
+                                isActive ? "text-primary" : "text-muted-foreground group-hover:text-white"
                               )} />
                               <span className="text-sm font-bold tracking-tight">{subItem.title}</span>
                             </Link>
@@ -306,14 +310,14 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     "w-full justify-start gap-4 h-11 px-3 transition-all duration-200 group rounded-md",
                     isCollapsed && "justify-center px-0",
                     isActive
-                      ? "text-white bg-[#282828]"
-                      : "text-[#b3b3b3] hover:text-white hover:bg-transparent",
+                      ? "text-white bg-surface-hover"
+                      : "text-muted-foreground hover:text-white hover:bg-transparent",
                   )}
                 >
-                  <Link href={item.href!}>
+                  <Link href={item.href!} aria-label={item.title} aria-current={isActive ? "page" : undefined}>
                     <item.icon className={cn(
                       "w-6 h-6 flex-shrink-0 transition-colors",
-                      isActive ? "text-primary" : "text-[#b3b3b3] group-hover:text-white"
+                      isActive ? "text-primary" : "text-muted-foreground group-hover:text-white"
                     )} />
                     {!isCollapsed && (
                       <span className="text-sm font-bold tracking-tight">{item.title}</span>
@@ -333,14 +337,14 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           asChild
           variant="ghost"
           className={cn(
-            "w-full justify-start gap-3 h-14 hover:bg-[#282828] group transition-all rounded-md px-3",
+            "w-full justify-start gap-3 h-14 hover:bg-surface-hover group transition-all rounded-md px-3",
             isCollapsed && "justify-center px-0"
           )}
         >
-          <Link href="/dashboard/settings">
+          <Link href="/dashboard/settings" aria-label="Account settings">
             <Avatar className="h-8 w-8 border-none ring-2 ring-white/5 group-hover:ring-white/20 transition-all">
               <AvatarImage src={userProfile?.avatar_url || ""} />
-              <AvatarFallback className="bg-[#282828] text-white text-xs font-bold">{userProfile?.full_name?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
+              <AvatarFallback className="bg-surface-hover text-white text-xs font-bold">{userProfile?.full_name?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
 
             {!isCollapsed && (
@@ -348,7 +352,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 <span className="text-sm font-bold text-white truncate w-32 group-hover:text-primary transition-colors">
                   {userProfile?.full_name || "User"}
                 </span>
-                <span className="text-spotify-label text-[#b3b3b3] truncate w-32">
+                <span className="text-spotify-label text-muted-foreground truncate w-32">
                   {userProfile?.email}
                 </span>
               </div>
@@ -361,10 +365,11 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            "w-full justify-start gap-3 h-10 text-[#b3b3b3] hover:text-destructive hover:bg-destructive/10 rounded-md px-3 transition-all",
+            "w-full justify-start gap-3 h-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md px-3 transition-all",
             isCollapsed && "justify-center px-0",
           )}
           title="Logout"
+          aria-label="Logout"
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
           {!isCollapsed && <span className="text-sm font-bold tracking-tight">Logout</span>}

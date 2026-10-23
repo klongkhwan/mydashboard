@@ -57,15 +57,15 @@ function LegacyMyTradePage() {
           <div className="flex items-center gap-3">
             <Button
               onClick={() => setShowCalculatorModal(true)}
-              variant="ghost"
-              className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
+              variant="pill-secondary"
+              className="bg-secondary hover:bg-surface-hover text-white"
             >
               <Calculator className="w-4 h-4 mr-2 text-primary" />
               Calculate
             </Button>
             <Button
               onClick={() => setShowNewTradeModal(true)}
-              className="btn-pill-primary"
+              variant="pill" className=""
             >
               <PlusCircle className="w-4 h-4 mr-2" />
               บันทึกการเทรด

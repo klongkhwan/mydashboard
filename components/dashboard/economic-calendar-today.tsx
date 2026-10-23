@@ -150,7 +150,7 @@ export function EconomicCalendarToday({ className }: { className?: string }) {
             return (
               <div
                 key={ev.id}
-                className={`flex flex-col gap-1.5 rounded-lg border border-white/5 bg-[#181818] p-3 transition-opacity ${
+                className={`flex flex-col gap-1.5 rounded-lg border border-white/5 bg-card p-3 transition-opacity ${
                   isPassed ? "opacity-60" : "opacity-100"
                 }`}
               >
@@ -163,11 +163,11 @@ export function EconomicCalendarToday({ className }: { className?: string }) {
                     </span>
                   </div>
                   {isPassed && (
-                    <span className="shrink-0 text-[10px] text-[#7c7c7c]">ผ่านไปแล้ว</span>
+                    <span className="shrink-0 text-[10px] text-muted-foreground">ผ่านไปแล้ว</span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-3 text-[11px] text-[#b3b3b3] pl-6">
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground pl-6">
                   <span>
                     Actual: <strong className="text-white">{actualVal}</strong>
                   </span>
@@ -175,7 +175,7 @@ export function EconomicCalendarToday({ className }: { className?: string }) {
                     Forecast: <span className="text-[#cbcbcb]">{forecastVal}</span>
                   </span>
                   <span>
-                    Previous: <span className="text-[#7c7c7c]">{prevVal}</span>
+                    Previous: <span className="text-muted-foreground">{prevVal}</span>
                   </span>
                 </div>
               </div>

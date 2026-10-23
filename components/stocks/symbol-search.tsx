@@ -84,12 +84,12 @@ export function SymbolSearch({ value, onChange, onSelect }: SymbolSearchProps) {
 
   return (
     <div className="relative w-full" ref={wrapper}>
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#b3b3b3]" />
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <input
         aria-autocomplete="list"
         aria-expanded={open && suggestions.length > 0}
         aria-label="Search symbol"
-        className="h-10 w-full rounded-md bg-[#282828] pl-9 pr-9 text-sm text-white outline-none placeholder:text-[#6a6a6a] focus:ring-1 focus:ring-primary"
+        className="h-10 w-full rounded-md bg-surface-hover pl-9 pr-9 text-sm text-white outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary"
         onChange={(event) => { typedByUser.current = true; onChange(event.target.value) }}
         onFocus={() => { if (suggestions.length > 0) setOpen(true) }}
         onKeyDown={onKeyDown}
@@ -97,10 +97,10 @@ export function SymbolSearch({ value, onChange, onSelect }: SymbolSearchProps) {
         role="combobox"
         value={value}
       />
-      {loading && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-[#6a6a6a]" />}
+      {loading && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
 
       {open && suggestions.length > 0 && (
-        <ul className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-lg border border-white/10 bg-[#181818] py-1 shadow-2xl" role="listbox">
+        <ul className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-lg border border-white/10 bg-card py-1 shadow-2xl" role="listbox">
           {suggestions.map((item, index) => (
             <li key={item.value} role="option" aria-selected={index === highlighted}>
               <button
@@ -111,9 +111,9 @@ export function SymbolSearch({ value, onChange, onSelect }: SymbolSearchProps) {
               >
                 <span className="flex w-full items-center justify-between gap-2">
                   <span className="text-sm font-bold text-white">{item.symbol}</span>
-                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-[#6a6a6a]">{item.exchange}</span>
+                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">{item.exchange}</span>
                 </span>
-                <span className="line-clamp-1 text-xs text-[#b3b3b3]">{item.description}</span>
+                <span className="line-clamp-1 text-xs text-muted-foreground">{item.description}</span>
               </button>
             </li>
           ))}

@@ -10,13 +10,13 @@ export function MyWealthCashFlowChart({ rows }: { rows: CashFlowRow[] }) {
   const maxValue = Math.max(1, ...visibleRows.flatMap((row) => [row.income, row.expenses]))
 
   return (
-    <section className="card-spotify p-5 sm:p-6 space-y-4 border border-white/5 bg-[#181818]/60">
+    <section className="card-spotify p-5 sm:p-6 space-y-4 border border-white/5 bg-card/60">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base sm:text-lg font-bold text-white">กราฟกระแสเงินสดรายวัน (Daily Cash Flow)</h2>
           <p className="text-spotify-muted mt-0.5 text-xs">
             <span className="inline-block w-2 h-2 rounded-full bg-primary mr-1" /> เขียว: รายรับ
-            <span className="inline-block w-2 h-2 rounded-full bg-[#f3727f] ml-3 mr-1" /> แดง: รายจ่ายจริง
+            <span className="inline-block w-2 h-2 rounded-full bg-destructive ml-3 mr-1" /> แดง: รายจ่ายจริง
           </p>
         </div>
         <span className="text-xs text-spotify-muted font-bold">{visibleRows.length} วันที่มีรายการ</span>
@@ -45,7 +45,7 @@ export function MyWealthCashFlowChart({ rows }: { rows: CashFlowRow[] }) {
                 />
                 {/* Expense Bar (Rose) */}
                 <div
-                  className="w-1.5 sm:w-2 rounded-t bg-[#f3727f] transition-all duration-300 group-hover:brightness-125"
+                  className="w-1.5 sm:w-2 rounded-t bg-destructive transition-all duration-300 group-hover:brightness-125"
                   style={{
                     height: row.expenses > 0 ? `${Math.max(4, expensePct)}%` : "0%",
                     minHeight: row.expenses > 0 ? "4px" : "0",
@@ -56,7 +56,7 @@ export function MyWealthCashFlowChart({ rows }: { rows: CashFlowRow[] }) {
               {/* Net Text */}
               <span
                 className={`text-[10px] font-bold tabular-nums whitespace-nowrap ${
-                  net > 0 ? "text-primary" : net < 0 ? "text-[#f3727f]" : "text-spotify-muted"
+                  net > 0 ? "text-primary" : net < 0 ? "text-destructive" : "text-spotify-muted"
                 }`}
               >
                 {net > 0 ? `+${money(net)}` : money(net)}

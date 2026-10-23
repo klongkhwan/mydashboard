@@ -497,7 +497,7 @@ export default function ApiSchedulerPage() {
           variant="ghost"
           size="sm"
           onClick={() => handleManualTrigger(row.original)}
-          className="h-8 px-4 rounded-full bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white text-[10px] font-bold uppercase tracking-wider"
+          className="h-8 px-4 rounded-full bg-secondary hover:bg-surface-hover text-white text-[10px] font-bold uppercase tracking-wider"
         >
           <PlayCircle className="w-3.5 h-3.5 mr-1.5 text-primary" />
           Run
@@ -513,7 +513,7 @@ export default function ApiSchedulerPage() {
             variant="ghost"
             size="icon"
             onClick={() => handleEditSchedule(row.original)}
-            className="h-8 w-8 text-[#b3b3b3] hover:text-white"
+            className="h-8 w-8 text-muted-foreground hover:text-white"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -521,7 +521,7 @@ export default function ApiSchedulerPage() {
             variant="ghost"
             size="icon"
             onClick={() => handleToggleStatus(row.original.id)}
-            className="h-8 w-8 text-[#b3b3b3] hover:text-white"
+            className="h-8 w-8 text-muted-foreground hover:text-white"
           >
             {row.original.status === "ACTIVE" ? (
               <Pause className="w-4 h-4" />
@@ -533,7 +533,7 @@ export default function ApiSchedulerPage() {
             variant="ghost"
             size="icon"
             onClick={() => handleDeleteSchedule(row.original.id)}
-            className="h-8 w-8 text-[#b3b3b3] hover:text-destructive"
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -547,21 +547,21 @@ export default function ApiSchedulerPage() {
       case "ACTIVE":
         return <Badge className="bg-primary text-black hover:bg-primary/90 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Active</Badge>
       case "PAUSED":
-        return <Badge className="bg-[#282828] text-[#b3b3b3] hover:bg-[#333333] rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Paused</Badge>
+        return <Badge className="bg-surface-hover text-muted-foreground hover:bg-[#333333] rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Paused</Badge>
       case "FAILED":
-        return <Badge className="bg-destructive text-white hover:bg-destructive/90 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Failed</Badge>
+        return <Badge className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Failed</Badge>
     }
   }
 
   const getMethodBadge = (method: ApiSchedule["method"]) => {
     const methodColors: Record<string, string> = {
-      "GET": "bg-[#181818] text-[#1ed760] border-white/5",
-      "POST": "bg-[#181818] text-[#ffa42b] border-white/5",
-      "PUT": "bg-[#181818] text-[#539df5] border-white/5",
-      "PATCH": "bg-[#181818] text-[#cbcbcb] border-white/5",
-      "DELETE": "bg-[#181818] text-[#f3727f] border-white/5",
+      "GET": "bg-card text-[#1ed760] border-white/5",
+      "POST": "bg-card text-warning border-white/5",
+      "PUT": "bg-card text-info border-white/5",
+      "PATCH": "bg-card text-[#cbcbcb] border-white/5",
+      "DELETE": "bg-card text-destructive border-white/5",
     }
-    return <Badge className={cn("rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-widest border", methodColors[method] || "bg-[#181818] text-[#b3b3b3] border-white/5")}>{method}</Badge>
+    return <Badge className={cn("rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-widest border", methodColors[method] || "bg-card text-muted-foreground border-white/5")}>{method}</Badge>
   }
 
   const getFrequencyDisplay = (frequency: ApiSchedule["frequency"]) => {
@@ -600,15 +600,15 @@ export default function ApiSchedulerPage() {
             <Button
               onClick={() => handleCheckSchedules(false)}
               disabled={checkLoading}
-              variant="ghost"
-              className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
+              variant="pill-secondary"
+              className="bg-secondary hover:bg-surface-hover text-white"
             >
               {checkLoading ? <Loading variant="spinner" size="sm" className="mr-2" /> : <Clock className="w-4 h-4 mr-2 text-primary" />}
               Check Now
             </Button>
             <Button
               onClick={handleAddSchedule}
-              className="btn-pill-primary"
+              variant="pill" className=""
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Schedule
@@ -648,7 +648,7 @@ export default function ApiSchedulerPage() {
                 id="apiName"
                 value={formData.apiName}
                 onChange={(e) => setFormData((prev) => ({ ...prev, apiName: e.target.value }))}
-                className="col-span-3 spotify-input"
+                variant="pill" className="col-span-3"
                 placeholder="e.g., Refresh Listing"
               />
             </div>
@@ -660,7 +660,7 @@ export default function ApiSchedulerPage() {
                 id="url"
                 value={formData.url}
                 onChange={(e) => setFormData((prev) => ({ ...prev, url: e.target.value }))}
-                className="col-span-3 spotify-input"
+                variant="pill" className="col-span-3"
                 placeholder="e.g., /graphql"
               />
             </div>
@@ -678,7 +678,7 @@ export default function ApiSchedulerPage() {
                   <SelectTrigger className="spotify-input w-full">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#282828] border-none text-white shadow-heavy">
+                  <SelectContent className="bg-surface-hover border-none text-white shadow-heavy">
                     <SelectItem value="GET" className="focus:bg-white/10 cursor-pointer">GET</SelectItem>
                     <SelectItem value="POST" className="focus:bg-white/10 cursor-pointer">POST</SelectItem>
                     <SelectItem value="PATCH" className="focus:bg-white/10 cursor-pointer">PATCH</SelectItem>
@@ -697,7 +697,7 @@ export default function ApiSchedulerPage() {
                 type="time"
                 value={formData.time}
                 onChange={(e) => setFormData((prev) => ({ ...prev, time: e.target.value }))}
-                className="col-span-3 spotify-input"
+                variant="pill" className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 gap-4 items-center">
@@ -714,7 +714,7 @@ export default function ApiSchedulerPage() {
                   <SelectTrigger className="spotify-input w-full">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#282828] border-none text-white shadow-heavy">
+                  <SelectContent className="bg-surface-hover border-none text-white shadow-heavy">
                     <SelectItem value="DAILY" className="focus:bg-white/10 cursor-pointer">Daily</SelectItem>
                     <SelectItem value="WEEKLY" className="focus:bg-white/10 cursor-pointer">Weekly</SelectItem>
                     <SelectItem value="MONTHLY" className="focus:bg-white/10 cursor-pointer">Monthly</SelectItem>
@@ -731,7 +731,7 @@ export default function ApiSchedulerPage() {
                 id="headers"
                 value={formData.headers}
                 onChange={(e) => setFormData((prev) => ({ ...prev, headers: e.target.value }))}
-                className="col-span-3 bg-[#121212] border-none rounded-lg p-4 font-mono text-[13px] text-white shadow-inset focus:ring-1 focus:ring-white/20"
+                className="col-span-3 bg-background border-none rounded-lg p-4 font-mono text-[13px] text-white shadow-inset focus:ring-1 focus:ring-white/20"
                 style={{ resize: 'none', minHeight: '120px' }}
                 placeholder='{"Content-Type": "application/json"}'
               />
@@ -745,7 +745,7 @@ export default function ApiSchedulerPage() {
                   id="body"
                   value={formData.body}
                   onChange={(e) => setFormData((prev) => ({ ...prev, body: e.target.value }))}
-                  className="col-span-3 bg-[#121212] border-none rounded-lg p-4 font-mono text-[13px] text-white shadow-inset focus:ring-1 focus:ring-white/20"
+                  className="col-span-3 bg-background border-none rounded-lg p-4 font-mono text-[13px] text-white shadow-inset focus:ring-1 focus:ring-white/20"
                   style={{ resize: 'none', minHeight: '180px' }}
                   placeholder='{ "query": "..." }'
                 />
@@ -753,10 +753,10 @@ export default function ApiSchedulerPage() {
             )}
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="text-[#b3b3b3] hover:text-white">
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="text-muted-foreground hover:text-white">
               Cancel
             </Button>
-            <Button onClick={handleSaveSchedule} className="btn-pill-primary">
+            <Button onClick={handleSaveSchedule} variant="pill" className="">
               Save Schedule
             </Button>
           </DialogFooter>

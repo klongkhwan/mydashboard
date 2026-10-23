@@ -290,7 +290,7 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
 
   // Leverage Color Helper
   const getLeverageColor = (lev: number) => {
-    if (lev <= 3) return 'bg-[#39FF14]' // Safe (Green)
+    if (lev <= 3) return 'bg-primary' // Safe (Green)
     if (lev <= 10) return 'bg-yellow-500' // Medium
     return 'bg-red-500' // High Risk
   }
@@ -300,7 +300,7 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
     return 'High Risk'
   }
   const getLeverageTextColor = (lev: number) => {
-    if (lev <= 3) return 'text-[#39FF14]'
+    if (lev <= 3) return 'text-primary'
     if (lev <= 10) return 'text-yellow-500'
     return 'text-red-500'
   }
@@ -334,13 +334,13 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
             <TabsList className="grid w-full grid-cols-2 bg-zinc-800/50 p-1 rounded-lg">
               <TabsTrigger
                 value="trading"
-                className="data-[state=active]:bg-[#39FF14] data-[state=active]:text-black font-semibold transition-all"
+                className="data-[state=active]:bg-primary data-[state=active]:text-black font-semibold transition-all"
               >
                 Trading Calculator
               </TabsTrigger>
               <TabsTrigger
                 value="positionsize"
-                className="data-[state=active]:bg-[#39FF14] data-[state=active]:text-black font-semibold transition-all"
+                className="data-[state=active]:bg-primary data-[state=active]:text-black font-semibold transition-all"
               >
                 Position Sizing
               </TabsTrigger>
@@ -390,22 +390,22 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
                       <div className="space-y-2">
                         <Label htmlFor="balance" className="text-xs text-muted-foreground">Balance (USD)</Label>
                         <Input id="balance" type="number" value={calcValues.balance || ''} onChange={(e) => handleCalcChange('balance', e.target.value)}
-                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14] transition-colors" placeholder="0.00" />
+                          className="bg-zinc-950 border-zinc-800 focus:border-primary transition-colors" placeholder="0.00" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="qty" className="text-xs text-muted-foreground">Quantity</Label>
                         <Input id="qty" type="number" value={calcValues.qty || ''} onChange={(e) => handleCalcChange('qty', e.target.value)}
-                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14] transition-colors" placeholder="0.00" />
+                          className="bg-zinc-950 border-zinc-800 focus:border-primary transition-colors" placeholder="0.00" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="entry" className="text-xs text-muted-foreground">Entry Price</Label>
                         <Input id="entry" type="number" value={calcValues.entryPrice || ''} onChange={(e) => handleCalcChange('entryPrice', e.target.value)}
-                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14] transition-colors" placeholder="0.00" />
+                          className="bg-zinc-950 border-zinc-800 focus:border-primary transition-colors" placeholder="0.00" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="exit" className="text-xs text-muted-foreground">Exit Price</Label>
                         <Input id="exit" type="number" value={calcValues.exitPrice || ''} onChange={(e) => handleCalcChange('exitPrice', e.target.value)}
-                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14] transition-colors" placeholder="0.00" />
+                          className="bg-zinc-950 border-zinc-800 focus:border-primary transition-colors" placeholder="0.00" />
                       </div>
                     </div>
 
@@ -413,7 +413,7 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
                       <Label htmlFor="roiTarget" className="text-xs text-muted-foreground">Values Target (%)</Label>
                       <div className="flex gap-2">
                         <Input id="roiTarget" type="number" value={calcValues.roiTarget || ''} onChange={(e) => handleCalcChange('roiTarget', e.target.value)}
-                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14] transition-colors" placeholder="e.g. 50" />
+                          className="bg-zinc-950 border-zinc-800 focus:border-primary transition-colors" placeholder="e.g. 50" />
                       </div>
                     </div>
                   </CardContent>
@@ -422,7 +422,7 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
                 {/* RIGHT: RESULTS */}
                 <Card className="bg-zinc-900/80 border-zinc-800 h-full flex flex-col">
                   <CardHeader className="pb-4 border-b border-zinc-800/50">
-                    <CardTitle className="text-sm font-medium uppercase tracking-wider text-[#39FF14] flex items-center gap-2">
+                    <CardTitle className="text-sm font-medium uppercase tracking-wider text-primary flex items-center gap-2">
                       <Calculator className="w-4 h-4" /> Results
                     </CardTitle>
                   </CardHeader>
@@ -433,7 +433,7 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
                       <div className="p-5 flex items-center justify-between hover:bg-zinc-800/30 transition-colors">
                         <span className="text-sm text-gray-300">PNL</span>
                         <div className="text-right">
-                          <div className={`text-2xl font-bold tabular-nums ${calcResults.pnl > 0 ? "text-[#39FF14]" : calcResults.pnl < 0 ? "text-red-500" : "text-gray-500"}`}>
+                          <div className={`text-2xl font-bold tabular-nums ${calcResults.pnl > 0 ? "text-primary" : calcResults.pnl < 0 ? "text-red-500" : "text-gray-500"}`}>
                             {calcResults.pnl > 0 ? "+" : ""}{formatCurrency(calcResults.pnl)}
                           </div>
                           <div className={`text-xs ${calcResults.roi > 0 ? "text-green-400" : calcResults.roi < 0 ? "text-red-400" : "text-gray-500"}`}>
@@ -517,7 +517,7 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
                     <div className="space-y-2">
                       <Label htmlFor="ps-balance" className="text-xs text-muted-foreground">Account Balance (USD)</Label>
                       <Input id="ps-balance" type="number" value={posValues.balance || ''} onChange={(e) => handlePosChange('balance', e.target.value)}
-                        className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14]" placeholder="e.g 1000" />
+                        className="bg-zinc-950 border-zinc-800 focus:border-primary" placeholder="e.g 1000" />
                     </div>
 
                     <div className="space-y-2">
@@ -535,7 +535,7 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
                       <div className="space-y-2">
                         <Label htmlFor="ps-entry" className="text-xs text-muted-foreground">Entry Price</Label>
                         <Input id="ps-entry" type="number" value={posValues.entryPrice || ''} onChange={(e) => handlePosChange('entryPrice', e.target.value)}
-                          className="bg-zinc-950 border-zinc-800 focus:border-[#39FF14]" placeholder="0.00" />
+                          className="bg-zinc-950 border-zinc-800 focus:border-primary" placeholder="0.00" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="ps-stoploss" className="text-xs text-muted-foreground">Stop Loss Price</Label>
@@ -560,7 +560,7 @@ export function TradingCalculator({ isOpen, onClose }: TradingCalculatorProps) {
                   <div className="absolute inset-0 bg-grid-white/[0.02] -z-0" />
 
                   <CardHeader className="pb-4 border-b border-zinc-800/50 z-10 bg-zinc-900/80">
-                    <CardTitle className="text-sm font-medium uppercase tracking-wider text-[#39FF14] flex items-center gap-2">
+                    <CardTitle className="text-sm font-medium uppercase tracking-wider text-primary flex items-center gap-2">
                       <DollarSign className="w-4 h-4" /> Position Size
                     </CardTitle>
                   </CardHeader>

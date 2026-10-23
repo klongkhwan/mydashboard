@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
-export interface DatePickerProps {
+export interface DatePickerProps extends Pick<React.ComponentProps<typeof Button>, "id" | "aria-invalid" | "aria-describedby"> {
     value?: Date
     onChange?: (date: Date | undefined) => void
     defaultValue?: string | Date
@@ -17,6 +17,7 @@ export interface DatePickerProps {
     placeholder?: string
     className?: string
     disabled?: boolean
+    maxDate?: Date
 }
 
 const parseDateValue = (val: string | Date | undefined): Date | undefined => {
@@ -47,6 +48,10 @@ export function DatePicker({
     placeholder = "DD/MM/YYYY",
     className,
     disabled = false,
+    maxDate,
+    id,
+    "aria-invalid": ariaInvalid,
+    "aria-describedby": ariaDescribedBy,
 }: DatePickerProps) {
     const isControlled = value !== undefined
     const [internalDate, setInternalDate] = React.useState<Date | undefined>(() =>
@@ -81,27 +86,37 @@ export function DatePicker({
                         type="button"
                         variant="outline"
                         disabled={disabled}
+                        id={id}
+                        aria-invalid={ariaInvalid}
+                        aria-describedby={ariaDescribedBy}
                         className={cn(
-                            "w-full justify-start text-left font-normal h-9 rounded-lg border border-white/10 bg-[#181818] px-3 text-xs text-white shadow-xs transition hover:border-white/20 hover:bg-[#202020] hover:text-white focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer",
-                            !currentDate && "text-white/40",
+                            "w-full justify-start text-left font-normal h-control rounded-md border border-input bg-background px-3 text-sm text-foreground hover:bg-muted cursor-pointer",
+                            "aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive",
+                            !currentDate && "text-muted-foreground",
                             className
                         )}
                     >
-                        <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-white/50" />
+                        <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
                         {currentDate ? (
                             <span className="tabular-nums font-medium">{format(currentDate, "dd/MM/yyyy")}</span>
                         ) : (
-                            <span className="text-white/40">{placeholder}</span>
+                            <span className="text-muted-foreground">{placeholder}</span>
                         )}
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                    className="w-auto p-0 z-50 bg-[#181818] border border-white/10 text-white shadow-xl"
+                    className="w-auto p-0"
                     align="start"
                 >
                     <Calendar
+                        style={{
+                            "--rdp-day-width": "min(44px, calc((100vw - 4rem) / 7))",
+                            "--rdp-day_button-width": "min(42px, calc((100vw - 4rem) / 7))",
+                        } as React.CSSProperties}
                         mode="single"
                         selected={currentDate}
+                        required={required}
+                        disabled={maxDate ? { after: maxDate } : undefined}
                         onSelect={handleSelect}
                         initialFocus
                     />

@@ -161,11 +161,11 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Left column: Substantial Profile Summary - Matching Height */}
       <div className="lg:col-span-4">
-        <Card className="card-spotify border border-white/5 shadow-heavy bg-[#181818] overflow-hidden relative h-full flex flex-col group">
+        <Card className="card-spotify border border-white/5 shadow-heavy bg-card overflow-hidden relative h-full flex flex-col group">
           <CardContent className="p-10 flex flex-col items-center text-center relative z-10 flex-1 justify-center">
             <div className="relative mb-8">
-              <div className="h-48 w-48 rounded-full p-1 bg-[#282828] relative shadow-play group-hover:scale-105 transition-transform duration-500">
-                <div className="h-full w-full rounded-full overflow-hidden border-4 border-[#181818] bg-black relative">
+              <div className="h-48 w-48 rounded-full p-1 bg-surface-hover relative shadow-play group-hover:scale-105 transition-transform duration-500">
+                <div className="h-full w-full rounded-full overflow-hidden border-4 border-card bg-black relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={previewUrl || "https://ui.shadcn.com/avatars/02.png"}
@@ -214,7 +214,7 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
       {/* Right column: Form Sections (Stacked & Compact) */}
       <div className="lg:col-span-8 space-y-6">
         {/* Personal Information */}
-        <Card className="card-spotify border border-white/5 bg-[#181818]/60 shadow-none relative overflow-hidden group backdrop-blur-md">
+        <Card className="card-spotify border border-white/5 bg-card/60 shadow-none relative overflow-hidden group backdrop-blur-md">
           <CardHeader className="p-6 flex flex-row items-center justify-between space-y-0 border-b border-white/5 bg-white/[0.02]">
             <div className="flex items-center gap-4">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-play">
@@ -230,7 +230,7 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
               type="submit"
               form="personal-info-form"
               disabled={isLoading}
-              className="btn-pill-primary h-10 px-8"
+              variant="pill" className="h-10 px-8"
             >
               {isLoading ? (
                 <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
@@ -261,7 +261,7 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
                       id="email"
                       value={profile.email || ""}
                       disabled
-                      className="spotify-input bg-black/40 text-spotify-muted border-dashed h-12"
+                      variant="pill" className="bg-black/40 text-spotify-muted border-dashed h-12"
                     />
                     <Lock className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/10" />
                   </div>
@@ -276,7 +276,7 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
                     name="fullName"
                     defaultValue={profile.full_name || ""}
                     placeholder="Enter your name"
-                    className="spotify-input h-12"
+                    variant="pill" className="h-12"
                   />
                 </div>
               </div>
@@ -285,10 +285,10 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
         </Card>
 
         {/* Security / Password */}
-        <Card className="card-spotify border border-white/5 bg-[#181818]/60 shadow-none relative overflow-hidden group backdrop-blur-md">
+        <Card className="card-spotify border border-white/5 bg-card/60 shadow-none relative overflow-hidden group backdrop-blur-md">
           <CardHeader className="p-6 flex flex-row items-center justify-between space-y-0 border-b border-white/5 bg-white/[0.02]">
             <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-full bg-[#f3727f]/10 flex items-center justify-center text-[#f3727f] shadow-play">
+              <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center text-destructive shadow-play">
                 <Shield className="w-5 h-5" />
               </div>
               <div>
@@ -301,7 +301,7 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
               type="submit"
               form="password-form"
               disabled={isPasswordLoading}
-              className="btn-pill h-10 px-8 bg-[#f3727f] text-white hover:bg-[#f3727f]/90"
+              variant="destructive" className="h-10 px-8 rounded-full"
             >
               {isPasswordLoading ? (
                 <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -322,7 +322,7 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
                     name="newPassword"
                     type="password"
                     placeholder="••••••••"
-                    className="spotify-input h-12"
+                    variant="pill" className="h-12"
                   />
                 </div>
 
@@ -335,7 +335,7 @@ function ProfileSettings({ initialProfile }: { initialProfile: any }) {
                     name="confirmPassword"
                     type="password"
                     placeholder="••••••••"
-                    className="spotify-input h-12"
+                    variant="pill" className="h-12"
                   />
                 </div>
               </div>

@@ -24,9 +24,9 @@ const LoadingSpinner = ({ size = "md", className = "" }: { size?: "sm" | "md" | 
   return (
     <div className={cn("relative", sizeClasses[size], className)}>
       {/* Track */}
-      <div className="absolute inset-0 rounded-full border-2 border-white/10" />
+      <div className="absolute inset-0 rounded-full border-2 border-current opacity-20" />
       {/* Spinner */}
-      <div className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+      <div className="absolute inset-0 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
     </div>
   )
 }
@@ -83,7 +83,7 @@ export function Loading({
   fullScreen = false
 }: LoadingProps) {
   const content = (
-    <div className={cn(
+    <div role="status" aria-label={text || "Loading"} className={cn(
       "flex items-center justify-center",
       text && "gap-3",
       fullScreen && "min-h-screen bg-background",

@@ -10,13 +10,13 @@ interface ModernLoadingProps {
 
 export function ModernPageLoading({ className, text }: ModernLoadingProps) {
     return (
-        <div className={cn("min-h-[200px] flex flex-col items-center justify-center bg-transparent", className)}>
-            <div className="relative flex items-center justify-center">
+        <div role="status" aria-label={text || "Loading"} className={cn("min-h-[200px] flex flex-col items-center justify-center bg-transparent", className)}>
+            <div aria-hidden="true" className="relative flex items-center justify-center size-8">
                 {/* Track */}
                 <div className="absolute w-8 h-8 rounded-full border-[2px] border-secondary/30" />
 
                 {/* Rotating Arc */}
-                <div className="absolute w-8 h-8 rounded-full border-[2px] border-t-[#39FF14] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                <div className="absolute w-8 h-8 rounded-full border-[2px] border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
             </div>
 
             {/* Optional minimal text - only if provided */}

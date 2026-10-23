@@ -58,7 +58,7 @@ export default function RegisterPage() {
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <Card className="card-spotify border border-white/10 shadow-heavy bg-[#181818] overflow-hidden">
+                <Card className="card-spotify border border-white/10 shadow-heavy bg-card overflow-hidden">
                     <CardHeader className="text-center space-y-3 pb-2 pt-8">
                         <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-play">
                             <UserPlus className="w-6 h-6" />
@@ -83,7 +83,7 @@ export default function RegisterPage() {
                                     <p className="text-spotify-muted text-sm">{success}</p>
                                 </div>
                                 <Link href="/login">
-                                    <Button className="btn-pill-primary mt-4">กลับไปหน้าเข้าสู่ระบบ</Button>
+                                    <Button variant="pill" className="mt-4">กลับไปหน้าเข้าสู่ระบบ</Button>
                                 </Link>
                             </div>
                         ) : (
@@ -97,7 +97,7 @@ export default function RegisterPage() {
                                             name="email"
                                             type="email"
                                             placeholder="name@example.com"
-                                            className="spotify-input pl-10"
+                                            variant="pill" className="pl-10"
                                             required
                                         />
                                     </div>
@@ -111,12 +111,13 @@ export default function RegisterPage() {
                                             name="password"
                                             type={showPassword ? "text" : "password"}
                                             placeholder="••••••••"
-                                            className="spotify-input pl-10 pr-10"
+                                            variant="pill" className="pl-10 pr-10"
                                             required
                                             minLength={6}
                                         />
                                         <button
                                             type="button"
+                                            aria-label={showPassword ? "Hide password" : "Show password"}
                                             onClick={() => setShowPassword(!showPassword)}
                                             className="absolute right-3.5 top-3.5 text-spotify-muted hover:text-white transition-colors"
                                         >
@@ -137,12 +138,13 @@ export default function RegisterPage() {
                                             name="confirmPassword"
                                             type={showConfirmPassword ? "text" : "password"}
                                             placeholder="••••••••"
-                                            className="spotify-input pl-10 pr-10"
+                                            variant="pill" className="pl-10 pr-10"
                                             required
                                             minLength={6}
                                         />
                                         <button
                                             type="button"
+                                            aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
                                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                             className="absolute right-3.5 top-3.5 text-spotify-muted hover:text-white transition-colors"
                                         >
@@ -156,13 +158,13 @@ export default function RegisterPage() {
                                 </div>
 
                                 {error && (
-                                    <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-lg border border-destructive/20 text-left">
+                                    <div role="alert" className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-lg border border-destructive/20 text-left">
                                         <AlertCircle className="w-4 h-4 flex-shrink-0" />
                                         <span>{error}</span>
                                     </div>
                                 )}
 
-                                <Button type="submit" className="btn-pill-primary w-full h-11 text-xs" disabled={isLoading}>
+                                <Button type="submit" variant="pill" className="w-full h-11 text-xs" disabled={isLoading}>
                                     {isLoading ? (
                                         <>
                                             <Loading className="mr-2 h-4 w-4" /> กำลังดำเนินการ...

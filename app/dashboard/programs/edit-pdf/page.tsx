@@ -1078,7 +1078,7 @@ export default function EditPDFPage() {
                     <div className="mt-4 flex flex-wrap items-center gap-3"><span className="text-xs text-muted-foreground">หรือเริ่มเขียนเอกสารใหม่</span><Button variant="outline" size="sm" disabled={loading} onClick={() => { setTool('edit'); void addBlankPage() }} className="gap-2"><Plus className="h-4 w-4" />สร้าง PDF เปล่า A4</Button></div>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#181818] p-4 text-sm text-[#b3b3b3]">
+                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-card p-4 text-sm text-muted-foreground">
                     <div className="rounded-full bg-primary/10 p-2 text-primary">
                         <Lock className="h-4 w-4 shrink-0" />
                     </div>

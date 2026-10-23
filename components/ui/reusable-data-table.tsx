@@ -37,6 +37,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
@@ -105,21 +106,22 @@ export function ReusableDataTable<TData, TValue>({
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <button
+            <Button type="button" variant="secondary"
+              aria-current={page === i ? "page" : undefined}
               onClick={(e) => {
                 e.preventDefault()
                 onPageChange?.(i)
                 if (!manualPagination) table.setPageIndex(i - 1)
               }}
               className={cn(
-                "h-9 px-3 min-w-[36px] rounded-md border border-white/10 font-black text-[11px] transition-all",
+                "h-9 px-3 min-w-[36px] rounded-md border border-border font-black text-[11px] transition-all",
                 page === i 
                   ? "bg-primary text-black border-primary shadow-play" 
-                  : "bg-[#1f1f1f] text-[#b3b3b3] hover:text-white hover:bg-[#2a2a2a]"
+                  : "bg-secondary text-muted-foreground hover:text-white hover:bg-surface-hover"
               )}
             >
               {i}
-            </button>
+            </Button>
           </PaginationItem>
         )
       }
@@ -133,67 +135,70 @@ export function ReusableDataTable<TData, TValue>({
       // First Page
       items.push(
         <PaginationItem key={1}>
-          <button
+          <Button type="button" variant="secondary"
+            aria-current={page === 1 ? "page" : undefined}
             onClick={(e) => {
               e.preventDefault()
               onPageChange?.(1)
               if (!manualPagination) table.setPageIndex(0)
             }}
             className={cn(
-              "h-9 px-3 min-w-[36px] rounded-md border border-white/10 font-black text-[11px]",
-              page === 1 ? "bg-primary text-black" : "bg-[#1f1f1f] text-[#b3b3b3] hover:text-white"
+              "h-9 px-3 min-w-[36px] rounded-md border border-border font-black text-[11px]",
+              page === 1 ? "bg-primary text-black" : "bg-secondary text-muted-foreground hover:text-white"
             )}
           >
             1
-          </button>
+          </Button>
         </PaginationItem>
       )
 
       if (showLeftDots) {
-        items.push(<PaginationEllipsis key="left-dots" className="text-[#b3b3b3]" />)
+        items.push(<PaginationEllipsis key="left-dots" className="text-muted-foreground" />)
       }
 
       for (let i = leftSiblingIndex; i <= rightSiblingIndex; i++) {
         if (i === 1 || i === totalPages) continue
         items.push(
           <PaginationItem key={i}>
-            <button
+            <Button type="button" variant="secondary"
+              aria-current={page === i ? "page" : undefined}
               onClick={(e) => {
                 e.preventDefault()
                 onPageChange?.(i)
                 if (!manualPagination) table.setPageIndex(i - 1)
               }}
               className={cn(
-                "h-9 px-3 min-w-[36px] rounded-md border border-white/10 font-black text-[11px]",
-                page === i ? "bg-primary text-black" : "bg-[#1f1f1f] text-[#b3b3b3] hover:text-white"
+                "h-9 px-3 min-w-[36px] rounded-md border border-border font-black text-[11px]",
+                page === i ? "bg-primary text-black" : "bg-secondary text-muted-foreground hover:text-white"
               )}
             >
               {i}
-            </button>
+            </Button>
           </PaginationItem>
         )
       }
 
       if (showRightDots) {
-        items.push(<PaginationEllipsis key="right-dots" className="text-[#b3b3b3]" />)
+        items.push(<PaginationEllipsis key="right-dots" className="text-muted-foreground" />)
       }
 
       // Last Page
       items.push(
         <PaginationItem key={totalPages}>
-          <button
+          <Button type="button" variant="secondary"
+            aria-current={page === totalPages ? "page" : undefined}
             onClick={(e) => {
               e.preventDefault()
               onPageChange?.(totalPages)
               if (!manualPagination) table.setPageIndex(totalPages - 1)
             }}
             className={cn(
-              "h-9 px-3 min-w-[36px] rounded-md border border-white/10 font-black text-[11px]",
-              page === totalPages ? "bg-primary text-black" : "bg-[#1f1f1f] text-[#b3b3b3] hover:text-white"
+              "h-9 px-3 min-w-[36px] rounded-md border border-border font-black text-[11px]",
+              page >= totalPages ? "bg-primary text-black" : "bg-secondary text-muted-foreground hover:text-white"
             )}
           >
             {totalPages}
-          </button>
+          </Button>
         </PaginationItem>
       )
     }
@@ -204,9 +209,9 @@ export function ReusableDataTable<TData, TValue>({
   return (
     <div className={cn("space-y-6", className)}>
       {/* Table Container */}
-      <div className="bg-[#181818]/40 rounded-lg overflow-hidden border border-white/5 backdrop-blur-sm shadow-heavy">
-        <Table>
-          <TableHeader className="bg-[#121212]/50 border-b border-white/5">
+      <div className="bg-card/40 rounded-lg overflow-hidden border border-border backdrop-blur-sm shadow-card">
+        <Table aria-busy={Boolean(loading)}>
+          <TableHeader className="bg-background/50 border-b border-border">
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<TData>) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent border-none">
                 {headerGroup.headers.map((header: Header<TData, unknown>) => {
@@ -228,7 +233,7 @@ export function ReusableDataTable<TData, TValue>({
             {loading ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-48 text-center border-none">
-                  <div className="flex flex-col items-center gap-3">
+                  <div role="status" className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     <span className="text-[10px] font-bold text-spotify-muted uppercase tracking-widest">Loading data...</span>
                   </div>
@@ -239,7 +244,7 @@ export function ReusableDataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="hover:bg-white/5 border-none group transition-colors"
+                  className="hover:bg-muted/50 border-none group transition-colors"
                 >
                   {row.getVisibleCells().map((cell: Cell<TData, unknown>) => (
                     <TableCell key={cell.id} className="py-2 border-none">
@@ -266,7 +271,7 @@ export function ReusableDataTable<TData, TValue>({
       {/* Redesigned Footer - Matching Request Structure but with Site CI Colors */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-2 py-4">
         {/* Left: Show [10] entries of X total */}
-        <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-[#b3b3b3]">
+        <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
           <span>Show</span>
           <Select
             value={pageSize.toString()}
@@ -280,12 +285,12 @@ export function ReusableDataTable<TData, TValue>({
               }
             }}
           >
-            <SelectTrigger className="h-9 w-20 bg-[#1f1f1f] border border-white/10 text-white font-bold rounded-md focus:ring-0">
+            <SelectTrigger aria-label="Rows per page" className="h-9 w-20 bg-secondary border border-border text-white font-bold rounded-md ">
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
-            <SelectContent className="bg-[#282828] border-white/10 text-white">
+            <SelectContent>
               {[10, 25, 50, 100].map((size) => (
-                <SelectItem key={size} value={size.toString()} className="text-[11px] font-bold uppercase tracking-widest hover:bg-white/10 focus:bg-white/10">
+                <SelectItem key={size} value={size.toString()} className="text-xs">
                   {size}
                 </SelectItem>
               ))}
@@ -299,8 +304,8 @@ export function ReusableDataTable<TData, TValue>({
           <Pagination className="w-fit mx-0">
             <PaginationContent className="gap-1.5">
               <PaginationItem>
-                <button
-                  disabled={page === 1}
+                <Button type="button" variant="secondary"
+                  disabled={page <= 1 || loading}
                   onClick={(e) => {
                     e.preventDefault()
                     if (page > 1) {
@@ -310,21 +315,21 @@ export function ReusableDataTable<TData, TValue>({
                     }
                   }}
                   className={cn(
-                    "h-9 px-4 rounded-md border border-white/10 text-[11px] font-black uppercase tracking-[0.1em] transition-all",
+                    "h-9 px-4 rounded-md border border-border text-[11px] font-black uppercase tracking-[0.1em] transition-all",
                     page === 1 
-                      ? "bg-transparent text-[#333333] border-white/5 cursor-not-allowed" 
-                      : "bg-[#1f1f1f] text-[#b3b3b3] hover:text-white hover:bg-[#2a2a2a] active:scale-95"
+                      ? "bg-transparent text-muted-foreground border-border"
+                      : "bg-secondary text-muted-foreground hover:text-white hover:bg-surface-hover "
                   )}
                 >
                   PREV
-                </button>
+                </Button>
               </PaginationItem>
               
               {renderPaginationItems()}
 
               <PaginationItem>
-                <button
-                  disabled={page === totalPages}
+                <Button type="button" variant="secondary"
+                  disabled={page >= totalPages || loading}
                   onClick={(e) => {
                     e.preventDefault()
                     if (page < totalPages) {
@@ -334,14 +339,14 @@ export function ReusableDataTable<TData, TValue>({
                     }
                   }}
                   className={cn(
-                    "h-9 px-4 rounded-md border border-white/10 text-[11px] font-black uppercase tracking-[0.1em] transition-all",
-                    page === totalPages 
-                      ? "bg-transparent text-[#333333] border-white/5 cursor-not-allowed"
-                      : "bg-[#1f1f1f] text-[#b3b3b3] hover:text-white hover:bg-[#2a2a2a] active:scale-95"
+                    "h-9 px-4 rounded-md border border-border text-[11px] font-black uppercase tracking-[0.1em] transition-all",
+                    page >= totalPages
+                      ? "bg-transparent text-muted-foreground border-border"
+                      : "bg-secondary text-muted-foreground hover:text-white hover:bg-surface-hover "
                   )}
                 >
                   NEXT
-                </button>
+                </Button>
               </PaginationItem>
             </PaginationContent>
           </Pagination>

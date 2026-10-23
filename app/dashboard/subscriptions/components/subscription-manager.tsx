@@ -99,11 +99,11 @@ export function SubscriptionManager() {
             case 'completed':
                 return 'bg-primary text-black hover:bg-primary/90'
             case 'canceled':
-                return 'bg-destructive text-white hover:bg-destructive/90'
+                return 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
             case 'paused':
-                return 'bg-[#282828] text-[#b3b3b3] hover:bg-[#333333]'
+                return 'bg-surface-hover text-muted-foreground hover:bg-[#333333]'
             default:
-                return 'bg-[#181818] text-white'
+                return 'bg-card text-white'
         }
     }
 
@@ -206,8 +206,8 @@ export function SubscriptionManager() {
             header: "ชื่อบริการ",
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-[#282828] flex items-center justify-center flex-shrink-0 group-hover:shadow-play transition-all">
-                        <CreditCard className="w-4 h-4 text-[#b3b3b3] group-hover:text-primary transition-colors" />
+                    <div className="w-8 h-8 rounded bg-surface-hover flex items-center justify-center flex-shrink-0 group-hover:shadow-play transition-all">
+                        <CreditCard className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
                     <span className="font-bold text-white group-hover:text-primary transition-colors">{row.original.name}</span>
                 </div>
@@ -265,15 +265,15 @@ export function SubscriptionManager() {
                         subscription={row.original}
                         onSuccess={fetchSubscriptions}
                         trigger={
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#b3b3b3] hover:text-white" title="แก้ไข">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-white" title="แก้ไข">
                                 <Edit className="h-4 w-4" />
                             </Button>
                         }
                     />
                     <Button
-                        variant="ghost"
+                        variant="pill-secondary"
                         size="icon"
-                        className="h-8 w-8 text-[#b3b3b3] hover:text-primary"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
                         title="ต่ออายุ"
                         onClick={() => setRenewSub(row.original)}
                     >
@@ -282,7 +282,7 @@ export function SubscriptionManager() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-[#b3b3b3] hover:text-destructive"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
                         title="ลบ"
                         onClick={() => setDeleteSubId(row.original.id)}
                     >
@@ -346,9 +346,9 @@ export function SubscriptionManager() {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
         if (diffDays <= 7) {
-            return 'text-[#f3727f] font-bold'
+            return 'text-destructive font-bold'
         } else if (diffDays <= 14) {
-            return 'text-[#ffa42b] font-bold'
+            return 'text-warning font-bold'
         }
         return ''
     }
@@ -358,10 +358,10 @@ export function SubscriptionManager() {
         <>
             <div className="space-y-8">
                 <div className="grid gap-6 md:grid-cols-3">
-                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                    <Card className="card-spotify border-none shadow-none bg-card p-2 hover:bg-surface-hover transition-all group">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
                             <CardTitle className="text-spotify-label">Subscriptions ที่ใช้งาน</CardTitle>
-                            <CreditCard className="h-4 w-4 text-[#b3b3b3] group-hover:text-primary transition-colors" />
+                            <CreditCard className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </CardHeader>
                         <CardContent className="px-4 pb-4">
                             <div className="text-3xl font-bold text-white">
@@ -370,7 +370,7 @@ export function SubscriptionManager() {
                             <p className="text-spotify-muted mt-1">รายการที่กำลัง active</p>
                         </CardContent>
                     </Card>
-                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                    <Card className="card-spotify border-none shadow-none bg-card p-2 hover:bg-surface-hover transition-all group">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
                             <CardTitle className="text-spotify-label">ค่าใช้จ่ายรายเดือน</CardTitle>
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -384,13 +384,13 @@ export function SubscriptionManager() {
                             <p className="text-spotify-muted mt-1">ประมาณการต่อเดือน</p>
                         </CardContent>
                     </Card>
-                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                    <Card className="card-spotify border-none shadow-none bg-card p-2 hover:bg-surface-hover transition-all group">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
                             <CardTitle className="text-spotify-label">ค่าใช้จ่ายที่ผ่านไปแล้ว</CardTitle>
-                            <History className="h-4 w-4 text-[#b3b3b3] group-hover:text-white transition-colors" />
+                            <History className="h-4 w-4 text-muted-foreground group-hover:text-white transition-colors" />
                         </CardHeader>
                         <CardContent className="px-4 pb-4">
-                            <div className="text-3xl font-bold text-[#b3b3b3]">
+                            <div className="text-3xl font-bold text-muted-foreground">
                                 {loading ? <span className="inline-block h-8 w-28 rounded bg-white/10 animate-pulse" /> : `฿${totalPastCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                             </div>
                             <p className="text-spotify-muted mt-1">จาก {historySubscriptions.length} รายการที่จบไปแล้ว</p>
@@ -402,7 +402,7 @@ export function SubscriptionManager() {
                     <Button
                         variant="ghost"
                         onClick={() => setHistoryOpen(true)}
-                        className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
+                        className="bg-secondary hover:bg-surface-hover text-white"
                     >
                         <History className="h-4 w-4 mr-2" />
                         ประวัติ
@@ -433,7 +433,7 @@ export function SubscriptionManager() {
                     showCancelButton={false}
                     footer={
                         <div className="flex justify-end w-full">
-                            <Button variant="ghost" onClick={() => setHistoryOpen(false)} className="btn-pill bg-white text-black hover:bg-white/90">
+                            <Button variant="pill-secondary" onClick={() => setHistoryOpen(false)} className="bg-white text-black hover:bg-white/90">
                                 ปิดหน้าต่าง
                             </Button>
                         </div>

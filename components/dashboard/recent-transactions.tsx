@@ -40,7 +40,7 @@ export function RecentTransactions({ items, className, currency = "THB", rate = 
             return (
               <div
                 key={tx.id}
-                className="flex items-center justify-between rounded-lg border border-white/5 bg-[#181818] p-2.5 text-xs transition-colors"
+                className="flex items-center justify-between rounded-lg border border-white/5 bg-card p-2.5 text-xs transition-colors"
               >
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
                   <span
@@ -58,7 +58,7 @@ export function RecentTransactions({ items, className, currency = "THB", rate = 
 
                 <div className="flex shrink-0 items-center gap-2">
                   {isPending && (
-                    <span className="rounded-full border border-[#ffa42b]/30 bg-[#ffa42b]/10 px-1.5 py-0.5 text-[10px] text-[#ffa42b]">
+                    <span className="rounded-full border border-warning/30 bg-warning/10 px-1.5 py-0.5 text-[10px] text-warning">
                       ค้างจ่าย
                     </span>
                   )}

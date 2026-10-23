@@ -317,7 +317,7 @@ export function WorkoutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden bg-[#181818] border-white/10 text-white shadow-2xl">
+      <DialogContent className="max-w-xl max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-white/10 text-white shadow-2xl">
         <DialogHeader className="p-4 pb-3 border-b border-white/10 shrink-0 pr-10">
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-primary/20 p-1.5 text-primary">
@@ -341,7 +341,7 @@ export function WorkoutDialog({
           <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin">
             {/* Routine Presets Dropdown (Hide when editing existing workout) */}
             {!workoutToEdit && (
-            <div className="rounded-lg border border-white/10 bg-[#121212]/80 p-2.5 space-y-2">
+            <div className="rounded-lg border border-white/10 bg-background/80 p-2.5 space-y-2">
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="preset-select"
@@ -429,7 +429,7 @@ export function WorkoutDialog({
                   setSelectedPresetId(null)
                 }}
                 placeholder="เช่น Home Full Body"
-                className="bg-[#282828] border-white/10 text-white text-xs h-7"
+                className="bg-surface-hover border-white/10 text-white text-xs h-7"
                 required
               />
             </div>
@@ -458,7 +458,7 @@ export function WorkoutDialog({
                     setDate(`${y}-${m}-${d}`)
                   }
                 }}
-                className="bg-[#282828] border-white/10 text-white text-xs h-7 px-2 font-medium"
+                className="bg-surface-hover border-white/10 text-white text-xs h-7 px-2 font-medium"
               />
             </div>
             <div>
@@ -470,7 +470,7 @@ export function WorkoutDialog({
                 min="0"
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value))}
-                className="bg-[#282828] border-white/10 text-white text-xs h-7"
+                className="bg-surface-hover border-white/10 text-white text-xs h-7"
               />
             </div>
           </div>
@@ -509,7 +509,7 @@ export function WorkoutDialog({
               return (
                 <div
                   key={exIdx}
-                  className="rounded-lg border border-white/5 bg-[#1f1f1f] p-2.5 space-y-2"
+                  className="rounded-lg border border-white/5 bg-secondary p-2.5 space-y-2"
                 >
                   {/* Exercise header & category select */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1.5">
@@ -524,10 +524,10 @@ export function WorkoutDialog({
                         onChange={(e) =>
                           handleUpdateExercise(exIdx, "muscle_group", e.target.value)
                         }
-                        className="h-7 rounded bg-[#282828] border border-white/10 text-white text-[11px] px-1.5 shrink-0 outline-none font-medium"
+                        className="h-7 rounded bg-surface-hover border border-white/10 text-white text-[11px] px-1.5 shrink-0 outline-none font-medium"
                       >
                         {MUSCLE_GROUPS.map((m) => (
-                          <option key={m.value} value={m.value} className="bg-[#1f1f1f]">
+                          <option key={m.value} value={m.value} className="bg-secondary">
                             {m.label}
                           </option>
                         ))}
@@ -542,7 +542,7 @@ export function WorkoutDialog({
                             handleUpdateExercise(exIdx, "name", e.target.value)
                           }
                           placeholder="พิมพ์หรือเลือกท่า เช่น Push-ups..."
-                          className="bg-[#282828] border-white/10 text-white text-xs h-7 w-full"
+                          className="bg-surface-hover border-white/10 text-white text-xs h-7 w-full"
                         />
                         <datalist id={datalistId}>
                           {suggestedExercises.map((sEx, i) => (
@@ -581,7 +581,7 @@ export function WorkoutDialog({
                         className={`rounded px-1.5 py-0.5 text-[9px] font-medium transition-colors shrink-0 ${
                           ex.name === sEx.name
                             ? "bg-primary/20 text-primary border border-primary/30"
-                            : "bg-[#282828] text-spotify-muted hover:text-white hover:bg-white/10"
+                            : "bg-surface-hover text-spotify-muted hover:text-white hover:bg-white/10"
                         }`}
                       >
                         {sEx.isBodyweight ? "🏠 " : ""}{sEx.name}
@@ -603,7 +603,7 @@ export function WorkoutDialog({
                     {ex.sets.map((set, sIdx) => (
                       <div
                         key={sIdx}
-                        className="grid grid-cols-12 gap-1.5 items-center bg-[#282828]/60 p-1 rounded border border-white/5"
+                        className="grid grid-cols-12 gap-1.5 items-center bg-surface-hover/60 p-1 rounded border border-white/5"
                       >
                         <span className="col-span-2 text-[11px] font-bold text-center text-white/80">
                           #{set.set_number}
@@ -700,14 +700,14 @@ export function WorkoutDialog({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="ความรู้สึกล้า, สภาพร่างกาย, ฝึกที่บ้าน..."
-              className="bg-[#282828] border-white/10 text-white text-xs h-7"
+              className="bg-surface-hover border-white/10 text-white text-xs h-7"
             />
           </div>
 
           </div>
 
           {/* Sticky Footer: Live Volume Summary and Action Buttons (Always Visible) */}
-          <div className="shrink-0 p-3 px-4 border-t border-white/10 bg-[#121212] flex items-center justify-between">
+          <div className="shrink-0 p-3 px-4 border-t border-white/10 bg-background flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Flame className="h-4 w-4 text-amber-400" />
               <span className="text-xs text-spotify-muted">Total Volume:</span>

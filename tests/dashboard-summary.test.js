@@ -68,6 +68,104 @@ test('percentChange handles 0 or null previous values and computes delta', () =>
   assert.equal(percentChange(80, 100), -20)
 })
 
+test('dashboard realized profit uses the same SOL purchase basis as the investment row', () => {
+  const summary = buildDashboardSummary({
+    investments: [{
+      status: 'closed', quote_asset: 'USDT', investment_type: 'crypto_holding',
+      quantity: 31.294, entry_price: 103.56, exit_price: 104.875,
+      opened_at: '2026-10-19', closed_at: '2026-10-23',
+      opened_amount_thb: 3240.81, closed_amount_thb: 110800,
+    }],
+    usdThbRate: 33.76,
+    today: '2026-10-23',
+  })
+
+  assert.equal(summary.current.realizedPnl.toFixed(2), '1389.29')
+})
+
+test('dashboard data does not revalue recorded closed cash flows with the live exchange rate', async () => {
+  const load = require('./load-typescript.cjs')
+  const item = {
+    id: 'closed-sol', status: 'closed', quote_asset: 'USDT', investment_type: 'crypto_holding',
+    quantity: 2, entry_price: 100, exit_price: 120,
+    opened_at: '2026-10-19', closed_at: '2026-10-23',
+    opened_amount_thb: 6800, closed_amount_thb: 8160, entry_fee_thb: 34, exit_fee_thb: 68,
+  }
+  const results = []
+  for (const liveRate of [30, 40]) {
+    const actions = load('app/dashboard/actions.ts', {
+      '@/utils/supabase/server': { createClient: async () => ({
+        auth: { getUser: async () => ({ data: { user: { id: 'user', user_metadata: {} } } }) },
+        from(table) {
+          const data = table === 'profiles' ? { full_name: 'User' } : table === 'wealth_investments' ? [item] : []
+          return {
+            select() { return this }, eq() { return this }, gte() { return this }, order() { return this }, single() { return this },
+            then(resolve) { return Promise.resolve({ data, error: null }).then(resolve) },
+          }
+        },
+      }) },
+      '@/lib/market-quotes': { getUsdThbRate: async () => liveRate },
+      '@/lib/dashboard-summary': { ...require('../lib/dashboard-summary.js'), bangkokDate: () => '2026-10-23' },
+      'next/navigation': { redirect() { throw new Error('Unexpected redirect') } },
+    })
+    const { summary } = await actions.getDashboardData()
+    results.push(summary.current)
+  }
+  assert.deepEqual(results[1], results[0])
+  assert.equal(results[0].realizedPnl, 1258)
+  assert.equal(results[0].investmentInflow, 8092)
+  assert.equal(results[0].investmentOutflow, 6834)
+})
+
+test('realized profit card and its delta keep recorded THB values under the USD toggle', () => {
+  const React = require('react')
+  const { renderToStaticMarkup } = require('react-dom/server')
+  const load = require('./load-typescript.cjs')
+  const { KpiCards } = load('components/dashboard/kpi-cards.tsx')
+  const summary = buildDashboardSummary({
+    investments: [{ status: 'closed', opened_at: '2026-10-19', closed_at: '2026-10-23', opened_amount_thb: 1000, closed_amount_thb: 2258 }],
+    today: '2026-10-23',
+  })
+  const cards = [30, 40].map(rate => renderToStaticMarkup(React.createElement(KpiCards, { summary, currency: 'USD', rate })).split('Realized PnL')[1])
+  assert.deepEqual(cards[1], cards[0])
+  assert.match(cards[0], /฿1,258/)
+  assert.match(cards[0], /\+฿1,258 vs/)
+})
+
+test('a closed investment row stays fixed when market prices and exchange rates change', () => {
+  const React = require('react')
+  const { renderToStaticMarkup } = require('react-dom/server')
+  const load = require('./load-typescript.cjs')
+  const rows = [30, 40].map(rate => {
+    const { MyWealthSectionPage } = load('app/dashboard/my-wealth/section-page.tsx', {
+      'react-day-picker/style.css': {},
+      '@/lib/my-wealth-calculations': require('../lib/my-wealth-calculations.js'),
+      '@/components/my-wealth/wealth-context': { useWealth: () => ({
+        categories: [], transactions: [], investments: [{
+          id: 'sol', platform: 'binance_th', investment_type: 'crypto_holding',
+          asset_symbol: 'SOLUSDT', quote_asset: 'USDT', status: 'closed',
+          quantity: 2, entry_price: 100, exit_price: 120,
+          opened_at: '2026-10-19', closed_at: '2026-10-23',
+          opened_amount_thb: 6800, closed_amount_thb: 8160, entry_fee_thb: 34, exit_fee_thb: 68,
+        }],
+        quotes: { SOLUSDT: { price: rate * 10 } }, usdThbRate: rate,
+        displayCurrency: 'USD', formatMoney: value => `$${(value / rate).toFixed(2)}`,
+        refreshData() {}, setDisplayCurrency() {},
+      }) },
+      '@/components/my-wealth/quick-actions': { MyWealthQuickActions: () => null },
+      '@/components/my-wealth/wealth-status': { WealthApiStatus: () => null },
+      './actions': {},
+    })
+    const html = renderToStaticMarkup(React.createElement(MyWealthSectionPage, { section: 'investments' }))
+    return [...html.matchAll(/<tr\b[\s\S]*?<\/tr>/g)].find(([row]) => row.includes('SOLUSDT'))?.[0]
+  })
+  assert.ok(rows[0], 'The closed SOL row must be rendered')
+  assert.equal(rows[1], rows[0])
+  assert.match(rows[0], /37\.00/)
+  assert.match(rows[0], /18\.50/)
+  assert.match(rows[0], /23\/10\/2026/)
+})
+
 test('monthlySubscriptionCost calculates equivalent monthly cost for active subscriptions', () => {
   const subscriptions = [
     { status: 'active', price: 300, billing_cycle: 'monthly' },

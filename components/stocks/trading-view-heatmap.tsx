@@ -50,7 +50,7 @@ export function TradingViewHeatmap({ kind }: TradingViewHeatmapProps) {
   return (
     <div className="h-[680px] w-full overflow-hidden rounded-xl border border-white/10 bg-[#0f0f0f]">
       <div className="h-[calc(100%-28px)] w-full" ref={container} />
-      <div className="flex h-7 items-center px-3 text-[10px] text-[#b3b3b3]">
+      <div className="flex h-7 items-center px-3 text-[10px] text-muted-foreground">
         <a className="hover:text-primary" href={widget.sourceUrl} rel="noopener nofollow" target="_blank">
           {widget.label} by TradingView
         </a>

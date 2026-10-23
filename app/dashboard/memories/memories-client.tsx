@@ -60,7 +60,7 @@ export function MemoriesClient() {
     if (!isUnlocked) {
         return (
             <div className="flex items-center justify-center min-h-[70vh]">
-                <Card className="w-full max-w-sm card-spotify border border-white/5 shadow-heavy bg-[#181818]">
+                <Card className="w-full max-w-sm card-spotify border border-white/5 shadow-heavy bg-card">
                     <CardHeader className="text-center pb-2">
                         <div className="mx-auto mb-6 p-4 rounded-full bg-primary/10 w-fit shadow-play">
                             <Lock className="h-8 w-8 text-primary" />
@@ -73,6 +73,9 @@ export function MemoriesClient() {
                     <CardContent className="space-y-6 pt-4">
                         <div className="relative">
                             <Input
+                                aria-label="Memories password"
+                                aria-invalid={Boolean(error)}
+                                aria-describedby={error ? "memories-password-error" : undefined}
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Password"
                                 value={password}
@@ -81,21 +84,22 @@ export function MemoriesClient() {
                                     setError("")
                                 }}
                                 onKeyDown={handleKeyDown}
-                                className="spotify-input pr-12 h-12"
+                                variant="pill" className="pr-12 h-12"
                                 autoFocus
                             />
                             <button
                                 type="button"
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white transition-colors"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                         </div>
                         {error && (
-                            <p className="text-xs font-bold text-[#f3727f] text-center uppercase tracking-wider">{error}</p>
+                            <p id="memories-password-error" role="alert" className="text-xs font-bold text-destructive text-center uppercase tracking-wider">{error}</p>
                         )}
-                        <Button onClick={handleUnlock} className="btn-pill-primary w-full h-12">
+                        <Button onClick={handleUnlock} variant="pill" className="w-full h-12">
                             ปลดล็อก
                         </Button>
                     </CardContent>

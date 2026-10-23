@@ -23,17 +23,17 @@ export function PendingExpenses({ data, className, currency = "THB", rate = 34.0
       bodyClassName="p-4 flex flex-col justify-between"
     >
       {/* Total Pending Header */}
-      <div className="mb-4 rounded-lg border border-white/5 bg-[#181818] p-3">
+      <div className="mb-4 rounded-lg border border-white/5 bg-card p-3">
         <span className="text-spotify-label">ยอดค้างชำระทั้งหมด</span>
         <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-[#ffa42b]">{formatM(total)}</span>
+          <span className="text-2xl font-bold text-warning">{formatM(total)}</span>
           <span className="text-xs text-spotify-muted">({count} รายการ)</span>
         </div>
       </div>
 
       {/* Items List (up to 6) */}
       <div className="space-y-2 flex-1">
-        <span className="text-spotify-label text-[#7c7c7c]">รายการที่ค้างชำระ</span>
+        <span className="text-spotify-label text-muted-foreground">รายการที่ค้างชำระ</span>
 
         {items.length === 0 ? (
           <div className="flex h-36 items-center justify-center text-center text-xs text-spotify-muted">
@@ -52,7 +52,7 @@ export function PendingExpenses({ data, className, currency = "THB", rate = 34.0
               return (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between rounded-lg border border-white/5 bg-[#181818] p-2.5 text-xs transition-colors"
+                  className="flex items-center justify-between rounded-lg border border-white/5 bg-card p-2.5 text-xs transition-colors"
                 >
                   <div className="min-w-0 pr-2">
                     <p className="truncate font-semibold text-white">{label}</p>
@@ -63,7 +63,7 @@ export function PendingExpenses({ data, className, currency = "THB", rate = 34.0
                   </div>
 
                   <div className="shrink-0 text-right">
-                    <span className="font-bold text-[#f3727f]">{formatM(item.amount_thb)}</span>
+                    <span className="font-bold text-destructive">{formatM(item.amount_thb)}</span>
                   </div>
                 </div>
               )

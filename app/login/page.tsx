@@ -53,7 +53,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card className="card-spotify border border-white/10 shadow-heavy bg-[#181818] overflow-hidden text-center">
+        <Card className="card-spotify border border-white/10 shadow-heavy bg-card overflow-hidden text-center">
           <CardHeader className="text-center space-y-3 pb-2 pt-8">
             <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-play">
               <Shield className="w-6 h-6" />
@@ -79,7 +79,7 @@ export default function LoginPage() {
                     name="email"
                     type="email"
                     placeholder="name@example.com"
-                    className="spotify-input pl-10"
+                    variant="pill" className="pl-10"
                     required
                   />
                 </div>
@@ -98,11 +98,12 @@ export default function LoginPage() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="spotify-input pl-10 pr-10"
+                    variant="pill" className="pl-10 pr-10"
                     required
                   />
                   <button
                     type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-3.5 text-spotify-muted hover:text-white transition-colors"
                   >
@@ -116,7 +117,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-lg border border-destructive/20 text-left">
+                <div role="alert" className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-lg border border-destructive/20 text-left">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -124,11 +125,12 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="btn-pill-primary w-full h-11 text-xs"
+                variant="pill" className="w-full h-11 text-xs"
                 disabled={isLoading}
+                aria-busy={isLoading}
               >
                 {isLoading ? (
-                  <Loading size="sm" />
+                  <><Loading size="sm" /> กำลังเข้าสู่ระบบ...</>
                 ) : (
                   "เข้าสู่ระบบ"
                 )}

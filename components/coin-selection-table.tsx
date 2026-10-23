@@ -46,7 +46,7 @@ export function CoinSelectionTable({ onSave, saveButtonText = "Save Settings" }:
       header: "Coin",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded bg-[#282828] flex items-center justify-center flex-shrink-0 group-hover:shadow-play transition-all">
+          <div className="w-10 h-10 rounded bg-surface-hover flex items-center justify-center flex-shrink-0 group-hover:shadow-play transition-all">
             <span className="text-[11px] font-black text-primary uppercase">{row.original.symbol.substring(0, 2)}</span>
           </div>
           <div>
@@ -105,7 +105,7 @@ export function CoinSelectionTable({ onSave, saveButtonText = "Save Settings" }:
           <h2 className="text-spotify-label">Coin Display Settings</h2>
           <p className="text-spotify-muted text-xs mt-1 uppercase tracking-widest font-bold">Configure which coins are displayed on the dashboard</p>
         </div>
-        <Button onClick={handleSave} className="btn-pill-primary">
+        <Button onClick={handleSave} variant="pill" className="">
           <Save className="h-4 w-4 mr-2" />
           {saveButtonText}
         </Button>

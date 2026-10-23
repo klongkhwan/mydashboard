@@ -131,7 +131,7 @@ export function MemoryLogManager() {
             cell: ({ row }: { row: Row<MemoryLog> }) => (
                 <div>
                     {row.original.mood ? (
-                        <Badge className="bg-[#282828] text-[#b3b3b3] border-none text-[10px] font-bold uppercase px-2 py-0.5">
+                        <Badge className="bg-surface-hover text-muted-foreground border-none text-[10px] font-bold uppercase px-2 py-0.5">
                             {row.original.mood}
                         </Badge>
                     ) : "-"}
@@ -160,7 +160,7 @@ export function MemoryLogManager() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-[#b3b3b3] hover:text-white"
+                        className="h-8 w-8 text-muted-foreground hover:text-white"
                         title="ดูรายละเอียด"
                         onClick={() => setViewLog(row.original)}
                     >
@@ -171,7 +171,7 @@ export function MemoryLogManager() {
                         memoryLog={row.original}
                         onSuccess={fetchMemoryLogs}
                         trigger={
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#b3b3b3] hover:text-white" title="แก้ไข">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-white" title="แก้ไข">
                                 <Edit className="h-4 w-4" />
                             </Button>
                         }
@@ -180,7 +180,7 @@ export function MemoryLogManager() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-[#b3b3b3] hover:text-destructive"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
                         title="ลบ"
                         onClick={() => setDeleteLogId(row.original.id)}
                     >
@@ -200,40 +200,40 @@ export function MemoryLogManager() {
             <div className="space-y-8">
                 {/* Stats Cards */}
                 <div className="grid gap-6 md:grid-cols-4">
-                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                    <Card className="card-spotify border-none shadow-none bg-card p-2 hover:bg-surface-hover transition-all group">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
                             <CardTitle className="text-spotify-label">ความทรงจำทั้งหมด</CardTitle>
-                            <BookHeart className="h-4 w-4 text-[#b3b3b3] group-hover:text-primary transition-colors" />
+                            <BookHeart className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </CardHeader>
                         <CardContent className="px-4 pb-4">
                             <div className="text-3xl font-bold text-white">{memoryLogs.length}</div>
                             <p className="text-spotify-muted mt-1">รายการที่บันทึกไว้</p>
                         </CardContent>
                     </Card>
-                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                    <Card className="card-spotify border-none shadow-none bg-card p-2 hover:bg-surface-hover transition-all group">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
                             <CardTitle className="text-spotify-label">สื่อแนบ</CardTitle>
-                            <ImageIcon className="h-4 w-4 text-[#b3b3b3] group-hover:text-white transition-colors" />
+                            <ImageIcon className="h-4 w-4 text-muted-foreground group-hover:text-white transition-colors" />
                         </CardHeader>
                         <CardContent className="px-4 pb-4">
                             <div className="text-3xl font-bold text-white">{totalMedia}</div>
                             <p className="text-spotify-muted mt-1">รูป/วิดีโอ/เสียง</p>
                         </CardContent>
                     </Card>
-                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                    <Card className="card-spotify border-none shadow-none bg-card p-2 hover:bg-surface-hover transition-all group">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
                             <CardTitle className="text-spotify-label">สถานที่</CardTitle>
-                            <MapPin className="h-4 w-4 text-[#b3b3b3] group-hover:text-primary transition-colors" />
+                            <MapPin className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </CardHeader>
                         <CardContent className="px-4 pb-4">
                             <div className="text-3xl font-bold text-white">{uniqueLocations}</div>
                             <p className="text-spotify-muted mt-1">พิกัดความทรงจำ</p>
                         </CardContent>
                     </Card>
-                    <Card className="card-spotify border-none shadow-none bg-[#181818] p-2 hover:bg-[#282828] transition-all group">
+                    <Card className="card-spotify border-none shadow-none bg-card p-2 hover:bg-surface-hover transition-all group">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
                             <CardTitle className="text-spotify-label">ล่าสุด</CardTitle>
-                            <Calendar className="h-4 w-4 text-[#b3b3b3] group-hover:text-white transition-colors" />
+                            <Calendar className="h-4 w-4 text-muted-foreground group-hover:text-white transition-colors" />
                         </CardHeader>
                         <CardContent className="px-4 pb-4 min-w-0">
                             <div className="text-[15px] font-bold text-white truncate">
@@ -274,7 +274,7 @@ export function MemoryLogManager() {
                                 {viewLog && format(new Date(viewLog.date), "EEEE d MMMM yyyy", { locale: th })}
                             </span>
                             {viewLog?.location && (
-                                <span className="flex items-center gap-2 text-[#b3b3b3] font-bold text-sm uppercase tracking-wider">
+                                <span className="flex items-center gap-2 text-muted-foreground font-bold text-sm uppercase tracking-wider">
                                     <MapPin className="h-4 w-4" />
                                     {viewLog.location}
                                 </span>
@@ -286,7 +286,7 @@ export function MemoryLogManager() {
                         <div className="space-y-8 py-6">
                             {/* Mood */}
                             {viewLog.mood && (
-                                <div className="bg-[#121212] rounded-lg p-6 shadow-inset">
+                                <div className="bg-background rounded-lg p-6 shadow-inset">
                                     <span className="text-spotify-label mb-2 block">อารมณ์และความรู้สึก</span>
                                     <p className="text-xl font-bold text-white">{viewLog.mood}</p>
                                 </div>
@@ -296,7 +296,7 @@ export function MemoryLogManager() {
                             {viewLog.description && (
                                 <div className="space-y-3">
                                     <span className="text-spotify-label">บันทึกรายละเอียด</span>
-                                    <p className="whitespace-pre-wrap text-lg font-medium text-[#b3b3b3] leading-relaxed italic border-l-2 border-primary/40 pl-4">
+                                    <p className="whitespace-pre-wrap text-lg font-medium text-muted-foreground leading-relaxed italic border-l-2 border-primary/40 pl-4">
                                         {viewLog.description}
                                     </p>
 
@@ -331,7 +331,7 @@ export function MemoryLogManager() {
                                             // Audio
                                             if (type === 'audio') {
                                                 return (
-                                                    <div key={photo.id} className="aspect-square rounded-lg bg-[#282828] flex flex-col items-center justify-center p-4 relative group hover:bg-[#333333] transition-all">
+                                                    <div key={photo.id} className="aspect-square rounded-lg bg-surface-hover flex flex-col items-center justify-center p-4 relative group hover:bg-[#333333] transition-all">
                                                         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                                                             <FileAudio className="h-6 w-6 text-primary" />
                                                         </div>
@@ -344,7 +344,7 @@ export function MemoryLogManager() {
                                             return (
                                                 <div
                                                     key={photo.id}
-                                                    className="relative group cursor-pointer aspect-square rounded-lg overflow-hidden bg-[#282828]"
+                                                    className="relative group cursor-pointer aspect-square rounded-lg overflow-hidden bg-surface-hover"
                                                     onClick={() => setLightboxImage(photo.photo_url)}
                                                 >
                                                     <img
@@ -367,7 +367,7 @@ export function MemoryLogManager() {
                     )}
 
                     <DialogFooter className="border-t border-white/5 pt-6">
-                        <Button variant="ghost" onClick={() => setViewLog(null)} className="btn-pill bg-white text-black hover:bg-white/90">
+                        <Button variant="pill-secondary" onClick={() => setViewLog(null)} className="bg-white text-black hover:bg-white/90">
                             ปิดหน้าต่าง
                         </Button>
                     </DialogFooter>

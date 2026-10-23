@@ -277,7 +277,7 @@ export default function WorkoutsPage() {
                 <div
                   key={workout.id}
                   onClick={() => handleOpenEdit(workout)}
-                  className="group rounded-xl border border-white/5 bg-[#141414] hover:border-primary/40 hover:bg-[#181818] p-3.5 transition-all shadow-sm cursor-pointer"
+                  className="group rounded-xl border border-white/5 bg-[#141414] hover:border-primary/40 hover:bg-card p-3.5 transition-all shadow-sm cursor-pointer"
                 >
                   <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
                     <div className="flex items-center gap-2.5 min-w-0">

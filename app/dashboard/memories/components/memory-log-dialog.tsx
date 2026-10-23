@@ -247,7 +247,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 {trigger || (
-                    <Button className="btn-pill-primary">
+                    <Button variant="pill" className="">
                         <Plus className="h-4 w-4 mr-2" />
                         เพิ่มความทรงจำ
                     </Button>
@@ -270,7 +270,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                 <FormItem>
                                     <FormLabel className="text-spotify-label">หัวข้อ *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="เช่น วันเกิดปีนี้" className="spotify-input" {...field} />
+                                        <Input placeholder="เช่น วันเกิดปีนี้" variant="pill" className="" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -304,7 +304,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                     <FormItem>
                                         <FormLabel className="text-spotify-label">สถานที่</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="เช่น บ้าน, ที่ทำงาน" className="spotify-input" {...field} />
+                                            <Input placeholder="เช่น บ้าน, ที่ทำงาน" variant="pill" className="" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -319,7 +319,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                 <FormItem>
                                     <FormLabel className="text-spotify-label">อารมณ์/ความรู้สึก</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="เช่น มีความสุขมาก! 🎉" className="spotify-input" {...field} />
+                                        <Input placeholder="เช่น มีความสุขมาก! 🎉" variant="pill" className="" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -335,7 +335,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                     <FormControl>
                                         <Textarea
                                             placeholder="บันทึกเรื่องราวความทรงจำ..."
-                                            className="bg-[#121212] border-none rounded-xl p-4 font-medium text-white shadow-inset min-h-[120px] focus:ring-1 focus:ring-white/20"
+                                            className="bg-background border-none rounded-xl p-4 font-medium text-white shadow-inset min-h-[120px] focus:ring-1 focus:ring-white/20"
                                             style={{ resize: 'none' }}
                                             {...field}
                                         />
@@ -351,7 +351,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
 
                             {/* Upload Area */}
                             <div
-                                className="border-2 border-dashed border-white/5 rounded-xl p-8 text-center cursor-pointer hover:bg-white/5 hover:border-primary/50 transition-all group shadow-inset bg-[#121212]/50"
+                                className="border-2 border-dashed border-white/5 rounded-xl p-8 text-center cursor-pointer hover:bg-white/5 hover:border-primary/50 transition-all group shadow-inset bg-background/50"
                                 onClick={() => fileInputRef.current?.click()}
                             >
                                 <input
@@ -369,12 +369,12 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center gap-3">
-                                        <div className="w-12 h-12 rounded-full bg-[#282828] flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <Upload className="h-6 w-6 text-[#b3b3b3] group-hover:text-primary transition-colors" />
+                                        <div className="w-12 h-12 rounded-full bg-surface-hover flex items-center justify-center group-hover:scale-110 transition-transform">
+                                            <Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-sm font-bold text-white uppercase tracking-wider">เลือกไฟล์ หรือ ลากมาวาง</p>
-                                            <p className="text-[10px] font-bold text-[#b3b3b3] uppercase tracking-[0.1em]">
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">
                                                 Support: Image, Video, Audio (Max 50MB)
                                             </p>
                                         </div>
@@ -386,7 +386,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                             {pendingFiles.length > 0 && (
                                 <div className="grid grid-cols-4 gap-3">
                                     {pendingFiles.map((file, index) => (
-                                        <div key={index} className="relative group aspect-square rounded-lg overflow-hidden bg-[#282828] shadow-heavy">
+                                        <div key={index} className="relative group aspect-square rounded-lg overflow-hidden bg-surface-hover shadow-heavy">
                                             {renderPreview(file)}
                                             <button
                                                 type="button"
@@ -404,7 +404,7 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                             {photos.length > 0 && (
                                 <div className="grid grid-cols-4 gap-3">
                                     {photos.map((photo) => (
-                                        <div key={photo.id} className="relative group aspect-square rounded-lg overflow-hidden bg-[#282828] shadow-heavy">
+                                        <div key={photo.id} className="relative group aspect-square rounded-lg overflow-hidden bg-surface-hover shadow-heavy">
                                             {renderExistingMedia(photo)}
                                             <button
                                                 type="button"
@@ -420,10 +420,10 @@ export function MemoryLogDialog({ memoryLog, onSuccess, trigger }: MemoryLogDial
                         </div>
 
                         <DialogFooter className="gap-3 pt-4 border-t border-white/5">
-                            <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-[#b3b3b3] hover:text-white">
+                            <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-muted-foreground hover:text-white">
                                 ยกเลิก
                             </Button>
-                            <Button type="submit" disabled={loading} className="btn-pill-primary min-w-[100px]">
+                            <Button type="submit" disabled={loading} variant="pill" className="min-w-[100px]">
                                 {loading ? "กำลังบันทึก..." : isEdit ? "บันทึก" : "เพิ่มความทรงจำ"}
                             </Button>
                         </DialogFooter>

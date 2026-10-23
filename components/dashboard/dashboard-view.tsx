@@ -63,7 +63,7 @@ export function DashboardView({
           <span className="text-[11px] text-spotify-muted hidden md:inline tabular-nums">
             1 USD ≈ ฿{usdThbRate.toFixed(2)}
           </span>
-          <div className="flex items-center rounded-xl border border-white/10 bg-[#121212]/90 p-1 shadow-sm">
+          <div className="flex items-center rounded-xl border border-white/10 bg-background/90 p-1 shadow-sm">
             <button
               type="button"
               onClick={() => handleCurrencyChange("THB")}
@@ -89,7 +89,7 @@ export function DashboardView({
               USD
             </button>
           </div>
-          <span className="text-xs text-[#7c7c7c] hidden lg:inline tabular-nums">
+          <span className="text-xs text-muted-foreground hidden lg:inline tabular-nums">
             อัปเดตล่าสุด {generatedAt} น.
           </span>
         </div>

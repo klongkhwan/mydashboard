@@ -41,9 +41,9 @@ const getStatus = (start: number, end: number) => {
 
 const statusBadge = (status: ReturnType<typeof getStatus>) => {
   switch (status) {
-    case "upcoming": return <Badge className="bg-[#1f1f1f] text-[#539df5] border-white/5 h-5 px-2 text-[10px] font-bold uppercase tracking-wider">Soon</Badge>
+    case "upcoming": return <Badge className="bg-secondary text-info border-white/5 h-5 px-2 text-[10px] font-bold uppercase tracking-wider">Soon</Badge>
     case "ongoing": return <Badge className="bg-primary text-black h-5 px-2 text-[10px] font-bold uppercase tracking-wider">Live</Badge>
-    case "ended": return <Badge className="bg-[#1f1f1f] text-[#b3b3b3] border-white/5 h-5 px-2 text-[10px] font-bold uppercase tracking-wider">Ended</Badge>
+    case "ended": return <Badge className="bg-secondary text-muted-foreground border-white/5 h-5 px-2 text-[10px] font-bold uppercase tracking-wider">Ended</Badge>
   }
 }
 
@@ -118,8 +118,8 @@ export default function BinanceThCampaigns() {
             <Button
               key={index}
               asChild
-              variant="ghost"
-              className="btn-pill bg-[#181818] border border-white/5 hover:bg-[#282828] hover:border-primary/20 text-white h-10 px-6 transition-all"
+              variant="pill-secondary"
+              className="bg-card border border-white/5 hover:bg-surface-hover hover:border-primary/20 text-white h-10 px-6 transition-all"
             >
               <a
                 href={item.url}
@@ -130,7 +130,7 @@ export default function BinanceThCampaigns() {
               >
                 <Icon className="w-4 h-4 text-primary" />
                 <span className="font-bold tracking-tight text-xs uppercase">{item.title}</span>
-                <ExternalLink className="w-3 h-3 text-[#b3b3b3] group-hover:text-white transition-colors" />
+                <ExternalLink className="w-3 h-3 text-muted-foreground group-hover:text-white transition-colors" />
               </a>
             </Button>
           )
@@ -140,7 +140,7 @@ export default function BinanceThCampaigns() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left side - Binance campaigns */}
         <div className="lg:col-span-7 space-y-6">
-          <Card className="card-spotify border border-white/5 shadow-heavy bg-[#181818] h-full flex flex-col">
+          <Card className="card-spotify border border-white/5 shadow-heavy bg-card h-full flex flex-col">
             <CardHeader className="px-6 py-4 border-b border-white/5 bg-white/[0.02]">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-spotify-label flex items-center gap-2">
@@ -150,7 +150,7 @@ export default function BinanceThCampaigns() {
                 <button
                   onClick={() => setRefetchTick(x => x + 1)}
                   disabled={loading}
-                  className="text-[#b3b3b3] hover:text-white transition-all p-2 hover:bg-white/10 rounded-full"
+                  className="text-muted-foreground hover:text-white transition-all p-2 hover:bg-white/10 rounded-full"
                   title="Refresh"
                 >
                   <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -158,7 +158,7 @@ export default function BinanceThCampaigns() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-0 bg-[#121212]/40 flex-1">
+            <CardContent className="p-0 bg-background/40 flex-1">
               <div className="divide-y divide-white/5 overflow-y-auto spotify-scrollbar" style={{ height: "400px" }}>
                 {loading && (
                   <div className="p-12 flex flex-col items-center justify-center gap-4 h-full">
@@ -168,7 +168,7 @@ export default function BinanceThCampaigns() {
                 )}
                 {error && (
                   <div className="p-8 text-center">
-                    <p className="text-[#f3727f] text-sm font-bold">Something went wrong</p>
+                    <p className="text-destructive text-sm font-bold">Something went wrong</p>
                     <p className="text-spotify-muted mt-1">{error}</p>
                   </div>
                 )}
@@ -200,7 +200,7 @@ export default function BinanceThCampaigns() {
                         </div>
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary shadow-play bg-[#282828] rounded-full">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary shadow-play bg-surface-hover rounded-full">
                           <ExternalLink className="w-4 h-4" />
                         </Button>
                       </div>
@@ -214,7 +214,7 @@ export default function BinanceThCampaigns() {
 
         {/* Right side - TradingView Technical Analysis */}
         <div className="lg:col-span-5">
-          <Card className="card-spotify border border-white/5 shadow-heavy h-full bg-[#181818] overflow-hidden flex flex-col">
+          <Card className="card-spotify border border-white/5 shadow-heavy h-full bg-card overflow-hidden flex flex-col">
             <CardHeader className="px-6 py-4 border-b border-white/5 bg-white/[0.02]">
               <CardTitle className="text-spotify-label flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-primary" />

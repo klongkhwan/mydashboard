@@ -270,7 +270,7 @@ export function Calendar() {
   }
 
   return (
-    <Card className="card-spotify border border-white/5 shadow-heavy bg-[#181818]">
+    <Card className="card-spotify border border-white/5 shadow-heavy bg-card">
       <CardHeader className="px-5 py-3 border-b border-white/5 bg-white/[0.02]">
         <CardTitle className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -292,7 +292,7 @@ export function Calendar() {
                 onClick={() => setDayPreset(p.key)}
                 className={`btn-pill h-7 px-3 text-[10px] border-none transition-all ${dayPreset === p.key
                   ? "bg-white text-black scale-105"
-                  : "bg-[#282828] text-[#b3b3b3] hover:text-white"
+                  : "bg-surface-hover text-muted-foreground hover:text-white"
                   }`}
               >
                 {p.label}
@@ -311,7 +311,7 @@ export function Calendar() {
                   onClick={() => toggleCountry(c)}
                   className={`w-7 h-7 rounded-full transition-all flex items-center justify-center p-1 border-none ${active
                     ? "bg-white scale-110 shadow-play"
-                    : "bg-[#282828] hover:bg-[#333333]"
+                    : "bg-surface-hover hover:bg-[#333333]"
                     }`}
                   title={c}
                 >
@@ -322,13 +322,13 @@ export function Calendar() {
             <div className="ml-2 flex gap-1.5">
               <button
                 onClick={() => setCountries(["US"])}
-                className="text-[9px] font-bold uppercase tracking-wider text-[#b3b3b3] hover:text-white px-2 py-1 rounded hover:bg-white/5"
+                className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-white px-2 py-1 rounded hover:bg-white/5"
               >
                 US ONLY
               </button>
               <button
                 onClick={() => setCountries([...COUNTRY_OPTIONS])}
-                className="text-[9px] font-bold uppercase tracking-wider text-[#b3b3b3] hover:text-white px-2 py-1 rounded hover:bg-white/5"
+                className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-white px-2 py-1 rounded hover:bg-white/5"
               >
                 ALL
               </button>
@@ -342,8 +342,8 @@ export function Calendar() {
               <button
                 onClick={() => setImportanceFilter("high")}
                 className={`btn-pill h-7 px-3 text-[10px] border-none transition-all ${importanceFilter === "high"
-                  ? "bg-[#f3727f] text-white"
-                  : "bg-[#282828] text-[#b3b3b3] hover:text-[#f3727f]"
+                  ? "bg-destructive text-destructive-foreground"
+                  : "bg-surface-hover text-muted-foreground hover:text-destructive"
                   }`}
               >
                 High
@@ -351,8 +351,8 @@ export function Calendar() {
               <button
                 onClick={() => setImportanceFilter("medium")}
                 className={`btn-pill h-7 px-3 text-[10px] border-none transition-all ${importanceFilter === "medium"
-                  ? "bg-[#ffa42b] text-white"
-                  : "bg-[#282828] text-[#b3b3b3] hover:text-[#ffa42b]"
+                  ? "bg-warning text-white"
+                  : "bg-surface-hover text-muted-foreground hover:text-warning"
                   }`}
               >
                 Med
@@ -361,7 +361,7 @@ export function Calendar() {
                 onClick={() => setImportanceFilter("low")}
                 className={`btn-pill h-7 px-3 text-[10px] border-none transition-all ${importanceFilter === "low"
                   ? "bg-primary text-black"
-                  : "bg-[#282828] text-[#b3b3b3] hover:text-primary"
+                  : "bg-surface-hover text-muted-foreground hover:text-primary"
                   }`}
               >
                 Low
@@ -370,7 +370,7 @@ export function Calendar() {
                 onClick={() => setImportanceFilter("all")}
                 className={`btn-pill h-7 px-3 text-[10px] border-none transition-all ${importanceFilter === "all"
                   ? "bg-white text-black"
-                  : "bg-[#282828] text-[#b3b3b3] hover:text-white"
+                  : "bg-surface-hover text-muted-foreground hover:text-white"
                   }`}
               >
                 ALL
@@ -393,14 +393,14 @@ export function Calendar() {
           {loading ? (
             <div className="p-10 flex flex-col items-center justify-center gap-3">
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#b3b3b3]">Loading data...</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Loading data...</p>
             </div>
           ) : error ? (
-            <div className="p-6 text-center bg-[#f3727f]/10 rounded-lg">
-              <p className="text-[#f3727f] text-xs font-bold">{error}</p>
+            <div className="p-6 text-center bg-destructive/10 rounded-lg">
+              <p className="text-destructive text-xs font-bold">{error}</p>
             </div>
           ) : events.length === 0 ? (
-            <div className="p-10 text-center text-[#b3b3b3] text-xs font-bold">
+            <div className="p-10 text-center text-muted-foreground text-xs font-bold">
               No events found.
             </div>
           ) : (
@@ -420,7 +420,7 @@ export function Calendar() {
                         {/* Time & Flag Column - Fixed Width */}
                         <div className="flex items-center gap-3 md:w-28 shrink-0">
                           <span className="text-[13px] font-bold text-white tabular-nums w-10">{timeLocal}</span>
-                          <div className="w-6 h-6 rounded-full bg-[#282828] flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <div className="w-6 h-6 rounded-full bg-surface-hover flex items-center justify-center group-hover:scale-110 transition-transform">
                             <FlagIcon country={ev.country} size={16} />
                           </div>
                           <span className="text-[11px] font-black text-spotify-muted w-8">{ev.currency}</span>
@@ -429,8 +429,8 @@ export function Calendar() {
                         {/* Title & Info Column - Flexible but structured */}
                         <div className="flex-1 min-w-0 flex items-center gap-3">
                           <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", 
-                            ev.importance === 1 ? "bg-[#f3727f]" : 
-                            ev.importance === 0 ? "bg-[#ffa42b]" : 
+                            ev.importance === 1 ? "bg-destructive" :
+                            ev.importance === 0 ? "bg-warning" :
                             "bg-primary")}>
                           </div>
                           <span className="text-[13px] font-bold text-white group-hover:text-primary transition-colors truncate flex-1">
@@ -455,7 +455,7 @@ export function Calendar() {
                           </div>
                           <div className="flex flex-col items-center w-24 px-2">
                             <span className="text-[8px] font-black text-spotify-muted uppercase tracking-widest mb-0.5">Previous</span>
-                            <span className="text-[12px] font-bold text-[#b3b3b3] tabular-nums">{displayValue(ev.previous, ev.previousRaw, ev.unit)}</span>
+                            <span className="text-[12px] font-bold text-muted-foreground tabular-nums">{displayValue(ev.previous, ev.previousRaw, ev.unit)}</span>
                           </div>
                         </div>
                       </div>

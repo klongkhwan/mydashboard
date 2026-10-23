@@ -52,7 +52,7 @@ export function TradingViewElement({ script, tag, attributes = {}, className }: 
       {status !== "ready" && (
         <div className="grid min-h-[180px] place-items-center">
           {status === "error" ? (
-            <p className="text-xs text-[#6a6a6a]">Widget failed to load. Check your connection and try again.</p>
+            <p className="text-xs text-muted-foreground">Widget failed to load. Check your connection and try again.</p>
           ) : (
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-primary" />
           )}

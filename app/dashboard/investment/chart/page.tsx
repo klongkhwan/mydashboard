@@ -18,7 +18,7 @@ export default function InvestmentChartPage() {
           title="Interactive Chart"
           description="Real-time multi-asset technical charts, live WebSocket feeds, and unlimited indicators."
         />
-        <div className="flex items-center gap-1.5 bg-[#181818] p-1 rounded-xl border border-white/10 w-fit self-start sm:self-auto">
+        <div className="flex items-center gap-1.5 bg-card p-1 rounded-xl border border-white/10 w-fit self-start sm:self-auto">
           <Button
             size="sm"
             variant="ghost"

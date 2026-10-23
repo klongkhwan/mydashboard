@@ -244,7 +244,7 @@ export function TransactionsView({
             )
           }
           return (
-            <Badge className="bg-[#f3727f]/10 text-[#f3727f] border border-[#f3727f]/20 text-[10px] font-bold">
+            <Badge className="bg-destructive/10 text-destructive border border-destructive/20 text-[10px] font-bold">
               <ArrowDownRight className="w-3 h-3 mr-0.5" /> จ่ายแล้ว
             </Badge>
           )
@@ -356,7 +356,7 @@ export function TransactionsView({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 w-8 p-0 text-spotify-muted hover:text-[#f3727f]"
+                className="h-8 w-8 p-0 text-spotify-muted hover:text-destructive"
                 onClick={() => setDeleteTxId(item.id)}
                 title="ลบรายการ"
               >
@@ -371,7 +371,7 @@ export function TransactionsView({
   )
 
   const fieldClass =
-    "h-9 rounded-lg border border-white/10 bg-[#181818] px-3 text-xs text-white shadow-inner outline-none transition placeholder:text-white/35 hover:border-white/20 focus:border-primary focus:ring-1 focus:ring-primary/20"
+    "h-9 rounded-lg border border-white/10 bg-card px-3 text-xs text-white shadow-inner outline-none transition placeholder:text-white/35 hover:border-white/20 focus:border-primary focus:ring-1 focus:ring-primary/20"
 
   return (
     <div className="space-y-6">
@@ -385,7 +385,7 @@ export function TransactionsView({
               variant="outline"
               size="sm"
               onClick={() => setShowCategoryManager(true)}
-              className="h-9 rounded-full border-white/10 bg-[#1f1f1f] text-xs font-bold text-white hover:bg-white/10"
+              className="h-9 rounded-full border-white/10 bg-secondary text-xs font-bold text-white hover:bg-white/10"
             >
               <FolderCog className="w-3.5 h-3.5 mr-1.5 text-primary" /> จัดการหมวดหมู่
             </Button>
@@ -399,18 +399,18 @@ export function TransactionsView({
 
       {/* 4 Summary Metric Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60 flex flex-col justify-between">
+        <div className="card-spotify p-5 border border-white/5 bg-card/60 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-spotify-label">Net Cash Flow</span>
             <Wallet className="h-4 w-4 text-spotify-muted" />
           </div>
-          <p className={`text-2xl font-black mt-2 tabular-nums ${netCash >= 0 ? "text-primary" : "text-[#f3727f]"}`}>
+          <p className={`text-2xl font-black mt-2 tabular-nums ${netCash >= 0 ? "text-primary" : "text-destructive"}`}>
             {netCash >= 0 ? "+" : ""}{money(netCash)}
           </p>
           <p className="text-[11px] text-spotify-muted mt-1">รายรับหักรายจ่ายจริง</p>
         </div>
 
-        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60 flex flex-col justify-between">
+        <div className="card-spotify p-5 border border-white/5 bg-card/60 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-spotify-label">Income (รายรับ)</span>
             <ArrowUpRight className="h-4 w-4 text-primary" />
@@ -421,10 +421,10 @@ export function TransactionsView({
           </p>
         </div>
 
-        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60 flex flex-col justify-between">
+        <div className="card-spotify p-5 border border-white/5 bg-card/60 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-spotify-label">Paid Expenses (จ่ายแล้ว)</span>
-            <ArrowDownRight className="h-4 w-4 text-[#f3727f]" />
+            <ArrowDownRight className="h-4 w-4 text-destructive" />
           </div>
           <p className="text-2xl font-black mt-2 text-white tabular-nums">-{money(totalPaidExpenses)}</p>
           <p className="text-[11px] text-spotify-muted mt-1">
@@ -432,7 +432,7 @@ export function TransactionsView({
           </p>
         </div>
 
-        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60 flex flex-col justify-between">
+        <div className="card-spotify p-5 border border-white/5 bg-card/60 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-spotify-label">Pending (รอชำระ)</span>
             <Clock className="h-4 w-4 text-amber-400" />
@@ -447,7 +447,7 @@ export function TransactionsView({
       </div>
 
       {/* Primary Tab Switcher: All / Income / Paid Expenses / Pending */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-xl border border-white/5 bg-[#181818]/50 p-2.5">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-xl border border-white/5 bg-card/50 p-2.5">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           <button
             type="button"
@@ -515,10 +515,10 @@ export function TransactionsView({
           />
 
           <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="h-8 w-28 bg-[#1f1f1f] border-white/10 text-xs text-white">
+            <SelectTrigger className="h-8 w-28 bg-secondary border-white/10 text-xs text-white">
               <SelectValue placeholder="หมวดหมู่" />
             </SelectTrigger>
-            <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+            <SelectContent className="bg-secondary border-white/10 text-white">
               <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
               {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
@@ -561,7 +561,7 @@ export function TransactionsView({
 
       {/* MODAL: Edit Transaction */}
       <Dialog open={!!editTx} onOpenChange={(open) => !open && setEditTx(null)}>
-        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto p-6 bg-[#121212] border border-white/10 text-white">
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto p-6 bg-background border border-white/10 text-white">
           <DialogHeader className="border-b border-white/10 pb-4">
             <DialogTitle className="text-xl font-bold">
               แก้ไข{editTx?.type === "income" ? "รายรับ" : "รายจ่าย"}
@@ -581,7 +581,7 @@ export function TransactionsView({
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-spotify-muted font-bold">จำนวนเงิน</label>
-                  <div className="flex items-center rounded-lg border border-white/10 bg-[#1f1f1f] p-0.5">
+                  <div className="flex items-center rounded-lg border border-white/10 bg-secondary p-0.5">
                     <button
                       type="button"
                       onClick={() => setEditCurrency("THB")}
@@ -625,7 +625,7 @@ export function TransactionsView({
                   <SelectTrigger className={fieldClass}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                  <SelectContent className="bg-secondary border-white/10 text-white">
                     {categories
                       .filter((c) => c.type === editTx.type)
                       .map((c) => (
@@ -656,7 +656,7 @@ export function TransactionsView({
                     <SelectTrigger className={fieldClass}>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                    <SelectContent className="bg-secondary border-white/10 text-white">
                       <SelectItem value="paid">จ่ายแล้ว (Paid)</SelectItem>
                       <SelectItem value="pending">รอจ่าย (Pending)</SelectItem>
                     </SelectContent>
@@ -677,7 +677,7 @@ export function TransactionsView({
                 <Button type="button" variant="ghost" onClick={() => setEditTx(null)}>
                   ยกเลิก
                 </Button>
-                <Button type="submit" className="btn-pill-primary" disabled={pending}>
+                <Button type="submit" variant="pill" className="" disabled={pending}>
                   {pending ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
                 </Button>
               </DialogFooter>
@@ -688,7 +688,7 @@ export function TransactionsView({
 
       {/* MODAL: Delete Transaction */}
       <Dialog open={!!deleteTxId} onOpenChange={(open) => !open && setDeleteTxId(null)}>
-        <DialogContent className="max-w-sm p-6 bg-[#121212] border border-white/10 text-white">
+        <DialogContent className="max-w-sm p-6 bg-background border border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">ยืนยันการลบรายการ?</DialogTitle>
             <DialogDescription className="text-spotify-muted text-xs">
@@ -704,7 +704,7 @@ export function TransactionsView({
               size="sm"
               disabled={pending}
               onClick={handleDeleteTransaction}
-              className="bg-[#f3727f] hover:bg-[#f3727f]/80 text-black font-bold"
+              className="bg-destructive hover:bg-destructive/80 text-black font-bold"
             >
               {pending ? "กำลังลบ..." : "ลบรายการ"}
             </Button>

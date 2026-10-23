@@ -144,7 +144,7 @@ export default function NewsFlowPanel() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* LEFT: list + pagination */}
-      <Card className="lg:col-span-5 card-spotify border-none shadow-none bg-[#181818]/40 backdrop-blur-sm">
+      <Card className="lg:col-span-5 card-spotify border-none shadow-none bg-card/40 backdrop-blur-sm">
         <CardHeader
           className="px-6 py-5"
         >
@@ -154,7 +154,7 @@ export default function NewsFlowPanel() {
             </CardTitle>
             <button
               onClick={() => setRefetchTick((x) => x + 1)}
-              className="text-[#b3b3b3] hover:text-white transition-all p-2 hover:bg-white/10 rounded-full"
+              className="text-muted-foreground hover:text-white transition-all p-2 hover:bg-white/10 rounded-full"
               title="Refresh"
               disabled={loading}
             >
@@ -175,7 +175,7 @@ export default function NewsFlowPanel() {
                 <p className="text-spotify-label animate-pulse">Fetching news...</p>
               </div>
             )}
-            {error && <div className="p-6 text-[#f3727f] text-sm font-bold text-center">{error}</div>}
+            {error && <div className="p-6 text-destructive text-sm font-bold text-center">{error}</div>}
             {!loading && !error && pageItems.length === 0 && (
               <div className="p-12 text-center text-spotify-muted">ไม่มีข่าวในหน้านี้</div>
             )}
@@ -200,7 +200,7 @@ export default function NewsFlowPanel() {
                   {Array.isArray(n.relatedSymbols) && n.relatedSymbols.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {n.relatedSymbols.slice(0, 3).map((s, i) => (
-                        <Badge key={i} className="bg-[#282828] text-[#b3b3b3] group-hover:text-white border-none text-[10px] px-2 py-0.5 font-bold uppercase tracking-tighter">
+                        <Badge key={i} className="bg-surface-hover text-muted-foreground group-hover:text-white border-none text-[10px] px-2 py-0.5 font-bold uppercase tracking-tighter">
                           {s.symbol}
                         </Badge>
                       ))}
@@ -219,7 +219,7 @@ export default function NewsFlowPanel() {
       </Card>
 
       {/* RIGHT: detail */}
-      <Card className="lg:col-span-7 card-spotify border-none shadow-none bg-[#121212]/60 backdrop-blur-md">
+      <Card className="lg:col-span-7 card-spotify border-none shadow-none bg-background/60 backdrop-blur-md">
         <CardHeader
           className="px-6 py-5 border-b border-white/5"
         >
@@ -235,7 +235,7 @@ export default function NewsFlowPanel() {
         >
           {!selectedId && (
             <div className="h-full flex flex-col items-center justify-center text-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-[#181818] flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-card flex items-center justify-center">
                 <ExternalLink className="w-8 h-8 text-spotify-muted" />
               </div>
               <p className="text-spotify-muted font-bold">เลือกข่าวจากด้านซ้ายเพื่อดูรายละเอียด</p>
@@ -278,7 +278,7 @@ export default function NewsFlowPanel() {
                     </div>
                   )}
                   {detail.link && (
-                    <Button variant="ghost" asChild className="btn-pill bg-[#1f1f1f] text-white hover:scale-105 active:scale-95">
+                    <Button variant="pill-secondary" asChild className="bg-secondary text-white hover:scale-105 active:scale-95">
                       <a href={detail.link} target="_blank" rel="noreferrer" className="flex items-center gap-2">
                         View Source <ExternalLink className="w-3.5 h-3.5" />
                       </a>
@@ -290,7 +290,7 @@ export default function NewsFlowPanel() {
               <div className="h-px bg-white/5 w-full" />
 
               {detail.shortDescription && (
-                <p className="text-lg text-[#b3b3b3] font-medium leading-relaxed italic border-l-2 border-primary/40 pl-4">{detail.shortDescription}</p>
+                <p className="text-lg text-muted-foreground font-medium leading-relaxed italic border-l-2 border-primary/40 pl-4">{detail.shortDescription}</p>
               )}
 
 
@@ -303,7 +303,7 @@ export default function NewsFlowPanel() {
               {Array.isArray(detail.tags) && detail.tags.length > 0 && (
                 <div className="pt-8 flex flex-wrap gap-2">
                   {detail.tags.map((t: any, i: number) => (
-                    <Badge key={i} className="bg-[#282828] text-[#b3b3b3] hover:text-white border-none text-[10px] px-3 py-1 font-bold uppercase">
+                    <Badge key={i} className="bg-surface-hover text-muted-foreground hover:text-white border-none text-[10px] px-3 py-1 font-bold uppercase">
                       #{t?.title ?? "Tag"}
                     </Badge>
                   ))}
@@ -328,7 +328,7 @@ function Pagination({
       </div>
       <div className="flex items-center gap-3">
         <button
-          className="h-8 w-8 flex items-center justify-center rounded-full bg-[#1f1f1f] text-[#b3b3b3] hover:text-white hover:bg-[#2a2a2a] disabled:opacity-20 transition-all active:scale-90"
+          className="h-8 w-8 flex items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-white hover:bg-surface-hover disabled:opacity-20 transition-all active:scale-90"
           onClick={() => setPage(Math.max(1, page - 1))}
           disabled={page <= 1}
           aria-label="Previous page"
@@ -336,7 +336,7 @@ function Pagination({
           <ChevronLeft className="w-5 h-5" />
         </button>
         <button
-          className="h-8 w-8 flex items-center justify-center rounded-full bg-[#1f1f1f] text-[#b3b3b3] hover:text-white hover:bg-[#2a2a2a] disabled:opacity-20 transition-all active:scale-90"
+          className="h-8 w-8 flex items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-white hover:bg-surface-hover disabled:opacity-20 transition-all active:scale-90"
           onClick={() => setPage(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
           aria-label="Next page"

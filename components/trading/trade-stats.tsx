@@ -157,11 +157,11 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
           <div className="space-y-1">
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Equity:</span>
-              <span className="font-bold text-[#39FF14]">{formatCurrency(pnlData.pnl)}</span>
+              <span className="font-bold text-primary">{formatCurrency(pnlData.pnl)}</span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Change:</span>
-              <span className={`font-bold ${pnlData.rawPnl >= 0 ? "text-[#39FF14]" : "text-red-500"}`}>
+              <span className={`font-bold ${pnlData.rawPnl >= 0 ? "text-primary" : "text-red-500"}`}>
                 {pnlData.rawPnl > 0 ? "+" : ""}{formatCurrency(pnlData.rawPnl)}
               </span>
             </div>
@@ -182,7 +182,7 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
           <CardContent className="p-3 flex flex-col h-full">
             <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Net P&L</span>
             <div className="flex-1 flex items-center">
-              <div className={`text-2xl font-bold ${netPnL >= 0 ? "text-[#39FF14]" : "text-red-500"}`}>
+              <div className={`text-2xl font-bold ${netPnL >= 0 ? "text-primary" : "text-red-500"}`}>
                 {formatCurrency(netPnL)}
               </div>
             </div>
@@ -201,7 +201,7 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
               </div>
             </div>
             <div className="flex-1 flex items-center gap-2">
-              <span className={`text-2xl font-bold ${winRate >= 50 ? "text-[#39FF14]" : "text-yellow-500"}`}>
+              <span className={`text-2xl font-bold ${winRate >= 50 ? "text-primary" : "text-yellow-500"}`}>
                 {winRate.toFixed(1)}%
               </span>
               <span className="text-xs text-muted-foreground">({winningTradesCount}W/{losingTradesCount}L) Total {closedTradesCount}</span>
@@ -215,13 +215,13 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
             <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Extremes</span>
             <div className="grid grid-cols-2 gap-x-4 text-xs">
               <div className="text-muted-foreground">Best</div>
-              <div className="text-right text-[#39FF14] font-bold">{formatCurrency(largestWin)}</div>
+              <div className="text-right text-primary font-bold">{formatCurrency(largestWin)}</div>
               <div className="text-muted-foreground">Worst</div>
               <div className="text-right text-red-500 font-bold">{formatCurrency(largestLoss)}</div>
             </div>
             <div className="flex justify-between items-center text-[10px] bg-secondary/20 rounded px-2 py-1 mt-2">
               <span className="text-muted-foreground">Profit Factor</span>
-              <span className={`font-bold ${profitFactor >= 1.5 ? "text-[#39FF14]" : "text-foreground"}`}>{profitFactor.toFixed(2)}</span>
+              <span className={`font-bold ${profitFactor >= 1.5 ? "text-primary" : "text-foreground"}`}>{profitFactor.toFixed(2)}</span>
             </div>
           </CardContent>
         </Card>
@@ -266,7 +266,7 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
             <div className="space-y-1">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground">Win</span>
-                <span className="font-mono text-[#39FF14]">{formatDuration(avgWinHold)}</span>
+                <span className="font-mono text-primary">{formatDuration(avgWinHold)}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground">Loss</span>
@@ -286,7 +286,7 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
         <Card className="md:col-span-9 bg-card border-none shadow-md flex flex-col h-full">
           <CardHeader className="py-2 px-4 border-b border-border/10 flex flex-row items-center justify-between flex-shrink-0 min-h-[48px]">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-[#39FF14]" /> Equity Growth
+              <TrendingUp className="w-4 h-4 text-primary" /> Equity Growth
             </CardTitle>
             <div className="flex items-center gap-1 bg-secondary/30 rounded-lg p-1">
               {(['7d', '1m', '3m', 'ytd', '1y', 'all'] as const).map((range) => (
@@ -294,7 +294,7 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
                   key={range}
                   onClick={() => setTimeRange(range)}
                   className={`text-[10px] px-2 py-0.5 rounded-md transition-all ${timeRange === range
-                    ? 'bg-[#39FF14] text-black font-medium'
+                    ? 'bg-primary text-black font-medium'
                     : 'text-muted-foreground hover:text-foreground'
                     }`}
                 >
@@ -337,7 +337,7 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
                   {Object.entries(marketPerformance).map(([market, data]) => (
                     <div key={market} className="flex justify-between items-center text-[10px]">
                       <span className={`capitalize ${data.trades > 0 ? "text-foreground" : "text-muted-foreground"}`}>{market}</span>
-                      <span className={`font-mono ${data.profit_loss > 0 ? "text-[#39FF14]" : data.profit_loss < 0 ? "text-red-500" : "text-muted-foreground"}`}>
+                      <span className={`font-mono ${data.profit_loss > 0 ? "text-primary" : data.profit_loss < 0 ? "text-red-500" : "text-muted-foreground"}`}>
                         {data.profit_loss !== 0 ? formatCurrency(data.profit_loss) : "-"}
                       </span>
                     </div>
@@ -353,7 +353,7 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
                 <div className="flex justify-between items-center gap-2">
                   <div className="flex flex-col">
                     <span className="text-[9px] text-muted-foreground">Entry</span>
-                    <span className={`text-xs font-bold capitalize ${domEntry.emotion !== '-' ? 'text-[#39FF14]' : 'text-muted-foreground'}`}>{domEntry.emotion}</span>
+                    <span className={`text-xs font-bold capitalize ${domEntry.emotion !== '-' ? 'text-primary' : 'text-muted-foreground'}`}>{domEntry.emotion}</span>
                   </div>
                   <div className="h-6 w-[1px] bg-border/20"></div>
                   <div className="flex flex-col text-right">
@@ -373,7 +373,7 @@ export function TradeStats({ refreshTrigger = 0 }: TradeStatsProps) {
                 {/* Year Total Widget */}
                 <div className="text-[10px] font-mono">
                   <span className="text-muted-foreground mr-1">YTD:</span>
-                  <span className={`${stats?.total_profit_loss >= 0 ? "text-[#39FF14]" : "text-red-500"}`}>
+                  <span className={`${stats?.total_profit_loss >= 0 ? "text-primary" : "text-red-500"}`}>
                     {formatCurrency(stats?.total_profit_loss || 0)}
                   </span>
                 </div>

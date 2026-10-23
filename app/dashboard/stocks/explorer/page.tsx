@@ -55,7 +55,7 @@ export default function MarketExplorerPage() {
                   </div>
                   <button
                     aria-label={isFavorite ? "Remove from watchlist" : "Add to watchlist"}
-                    className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-[#282828] text-white transition-colors hover:bg-[#3a3a3a]"
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-surface-hover text-white transition-colors hover:bg-[#3a3a3a]"
                     onClick={() => saveFavorites(isFavorite ? favorites.filter((item) => item !== symbol) : [...favorites, symbol])}
                   >
                     <Heart className={`h-4 w-4 ${isFavorite ? "fill-primary text-primary" : ""}`} />
@@ -66,15 +66,15 @@ export default function MarketExplorerPage() {
                     and scrolls once the list outgrows that space instead of stretching the row. */}
                 <div className="flex min-h-0 flex-1 flex-col gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#6a6a6a]">Watchlist</span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Watchlist</span>
                     <span className="h-px flex-1 bg-white/5" />
-                    {favorites.length > 0 && <span className="text-[10px] text-[#6a6a6a]">{favorites.length} pinned</span>}
+                    {favorites.length > 0 && <span className="text-[10px] text-muted-foreground">{favorites.length} pinned</span>}
                   </div>
                   {favorites.length > 0 ? (
                     <div className="flex max-h-[132px] flex-wrap content-start gap-2 overflow-y-auto pr-1">
                       {favorites.map((item) => (
                         <button
-                          className={`flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors ${item === symbol ? "bg-primary text-black" : "bg-[#282828] text-white hover:bg-[#3a3a3a]"}`}
+                          className={`flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors ${item === symbol ? "bg-primary text-black" : "bg-surface-hover text-white hover:bg-[#3a3a3a]"}`}
                           key={item}
                           onClick={() => { setSymbol(item); setQuery(item) }}
                         >
@@ -84,7 +84,7 @@ export default function MarketExplorerPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="rounded-lg border border-dashed border-white/10 px-4 py-3 text-xs text-[#6a6a6a]">
+                    <p className="rounded-lg border border-dashed border-white/10 px-4 py-3 text-xs text-muted-foreground">
                       No saved symbols yet — search a symbol and tap the heart to pin it here.
                     </p>
                   )}

@@ -146,7 +146,7 @@ export function CategoryManagerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-xl overflow-hidden p-0 bg-[#121212] border border-white/10 text-white shadow-heavy flex flex-col">
+      <DialogContent className="max-h-[90vh] max-w-xl overflow-hidden p-0 bg-background border border-white/10 text-white shadow-heavy flex flex-col">
         <DialogHeader className="p-5 pb-3 border-b border-white/10 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -167,7 +167,7 @@ export function CategoryManagerDialog({
                   setIsCreating(true)
                   setNewCatType(activeTab === "all" ? "expense" : activeTab)
                 }}
-                className="btn-pill-primary h-8 px-3 text-xs"
+                variant="pill" className="h-8 px-3 text-xs"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" /> Add Category
               </Button>
@@ -176,8 +176,8 @@ export function CategoryManagerDialog({
         </DialogHeader>
 
         {/* Tab switchers: All / Income / Expense */}
-        <div className="px-5 pt-3 pb-2 border-b border-white/5 flex items-center justify-between bg-[#181818]/60 shrink-0">
-          <div className="flex items-center gap-1 rounded-lg bg-[#121212] p-1 border border-white/5">
+        <div className="px-5 pt-3 pb-2 border-b border-white/5 flex items-center justify-between bg-card/60 shrink-0">
+          <div className="flex items-center gap-1 rounded-lg bg-background p-1 border border-white/5">
             <button
               type="button"
               onClick={() => setActiveTab("all")}
@@ -233,7 +233,7 @@ export function CategoryManagerDialog({
                   className="spotify-input h-9 text-xs"
                   autoFocus
                 />
-                <div className="flex items-center gap-1 bg-[#181818] rounded-lg p-1 border border-white/10">
+                <div className="flex items-center gap-1 bg-card rounded-lg p-1 border border-white/10">
                   <button
                     type="button"
                     onClick={() => setNewCatType("expense")}
@@ -276,7 +276,7 @@ export function CategoryManagerDialog({
                   size="sm"
                   disabled={pending || !newCatName.trim()}
                   onClick={handleCreate}
-                  className="btn-pill-primary h-8 px-4 text-xs"
+                  variant="pill" className="h-8 px-4 text-xs"
                 >
                   {pending ? "Creating..." : "Create Category"}
                 </Button>
@@ -294,7 +294,7 @@ export function CategoryManagerDialog({
                 return (
                   <div
                     key={cat.id}
-                    className="flex flex-col gap-2 rounded-lg border border-primary/40 bg-[#1f1f1f] p-3"
+                    className="flex flex-col gap-2 rounded-lg border border-primary/40 bg-secondary p-3"
                   >
                     <div className="flex items-center gap-2">
                       <input
@@ -307,7 +307,7 @@ export function CategoryManagerDialog({
                         size="sm"
                         disabled={pending}
                         onClick={() => handleSaveEdit(cat.id)}
-                        className="btn-pill-primary h-8 px-3 text-xs"
+                        variant="pill" className="h-8 px-3 text-xs"
                       >
                         <Check className="w-3.5 h-3.5 mr-1" /> บันทึก
                       </Button>
@@ -343,7 +343,7 @@ export function CategoryManagerDialog({
                   key={cat.id}
                   className={`flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors ${
                     cat.is_active
-                      ? "border-white/5 bg-[#181818]/70 hover:bg-[#181818]"
+                      ? "border-white/5 bg-card/70 hover:bg-card"
                       : "border-white/5 bg-[#141414] opacity-60"
                   }`}
                 >
@@ -399,7 +399,7 @@ export function CategoryManagerDialog({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 w-8 p-0 text-spotify-muted hover:text-[#f3727f]"
+                        className="h-8 w-8 p-0 text-spotify-muted hover:text-destructive"
                         onClick={() => handleDelete(cat)}
                         title="ลบหมวดหมู่นี้"
                       >
@@ -419,7 +419,7 @@ export function CategoryManagerDialog({
           </div>
         </div>
 
-        <div className="p-4 border-t border-white/10 bg-[#181818]/90 shrink-0 flex items-center justify-between text-xs text-spotify-muted">
+        <div className="p-4 border-t border-white/10 bg-card/90 shrink-0 flex items-center justify-between text-xs text-spotify-muted">
           <span>* หมวดหมู่ที่มีประวัติบันทึกเงินจะไม่สามารถลบได้ แต่สามารถกดซ่อนได้</span>
           <Button
             type="button"

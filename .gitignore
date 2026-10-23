@@ -46,6 +46,7 @@ desktop.ini
 # Local SQL dumps
 *.sql
 !supabase/my_wealth.sql
+!supabase/my_wealth_growth.sql
 
 # Uploaded / generated media (video editor working files)
 /tmp/

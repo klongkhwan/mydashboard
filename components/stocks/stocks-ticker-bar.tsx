@@ -51,13 +51,13 @@ export function StocksTickerBar({ className }: { className?: string }) {
       <div className="flex items-center gap-2">
         <div className="min-w-0 flex-1 overflow-hidden" ref={container} />
         <div className="relative flex shrink-0 items-center gap-1">
-          <Search className="pointer-events-none absolute left-2 h-4 w-4 text-[#b3b3b3]" />
-          <input aria-label="Search symbol" className="h-8 w-36 rounded-md bg-[#282828] pl-8 pr-2 text-xs text-white outline-none focus:ring-1 focus:ring-primary" onChange={(event) => setQuery(event.target.value.toUpperCase())} placeholder="Search symbol" value={query} />
+          <Search className="pointer-events-none absolute left-2 h-4 w-4 text-muted-foreground" />
+          <input aria-label="Search symbol" className="h-8 w-36 rounded-md bg-surface-hover pl-8 pr-2 text-xs text-white outline-none focus:ring-1 focus:ring-primary" onChange={(event) => setQuery(event.target.value.toUpperCase())} placeholder="Search symbol" value={query} />
           <button aria-label="Add symbol" className="h-8 rounded-md bg-primary px-2 text-xs font-bold text-black disabled:opacity-40" disabled={!query.trim()} onClick={addSymbol}>Add</button>
-          <button aria-label="Edit ticker symbols" className="grid h-8 w-8 place-items-center rounded-md text-[#b3b3b3] hover:bg-[#282828] hover:text-white" onClick={() => setEditing(!editing)}><Settings2 className="h-4 w-4" /></button>
+          <button aria-label="Edit ticker symbols" className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-surface-hover hover:text-white" onClick={() => setEditing(!editing)}><Settings2 className="h-4 w-4" /></button>
         </div>
       </div>
-      {editing && <div className="mt-2 flex flex-wrap gap-2 border-t border-white/10 pt-2">{symbols.map((symbol, index) => <label className="flex items-center rounded-md bg-[#282828]" key={`${symbol}-${index}`}><input className="w-32 bg-transparent px-2 py-1 text-xs text-white outline-none" onChange={(event) => saveSymbols(symbols.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} value={symbol} /><button aria-label={`Remove ${symbol}`} className="p-1 text-[#b3b3b3] hover:text-white" onClick={() => saveSymbols(symbols.filter((_, itemIndex) => itemIndex !== index))}><X className="h-3 w-3" /></button></label>)}</div>}
+      {editing && <div className="mt-2 flex flex-wrap gap-2 border-t border-white/10 pt-2">{symbols.map((symbol, index) => <label className="flex items-center rounded-md bg-surface-hover" key={`${symbol}-${index}`}><input className="w-32 bg-transparent px-2 py-1 text-xs text-white outline-none" onChange={(event) => saveSymbols(symbols.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} value={symbol} /><button aria-label={`Remove ${symbol}`} className="p-1 text-muted-foreground hover:text-white" onClick={() => saveSymbols(symbols.filter((_, itemIndex) => itemIndex !== index))}><X className="h-3 w-3" /></button></label>)}</div>}
     </div>
   )
 }

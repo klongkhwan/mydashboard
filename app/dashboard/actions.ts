@@ -56,13 +56,13 @@ export async function getDashboardData(): Promise<DashboardDataResult> {
 
   const investmentsOpenedPromise = supabase
     .from("wealth_investments")
-    .select("id, opened_at, opened_amount_thb, entry_fee_thb, status, closed_at, closed_amount_thb, exit_fee_thb, quote_asset, quantity, entry_price, deposit_amount")
+    .select("id, opened_at, opened_amount_thb, entry_fee_thb, status, closed_at, closed_amount_thb, exit_fee_thb, quote_asset, quantity, entry_price, exit_price, investment_type, deposit_amount")
     .eq("user_id", user.id)
     .gte("opened_at", since)
 
   const investmentsClosedPromise = supabase
     .from("wealth_investments")
-    .select("id, opened_at, opened_amount_thb, entry_fee_thb, status, closed_at, closed_amount_thb, exit_fee_thb, quote_asset, quantity, entry_price, deposit_amount")
+    .select("id, opened_at, opened_amount_thb, entry_fee_thb, status, closed_at, closed_amount_thb, exit_fee_thb, quote_asset, quantity, entry_price, exit_price, investment_type, deposit_amount")
     .eq("user_id", user.id)
     .eq("status", "closed")
     .gte("closed_at", since)
@@ -135,29 +135,7 @@ export async function getDashboardData(): Promise<DashboardDataResult> {
     }
   }
   const rate = liveRate > 0 ? liveRate : 34.0
-  investments = Array.from(investmentMap.values()).map((inv) => {
-    const isUsd = inv.quote_asset === "USD" || inv.quote_asset === "USDT"
-    if (!isUsd) return inv
-    const qty = Number(inv.quantity || 0)
-    const price = Number(inv.entry_price || 0)
-    const calcUsd = qty > 0 && price > 0 ? qty * price : 0
-    const rawOpened = Number(inv.opened_amount_thb || 0)
-    const deposit = Number(inv.deposit_amount || 0)
-    const usdVal = deposit > 0 ? deposit : (calcUsd > 0 && rawOpened <= calcUsd * 1.5) ? calcUsd : (rawOpened > 0 ? rawOpened : calcUsd)
-    const openedThb = Math.round(usdVal * rate * 100) / 100
-
-    let closedThb = inv.closed_amount_thb
-    if (inv.closed_amount_thb != null) {
-      const rawClosed = Number(inv.closed_amount_thb)
-      closedThb = Math.round(rawClosed * rate * 100) / 100
-    }
-
-    return {
-      ...inv,
-      opened_amount_thb: openedThb,
-      closed_amount_thb: closedThb,
-    }
-  })
+  investments = Array.from(investmentMap.values())
 
   if (pendingRes.error) {
     if (!errors.wealth) errors.wealth = pendingRes.error.message

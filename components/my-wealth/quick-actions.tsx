@@ -190,15 +190,15 @@ export function MyWealthQuickActions({
       : "สร้างหมวดหมู่เพื่อจัดระเบียบกระแสเงินสดของคุณ"
 
   const fieldClass =
-    "h-9 rounded-lg border border-white/10 bg-[#181818] px-3 text-xs text-white shadow-inner outline-none transition placeholder:text-white/35 hover:border-white/20 focus:border-primary focus:ring-1 focus:ring-primary/20"
-  const footerClass = "p-3.5 border-t border-white/10 bg-[#181818]/90 shrink-0 flex items-center justify-end gap-2"
+    "h-9 rounded-lg border border-white/10 bg-card px-3 text-xs text-white shadow-inner outline-none transition placeholder:text-white/35 hover:border-white/20 focus:border-primary focus:ring-1 focus:ring-primary/20"
+  const footerClass = "p-3.5 border-t border-white/10 bg-card/90 shrink-0 flex items-center justify-end gap-2"
 
   return (
     <div className="flex flex-col items-end gap-2">
       <div className="flex flex-wrap items-center justify-end gap-2">
         {allowedModes.includes("income") && allowedModes.includes("expense") ? (
           <Button
-            className="btn-pill-primary text-xs"
+            variant="pill" className="text-xs"
             onClick={() => {
               setMode(defaultMode || "expense")
               setSelectedCategoryId("")
@@ -209,24 +209,24 @@ export function MyWealthQuickActions({
         ) : (
           <>
             {allowedModes.includes("income") && (
-              <Button className="btn-pill-primary text-xs" onClick={() => setMode("income")}>
+              <Button variant="pill" className="text-xs" onClick={() => setMode("income")}>
                 <Plus className="w-4 h-4 mr-1.5" /> Add Income
               </Button>
             )}
             {allowedModes.includes("expense") && (
-              <Button className="btn-pill-primary text-xs" onClick={() => setMode("expense")}>
+              <Button variant="pill" className="text-xs" onClick={() => setMode("expense")}>
                 <Plus className="w-4 h-4 mr-1.5" /> Add Expense
               </Button>
             )}
           </>
         )}
         {allowedModes.includes("investment") && (
-          <Button className="btn-pill-primary text-xs" onClick={() => setMode("investment")}>
+          <Button variant="pill" className="text-xs" onClick={() => setMode("investment")}>
             <Plus className="w-4 h-4 mr-1.5" /> Add Investment
           </Button>
         )}
         {allowedModes.includes("category") && (
-          <Button className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white text-xs border border-white/10" onClick={() => setMode("category")}>
+          <Button variant="pill-secondary" className="bg-secondary hover:bg-surface-hover text-white text-xs border border-white/10" onClick={() => setMode("category")}>
             <Plus className="w-4 h-4 mr-1.5" /> Add Category
           </Button>
         )}
@@ -234,7 +234,7 @@ export function MyWealthQuickActions({
       {message && <p className="text-xs text-rose-400">{message}</p>}
 
       <Dialog open={mode !== null} onOpenChange={(open) => !open && setMode(null)}>
-        <DialogContent className="max-h-[90vh] max-w-xl overflow-hidden p-0 bg-[#121212] border border-white/10 text-white shadow-heavy flex flex-col">
+        <DialogContent className="max-h-[90vh] max-w-xl overflow-hidden p-0 bg-background border border-white/10 text-white shadow-heavy flex flex-col">
           <DialogHeader className="p-5 pb-3 border-b border-white/10 shrink-0">
             <DialogTitle className="text-lg font-bold">{dialogTitle}</DialogTitle>
             <DialogDescription className="text-spotify-muted text-xs">{dialogDescription}</DialogDescription>
@@ -244,7 +244,7 @@ export function MyWealthQuickActions({
             <form action={(formData) => submitTransaction(formData, mode)} className="flex flex-col flex-1 overflow-hidden">
               <div className="overflow-y-auto px-5 py-4 flex-1 space-y-4">
                 {/* Type Switcher inside Modal */}
-                <div className="flex items-center gap-1 rounded-xl bg-[#181818] p-1 border border-white/5 w-fit">
+                <div className="flex items-center gap-1 rounded-xl bg-card p-1 border border-white/5 w-fit">
                   <button
                     type="button"
                     onClick={() => {
@@ -253,7 +253,7 @@ export function MyWealthQuickActions({
                     }}
                     className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
                       mode === "expense"
-                        ? "bg-[#f3727f]/20 text-[#f3727f] border border-[#f3727f]/30"
+                        ? "bg-destructive/20 text-destructive border border-destructive/30"
                         : "text-spotify-muted hover:text-white"
                     }`}
                   >
@@ -285,7 +285,7 @@ export function MyWealthQuickActions({
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                       <label className="text-xs text-spotify-muted font-bold">จำนวนเงิน</label>
-                      <div className="flex items-center rounded-lg border border-white/10 bg-[#1f1f1f] p-0.5">
+                      <div className="flex items-center rounded-lg border border-white/10 bg-secondary p-0.5">
                         <button
                           type="button"
                           onClick={() => setTxCurrency("THB")}
@@ -354,7 +354,7 @@ export function MyWealthQuickActions({
                             size="sm"
                             disabled={!inlineCategoryName.trim()}
                             onClick={() => handleCreateInlineCategory(mode)}
-                            className="btn-pill-primary h-8 px-3 text-xs"
+                            variant="pill" className="h-8 px-3 text-xs"
                           >
                             Create
                           </Button>
@@ -385,7 +385,7 @@ export function MyWealthQuickActions({
                       <SelectTrigger className={fieldClass}>
                         <SelectValue placeholder="เลือกหมวดหมู่" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                      <SelectContent className="bg-secondary border-white/10 text-white">
                         {activeCategories
                           .filter((category) => category.type === (mode === "income" ? "income" : "expense"))
                           .map((category) => (
@@ -419,7 +419,7 @@ export function MyWealthQuickActions({
                         <SelectTrigger className={fieldClass}>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                        <SelectContent className="bg-secondary border-white/10 text-white">
                           <SelectItem value="paid">จ่ายแล้ว (Paid)</SelectItem>
                           <SelectItem value="pending">รอจ่าย / ยังไม่ได้ชำระ (Pending)</SelectItem>
                         </SelectContent>
@@ -435,10 +435,10 @@ export function MyWealthQuickActions({
               </div>
 
               <DialogFooter className={footerClass}>
-                <Button type="button" variant="ghost" className="btn-pill text-spotify-muted hover:text-white" onClick={() => setMode(null)}>
+                <Button type="button" variant="pill-secondary" className="text-spotify-muted hover:text-white" onClick={() => setMode(null)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="btn-pill-primary" disabled={pending}>
+                <Button type="submit" variant="pill" className="" disabled={pending}>
                   {pending ? "Saving..." : "Add Transaction"}
                 </Button>
               </DialogFooter>
@@ -457,7 +457,7 @@ export function MyWealthQuickActions({
                   <SelectTrigger className={fieldClass}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                  <SelectContent className="bg-secondary border-white/10 text-white">
                     <SelectItem value="income">รายรับ (Income)</SelectItem>
                     <SelectItem value="expense">รายจ่าย (Expense)</SelectItem>
                   </SelectContent>
@@ -479,10 +479,10 @@ export function MyWealthQuickActions({
               </div>
 
               <DialogFooter className={`md:col-span-2 ${footerClass}`}>
-                <Button type="button" variant="ghost" className="btn-pill text-spotify-muted hover:text-white" onClick={() => setMode(null)}>
+                <Button type="button" variant="pill-secondary" className="text-spotify-muted hover:text-white" onClick={() => setMode(null)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="btn-pill-primary" disabled={pending}>
+                <Button type="submit" variant="pill" className="" disabled={pending}>
                   {pending ? "Creating..." : "Create Category"}
                 </Button>
               </DialogFooter>
@@ -499,7 +499,7 @@ export function MyWealthQuickActions({
                       <SelectTrigger className={fieldClass}>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                      <SelectContent className="bg-secondary border-white/10 text-white">
                         <SelectItem value="dime">Dime</SelectItem>
                         <SelectItem value="bybit">Bybit</SelectItem>
                         <SelectItem value="binance_th">Binance TH</SelectItem>
@@ -512,7 +512,7 @@ export function MyWealthQuickActions({
                       <SelectTrigger className={fieldClass}>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                      <SelectContent className="bg-secondary border-white/10 text-white">
                         <SelectItem value="thai_stock">Thai Stock</SelectItem>
                         <SelectItem value="foreign_stock">Global Stock</SelectItem>
                         <SelectItem value="spot_trade">Spot Trade</SelectItem>
@@ -530,7 +530,7 @@ export function MyWealthQuickActions({
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] text-spotify-muted font-bold">สกุลเงิน (Currency)</label>
-                    <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#181818] p-1 h-9">
+                    <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-card p-1 h-9">
                       {[
                         { key: "THB", label: "THB" },
                         { key: "USD", label: "USD" },
@@ -622,7 +622,7 @@ export function MyWealthQuickActions({
                           <SelectTrigger className={fieldClass}>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                          <SelectContent className="bg-secondary border-white/10 text-white">
                             <SelectItem value="buy_low">Buy Low</SelectItem>
                             <SelectItem value="sell_high">Sell High</SelectItem>
                           </SelectContent>
@@ -658,10 +658,10 @@ export function MyWealthQuickActions({
               </div>
 
               <DialogFooter className={footerClass}>
-                <Button type="button" variant="ghost" className="btn-pill text-spotify-muted hover:text-white" onClick={() => setMode(null)}>
+                <Button type="button" variant="pill-secondary" className="text-spotify-muted hover:text-white" onClick={() => setMode(null)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="btn-pill-primary" disabled={pending}>
+                <Button type="submit" variant="pill" className="" disabled={pending}>
                   {pending ? "Saving..." : "Add Investment"}
                 </Button>
               </DialogFooter>

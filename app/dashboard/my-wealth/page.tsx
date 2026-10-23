@@ -6,7 +6,8 @@ import { MyWealthCashFlowChart } from "@/components/my-wealth/cash-flow-chart"
 import { WealthApiStatus } from "@/components/my-wealth/wealth-status"
 import { useWealth } from "@/components/my-wealth/wealth-context"
 import { markWealthExpensePaid } from "@/app/dashboard/my-wealth/actions"
-import { formatDateDDMMYYYY } from "@/components/dashboard/format"
+import { formatDateDDMMYYYY, money as lockedMoney } from "@/components/dashboard/format"
+import { calculateClosedInvestmentPnl } from "@/lib/my-wealth-calculations"
 import { Button } from "@/components/ui/button"
 import { Check, Clock, TrendingUp, ArrowUpRight, ArrowDownRight, Wallet, ReceiptText, PiggyBank, FolderCog } from "lucide-react"
 import { CategoryManagerDialog } from "@/components/my-wealth/category-manager-dialog"
@@ -69,12 +70,7 @@ export default function MyWealthOverviewPage() {
       investments
         .filter((item) => item.status === "closed" && isSelectedMonth(item.closed_at))
         .reduce(
-          (sum, item) =>
-            sum +
-            Number(item.closed_amount_thb || 0) -
-            Number(item.exit_fee_thb || 0) -
-            Number(item.opened_amount_thb || 0) -
-            Number(item.entry_fee_thb || 0),
+          (sum, item) => sum + calculateClosedInvestmentPnl(item).pnlThb,
           0
         ),
     [investments, selectedMonth, isAllTime]
@@ -207,7 +203,7 @@ export default function MyWealthOverviewPage() {
             <WealthApiStatus showRate />
 
             {/* Currency Switcher */}
-            <div className="flex items-center rounded-xl border border-white/10 bg-[#121212]/90 p-1 shadow-sm">
+            <div className="flex items-center rounded-xl border border-white/10 bg-background/90 p-1 shadow-sm">
               <button
                 type="button"
                 onClick={() => setDisplayCurrency("THB")}
@@ -229,7 +225,7 @@ export default function MyWealthOverviewPage() {
             </div>
 
             {/* Quick Month Filter Pills */}
-            <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-[#181818] p-1">
+            <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-card p-1">
               <button
                 type="button"
                 onClick={() => setSelectedMonth(currentMonthStr)}
@@ -271,19 +267,19 @@ export default function MyWealthOverviewPage() {
       {/* 6 Executive KPI Cards Row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {/* Net Cash Flow */}
-        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+        <div className="card-spotify p-5 border border-white/5 bg-card/70 hover:bg-card transition-all">
           <div className="flex items-center justify-between">
             <span className="text-spotify-label">Net Cash Flow</span>
             <Wallet className="h-4 w-4 text-spotify-muted" />
           </div>
-          <p className={`text-2xl font-black mt-2 tabular-nums ${netCashFlow >= 0 ? "text-primary" : "text-[#f3727f]"}`}>
+          <p className={`text-2xl font-black mt-2 tabular-nums ${netCashFlow >= 0 ? "text-primary" : "text-destructive"}`}>
             {netCashFlow >= 0 ? "+" : ""}{money(netCashFlow)}
           </p>
           <p className="text-[11px] text-spotify-muted mt-1">รายรับหักรายจ่ายจริง</p>
         </div>
 
         {/* Income */}
-        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+        <div className="card-spotify p-5 border border-white/5 bg-card/70 hover:bg-card transition-all">
           <div className="flex items-center justify-between">
             <span className="text-spotify-label">Income</span>
             <ArrowUpRight className="h-4 w-4 text-primary" />
@@ -297,10 +293,10 @@ export default function MyWealthOverviewPage() {
         </div>
 
         {/* Paid Expenses */}
-        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+        <div className="card-spotify p-5 border border-white/5 bg-card/70 hover:bg-card transition-all">
           <div className="flex items-center justify-between">
             <span className="text-spotify-label">Paid Expenses</span>
-            <ArrowDownRight className="h-4 w-4 text-[#f3727f]" />
+            <ArrowDownRight className="h-4 w-4 text-destructive" />
           </div>
           <p className="text-2xl font-black mt-2 text-white tabular-nums">
             -{money(paidExpenses)}
@@ -311,7 +307,7 @@ export default function MyWealthOverviewPage() {
         </div>
 
         {/* Pending Expenses */}
-        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+        <div className="card-spotify p-5 border border-white/5 bg-card/70 hover:bg-card transition-all">
           <div className="flex items-center justify-between">
             <span className="text-spotify-label">Pending</span>
             <Clock className="h-4 w-4 text-amber-400" />
@@ -325,7 +321,7 @@ export default function MyWealthOverviewPage() {
         </div>
 
         {/* Active Investments */}
-        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+        <div className="card-spotify p-5 border border-white/5 bg-card/70 hover:bg-card transition-all">
           <div className="flex items-center justify-between">
             <span className="text-spotify-label">Open Capital</span>
             <TrendingUp className="h-4 w-4 text-sky-400" />
@@ -344,15 +340,15 @@ export default function MyWealthOverviewPage() {
         </div>
 
         {/* Realized PnL */}
-        <div className="card-spotify p-5 border border-white/5 bg-[#181818]/70 hover:bg-[#181818] transition-all">
+        <div className="card-spotify p-5 border border-white/5 bg-card/70 hover:bg-card transition-all">
           <div className="flex items-center justify-between">
             <span className="text-spotify-label">Realized PnL</span>
             <PiggyBank className="h-4 w-4 text-spotify-muted" />
           </div>
-          <p className={`text-2xl font-black mt-2 tabular-nums ${closedInvestmentPnl >= 0 ? "text-primary" : "text-[#f3727f]"}`}>
-            {closedInvestmentPnl >= 0 ? "+" : ""}{money(closedInvestmentPnl)}
+          <p className={`text-2xl font-black mt-2 tabular-nums ${closedInvestmentPnl >= 0 ? "text-primary" : "text-destructive"}`}>
+            {closedInvestmentPnl >= 0 ? "+" : ""}{lockedMoney(closedInvestmentPnl)}
           </p>
-          <p className="text-[11px] text-spotify-muted mt-1">กำไร/ขาดทุนที่ปิดดีลแล้ว</p>
+          <p className="text-[11px] text-spotify-muted mt-1">กำไร/ขาดทุนที่ปิดดีลแล้ว · ยอดบันทึก THB</p>
         </div>
       </div>
 
@@ -364,7 +360,7 @@ export default function MyWealthOverviewPage() {
         </div>
 
         {/* Actionable Pending Bills Box */}
-        <div className="card-spotify p-6 space-y-4 border border-white/5 bg-[#181818]/50">
+        <div className="card-spotify p-6 space-y-4 border border-white/5 bg-card/50">
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
             <div>
               <h2 className="font-bold text-white text-base flex items-center gap-2">
@@ -380,7 +376,7 @@ export default function MyWealthOverviewPage() {
 
           <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
             {actionablePending.map((item) => (
-              <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-[#1f1f1f]/50 p-3 hover:bg-[#1f1f1f] transition-all">
+              <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-secondary/50 p-3 hover:bg-secondary transition-all">
                 <div className="min-w-0">
                   <p className="font-bold text-sm text-white truncate">
                     {item.description || item.merchant_or_payer || "ค่าใช้จ่ายรอชำระ"}
@@ -390,14 +386,14 @@ export default function MyWealthOverviewPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-bold text-sm text-[#f3727f] tabular-nums">
+                  <span className="font-bold text-sm text-destructive tabular-nums">
                     -{money(Number(item.amount_thb))}
                   </span>
                   <Button
                     size="sm"
                     disabled={pending}
                     onClick={() => handleMarkPaid(item.id)}
-                    className="btn-pill-primary h-7 px-3 text-xs"
+                    variant="pill" className="h-7 px-3 text-xs"
                     title="บันทึกว่าจ่ายเงินแล้ว"
                   >
                     <Check className="w-3.5 h-3.5 mr-1" /> จ่ายแล้ว
@@ -418,7 +414,7 @@ export default function MyWealthOverviewPage() {
       {/* Bottom Row: Category Breakdown Progress Bars & Daily Summary Ledger */}
       <div className="grid gap-6 xl:grid-cols-2">
         {/* Category Breakdown (Copilot / Monarch style) */}
-        <section className="card-spotify p-6 space-y-4 border border-white/5 bg-[#181818]/50">
+        <section className="card-spotify p-6 space-y-4 border border-white/5 bg-card/50">
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
             <div>
               <h2 className="font-bold text-white text-base">สัดส่วนค่าใช้จ่ายตามหมวดหมู่</h2>
@@ -466,7 +462,7 @@ export default function MyWealthOverviewPage() {
         </section>
 
         {/* Daily Summary Ledger */}
-        <section className="card-spotify p-6 space-y-4 border border-white/5 bg-[#181818]/50">
+        <section className="card-spotify p-6 space-y-4 border border-white/5 bg-card/50">
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
             <div>
               <h2 className="font-bold text-white text-base">บันทึกรายวัน (Daily Activity)</h2>
@@ -483,9 +479,9 @@ export default function MyWealthOverviewPage() {
                   <span className="font-bold text-white tabular-nums">{formatDateDDMMYYYY(date)}</span>
                   <span className="text-spotify-muted">
                     {row.income > 0 && <span className="text-primary mr-2">+รับ {money(row.income)}</span>}
-                    {row.expenses > 0 && <span className="text-[#f3727f] mr-2">-จ่าย {money(row.expenses)}</span>}
+                    {row.expenses > 0 && <span className="text-destructive mr-2">-จ่าย {money(row.expenses)}</span>}
                   </span>
-                  <span className={`font-black tabular-nums text-right ${dayNet > 0 ? "text-primary" : dayNet < 0 ? "text-[#f3727f]" : "text-white"}`}>
+                  <span className={`font-black tabular-nums text-right ${dayNet > 0 ? "text-primary" : dayNet < 0 ? "text-destructive" : "text-white"}`}>
                     {dayNet > 0 ? "+" : ""}{money(dayNet)}
                   </span>
                 </div>

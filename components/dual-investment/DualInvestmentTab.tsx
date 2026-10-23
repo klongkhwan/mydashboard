@@ -111,7 +111,7 @@ export function DualInvestmentTab() {
       cell: ({ row }: { row: Row<DualInvestmentProject> }) => (
         <div className="flex items-center gap-2">
           <span className="font-bold text-white">{row.original.targetAsset}</span>
-          <Badge className="bg-[#282828] text-[#b3b3b3] border-none text-[10px] font-bold uppercase px-2 py-0.5">
+          <Badge className="bg-surface-hover text-muted-foreground border-none text-[10px] font-bold uppercase px-2 py-0.5">
             {row.original.underlying}
           </Badge>
         </div>
@@ -168,7 +168,7 @@ export function DualInvestmentTab() {
           className={cn(
             "flex items-center gap-1.5 w-fit cursor-pointer hover:shadow-play transition-all px-3 py-1 text-[10px] font-black uppercase tracking-wider border-none",
             row.original.type === "UP"
-              ? "bg-[#f3727f] text-white"
+              ? "bg-destructive text-destructive-foreground"
               : "bg-primary text-black"
           )}
           onClick={() => handleTypeClick(row.original)}
@@ -192,17 +192,17 @@ export function DualInvestmentTab() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h2 className="text-spotify-title">Dual Investment</h2>
           <p className="text-spotify-muted mt-2">Maximize your returns with automated dual investment strategies</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             onClick={handleRefresh}
-            variant="ghost"
+            variant="pill-secondary"
             size="sm"
-            className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
+            className="bg-secondary hover:bg-surface-hover text-white"
             disabled={loading}
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -210,18 +210,18 @@ export function DualInvestmentTab() {
           </Button>
           <Button
             onClick={() => window.open('https://www.binance.com/en/dual-investment', '_blank')}
-            variant="ghost"
+            variant="pill-secondary"
             size="sm"
-            className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
+            className="bg-secondary hover:bg-surface-hover text-white"
           >
             <TrendingUp className="w-4 h-4 mr-2 text-primary" />
             Binance
           </Button>
           <Button
             onClick={() => window.open('https://www.bybit.com/en/earn/dual-asset-mining', '_blank')}
-            variant="ghost"
+            variant="pill-secondary"
             size="sm"
-            className="btn-pill bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white"
+            className="bg-secondary hover:bg-surface-hover text-white"
           >
             <TrendingUp className="w-4 h-4 mr-2 text-primary" />
             Bybit
@@ -230,8 +230,8 @@ export function DualInvestmentTab() {
       </div>
 
       {/* Filters */}
-      <Card className="card-spotify border border-white/5 bg-[#181818]/60 shadow-heavy backdrop-blur-md">
-        <CardContent className="p-8">
+      <Card className="card-spotify border border-white/5 bg-card/60 shadow-heavy backdrop-blur-md">
+        <CardContent className="p-4 sm:p-8">
           <div className="flex flex-wrap items-end gap-10">
             {/* Coin Selection */}
             <div className="space-y-4">
@@ -239,7 +239,7 @@ export function DualInvestmentTab() {
               <RadioGroup
                 value={filters.coins[0]}
                 onValueChange={handleCoinChange}
-                className="flex gap-6"
+                className="flex flex-wrap gap-6"
               >
                 {COINS.map(coin => (
                   <div key={coin} className="flex items-center space-x-2">
@@ -259,7 +259,7 @@ export function DualInvestmentTab() {
                 type="single"
                 value={filters.projectType}
                 onValueChange={handleProjectTypeChange}
-                className="flex gap-2"
+                className="flex flex-wrap gap-2"
               >
                 <ToggleGroupItem
                   value="DOWN"
@@ -270,7 +270,7 @@ export function DualInvestmentTab() {
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="UP"
-                  className="btn-pill h-9 px-4 text-[11px] font-black uppercase tracking-widest data-[state=on]:bg-[#f3727f] data-[state=on]:text-white hover:bg-white/5 border border-white/5 transition-all"
+                  className="btn-pill h-9 px-4 text-[11px] font-black uppercase tracking-widest data-[state=on]:bg-destructive data-[state=on]:text-destructive-foreground hover:bg-white/5 border border-white/5 transition-all"
                 >
                   <TrendingUp className="w-3.5 h-3.5 mr-2" />
                   Sell High
@@ -279,7 +279,7 @@ export function DualInvestmentTab() {
             </div>
 
             {/* Duration */}
-            <div className="space-y-4 flex-1 min-w-0">
+            <div className="space-y-4 w-full min-w-0 lg:flex-1 lg:min-w-64">
               <label className="text-spotify-label">Duration</label>
               <div className="flex flex-wrap gap-2">
                 <ToggleGroup

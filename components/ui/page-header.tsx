@@ -40,7 +40,7 @@ export function SectionLabel({ children, hint, className }: SectionLabelProps) {
     <div className={cn("flex items-center gap-3 my-4", className)}>
       <span className="text-spotify-label whitespace-nowrap">{children}</span>
       <span className="h-px flex-1 bg-white/5" />
-      {hint && <span className="whitespace-nowrap text-xs text-[#6a6a6a]">{hint}</span>}
+      {hint && <span className="whitespace-nowrap text-xs text-muted-foreground">{hint}</span>}
     </div>
   )
 }
@@ -67,7 +67,7 @@ export function SectionPanel({ title, description, icon: Icon, action, className
           )}
           <div className="min-w-0">
             <h2 className="truncate text-sm font-bold tracking-tight text-white">{title}</h2>
-            {description && <p className="mt-0.5 text-xs text-[#b3b3b3]">{description}</p>}
+            {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
           </div>
         </div>
         {action && <div className="shrink-0">{action}</div>}

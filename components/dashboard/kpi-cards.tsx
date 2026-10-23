@@ -30,8 +30,8 @@ export function KpiCards({ summary, currency = "THB", rate = 34.0 }: KpiCardsPro
       title: "รายจ่าย (จ่ายแล้ว)",
       value: formatM(current.paidExpenses),
       icon: Wallet,
-      iconColor: "text-[#539df5]",
-      iconBg: "bg-[#539df5]/10",
+      iconColor: "text-info",
+      iconBg: "bg-info/10",
       deltaPercent: deltas.paidExpensesPercent,
       deltaDiff: deltas.paidExpensesDiff,
       // For expense: down is good (green), up is bad (red)
@@ -50,8 +50,8 @@ export function KpiCards({ summary, currency = "THB", rate = 34.0 }: KpiCardsPro
       valueColor: current.net >= 0 ? "text-white" : "text-destructive",
     },
     {
-      title: "Realized PnL (กำไร/ขาดทุน)",
-      value: formatM(current.realizedPnl),
+      title: "Realized PnL (ยอดปิด THB)",
+      value: money(current.realizedPnl),
       icon: TrendingUp,
       iconColor: current.realizedPnl >= 0 ? "text-primary" : "text-destructive",
       iconBg: current.realizedPnl >= 0 ? "bg-primary/10" : "bg-destructive/10",
@@ -70,21 +70,21 @@ export function KpiCards({ summary, currency = "THB", rate = 34.0 }: KpiCardsPro
         const diff = card.deltaDiff
 
         let trendText = ""
-        let trendColor = "text-[#b3b3b3]"
+        let trendColor = "text-muted-foreground"
         let TrendIcon = null
 
         if (card.isAmountDeltaOnly) {
           if (diff > 0) {
-            trendText = `+${formatM(diff)} vs ${prevMonthLabel}`
+            trendText = `+${money(diff)} vs ${prevMonthLabel}`
             trendColor = "text-primary"
             TrendIcon = ArrowUpRight
           } else if (diff < 0) {
-            trendText = `${formatM(diff)} vs ${prevMonthLabel}`
+            trendText = `${money(diff)} vs ${prevMonthLabel}`
             trendColor = "text-destructive"
             TrendIcon = ArrowDownRight
           } else {
             trendText = `คงที่ vs ${prevMonthLabel}`
-            trendColor = "text-[#b3b3b3]"
+            trendColor = "text-muted-foreground"
           }
         } else if (card.deltaPercent != null) {
           const isUp = card.deltaPercent > 0
@@ -94,7 +94,7 @@ export function KpiCards({ summary, currency = "THB", rate = 34.0 }: KpiCardsPro
           trendText = `${formatPercent(card.deltaPercent)} vs ${prevMonthLabel}`
         } else {
           trendText = `— ไม่มีข้อมูลเดือนก่อน`
-          trendColor = "text-[#7c7c7c]"
+          trendColor = "text-muted-foreground"
         }
 
         return (

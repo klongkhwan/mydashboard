@@ -3,7 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { SupabaseProvider } from '@/components/providers/supabase-provider'
-import { Toaster } from 'sonner'
+import { Toaster } from '@/components/ui/sonner'
 import '../styles/globals.css'
 
 export const metadata: Metadata = {
@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
         <SupabaseProvider>
           {children}
@@ -30,7 +30,6 @@ export default function RootLayout({
           position="bottom-right"
           richColors
           closeButton
-          theme="dark"
         />
         <Analytics />
       </body>

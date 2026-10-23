@@ -33,7 +33,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 import { DatePicker } from "@/components/ui/date-picker"
-import { formatDateDDMMYYYY } from "@/components/dashboard/format"
+import { formatDateDDMMYYYY, money as lockedMoney } from "@/components/dashboard/format"
+import { calculateClosedInvestmentPnl } from "@/lib/my-wealth-calculations"
 import { MyWealthQuickActions } from "@/components/my-wealth/quick-actions"
 import { useWealth, WealthTransaction, WealthInvestment, WealthCategory } from "@/components/my-wealth/wealth-context"
 import {
@@ -129,7 +130,7 @@ function getInvestmentTypeBadge(type: string) {
     default:
       return {
         label: type?.replace("_", " ")?.toUpperCase() || "ASSET",
-        className: "bg-white/5 text-[#b3b3b3] border-white/10",
+        className: "bg-white/5 text-muted-foreground border-white/10",
       }
   }
 }
@@ -159,7 +160,7 @@ function getPlatformBadge(platform: string) {
   }
   return {
     label: platform?.toUpperCase() || "-",
-    className: "bg-[#1f1f1f] text-white border-white/10",
+    className: "bg-secondary text-white border-white/10",
     dotColor: "#888888",
   }
 }
@@ -455,7 +456,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-2 text-xs text-[#b3b3b3]">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {item.quantity && <span>{Number(item.quantity).toLocaleString()} {cleanBaseAsset}</span>}
               {item.quantity && <span>·</span>}
               <span>เปิด: {formatDateDDMMYYYY(item.opened_at)}</span>
@@ -503,21 +504,28 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
             : deposit > 0
               ? deposit
               : (rawOpened > 0 ? rawOpened / rate : 0)
-          const thbVal = (qty > 0 && price > 0 || deposit > 0) ? usdVal * rate : rawOpened
+          const thbVal = item.status === "closed" ? rawOpened : (qty > 0 && price > 0 || deposit > 0) ? usdVal * rate : rawOpened
           primaryDisplay = `$${usdVal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
           entryText = price > 0 ? `$${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} (≈ ฿${Math.round(thbVal).toLocaleString("th-TH")})` : `≈ ฿${Math.round(thbVal).toLocaleString("th-TH")}`
+          if (item.status === "closed" && calculatedUsd === 0 && deposit === 0) {
+            primaryDisplay = lockedMoney(rawOpened)
+            entryText = "ยอดบันทึก ณ วันเปิด"
+          }
         } else {
           // Item was selected as THB
           const thbVal = (qty > 0 && price > 0) ? qty * price : (rawOpened > 0 ? rawOpened : 0)
           const usdVal = thbVal / rate
           primaryDisplay = `฿${Math.round(thbVal).toLocaleString("th-TH")}`
           entryText = price > 0 ? `฿${price.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} (≈ $${usdVal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : `≈ $${usdVal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          if (item.status === "closed") {
+            entryText = price > 0 ? `฿${price.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}` : "ยอดบันทึก ณ วันเปิด"
+          }
         }
 
         return (
           <div className="text-right py-1">
             <p className="font-bold text-white tabular-nums">{primaryDisplay}</p>
-            <p className="text-[11px] text-[#b3b3b3] tabular-nums">{entryText}</p>
+            <p className="text-[11px] text-muted-foreground tabular-nums">{entryText}</p>
           </div>
         )
       },
@@ -545,28 +553,24 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
             : (rawOpened > 0 ? rawOpened : (calculatedUsd > 0 ? calculatedUsd : 0))
 
         if (item.status === "closed") {
-          const rawClosed = Number(item.closed_amount_thb || 0)
-          const rawExitFee = Number(item.exit_fee_thb || 0)
-          const rawEntryFee = Number(item.entry_fee_thb || 0)
-          const pnlThb = rawClosed - rawExitFee - rawOpened - rawEntryFee
-          const pnlNative = (qty > 0 && item.exit_price && price > 0 && rawClosed === 0)
-            ? (Number(item.exit_price) - price) * qty
-            : isUsdQuote ? pnlThb / rate : pnlThb
-          const pnlPct = capitalNative > 0 ? (pnlNative / capitalNative) * 100 : 0
-          const isProfit = pnlNative >= 0
+          const { pnlNative, pnlThb, pnlPct } = calculateClosedInvestmentPnl(item)
+          const amount = pnlNative ?? pnlThb
+          const profitPrefix = isUsdQuote && pnlNative !== null ? "$" : "฿"
+          const isProfit = amount >= 0
           const exitPriceStr = item.exit_price ? `${prefix}${Number(item.exit_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}` : ""
 
           return (
             <div className="text-right py-1 pr-6">
               <span className={`inline-block font-bold tabular-nums ${isProfit ? "text-emerald-400" : "text-rose-400"}`}>
-                {isProfit ? "+" : "-"}{prefix}{Math.abs(pnlNative).toLocaleString(isUsdQuote ? "en-US" : "th-TH", { minimumFractionDigits: isUsdQuote ? 2 : 0, maximumFractionDigits: 2 })}
+                {isProfit ? "+" : "-"}{profitPrefix}{Math.abs(amount).toLocaleString(isUsdQuote ? "en-US" : "th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <p className="text-[11px] tabular-nums">
-                {exitPriceStr && <span className="text-[#b3b3b3]">{exitPriceStr} </span>}
+                {exitPriceStr && <span className="text-muted-foreground">{exitPriceStr} </span>}
                 <span className={isProfit ? "text-emerald-400" : "text-rose-400"}>
                   ({isProfit ? "+" : ""}{pnlPct.toFixed(2)}%)
                 </span>
               </p>
+              <p className="text-[10px] text-muted-foreground">ล็อก ณ วันปิด {formatDateDDMMYYYY(item.closed_at)}</p>
             </div>
           )
         }
@@ -580,7 +584,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           const hasQuote = currentPrice !== null && price > 0
           if (!hasQuote) {
             return (
-              <div className="text-right py-1 pr-6 text-[#b3b3b3] text-[11px]">
+              <div className="text-right py-1 pr-6 text-muted-foreground text-[11px]">
                 <span>รอราคาตลาด</span>
               </div>
             )
@@ -599,7 +603,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                 {isProfit ? "+" : "-"}{prefix}{Math.abs(diffNative).toLocaleString(isUsdQuote ? "en-US" : "th-TH", { minimumFractionDigits: isUsdQuote ? 2 : 0, maximumFractionDigits: 2 })}
               </span>
               <p className="text-[11px] tabular-nums">
-                <span className="text-[#b3b3b3]">{currentPriceFormatted} </span>
+                <span className="text-muted-foreground">{currentPriceFormatted} </span>
                 <span className={isProfit ? "text-emerald-400" : "text-rose-400"}>
                   ({isProfit ? "+" : ""}{pnlPct.toFixed(2)}%)
                 </span>
@@ -684,7 +688,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 text-spotify-muted hover:text-[#f3727f]"
+              className="h-8 w-8 p-0 text-spotify-muted hover:text-destructive"
               onClick={() => setDeleteInvId(item.id)}
               title="ลบรายการ"
             >
@@ -824,7 +828,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 text-spotify-muted hover:text-[#f3727f]"
+              className="h-8 w-8 p-0 text-spotify-muted hover:text-destructive"
               onClick={() => setDeleteTxId(item.id)}
               title="ลบ"
             >
@@ -915,7 +919,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 text-spotify-muted hover:text-[#f3727f]"
+              className="h-8 w-8 p-0 text-spotify-muted hover:text-destructive"
               onClick={() => setDeleteCatId(cat.id)}
               title="ลบหมวดหมู่"
             >
@@ -947,34 +951,29 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
         return sum + raw
       }, 0)
       const realizedPnl = closed.reduce(
-        (sum, i) =>
-          sum +
-          Number(i.closed_amount_thb || 0) -
-          Number(i.exit_fee_thb || 0) -
-          Number(i.opened_amount_thb || 0) -
-          Number(i.entry_fee_thb || 0),
+        (sum, i) => sum + calculateClosedInvestmentPnl(i).pnlThb,
         0
       )
       return (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">Open Capital (เงินต้นที่เปิดอยู่)</span>
             <p className="text-2xl font-black mt-2 text-white tabular-nums">{money(openCapital)}</p>
             <p className="text-[11px] text-spotify-muted mt-1">{open.length} ดีลที่กำลังถือครอง</p>
           </div>
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">Realized P&L (ปิดดีลแล้ว)</span>
-            <p className={`text-2xl font-black mt-2 tabular-nums ${realizedPnl >= 0 ? "text-primary" : "text-[#f3727f]"}`}>
-              {realizedPnl >= 0 ? "+" : ""}{money(realizedPnl)}
+            <p className={`text-2xl font-black mt-2 tabular-nums ${realizedPnl >= 0 ? "text-primary" : "text-destructive"}`}>
+              {realizedPnl >= 0 ? "+" : ""}{lockedMoney(realizedPnl)}
             </p>
-            <p className="text-[11px] text-spotify-muted mt-1">{closed.length} ดีลที่ปิดทำกำไร/ขาดทุน</p>
+            <p className="text-[11px] text-spotify-muted mt-1">{closed.length} ดีลที่ปิดทำกำไร/ขาดทุน · ยอดบันทึก THB</p>
           </div>
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">อัตราแลกเปลี่ยนปัจจุบัน</span>
             <p className="text-2xl font-black mt-2 text-sky-400 tabular-nums">฿{rate.toFixed(2)}</p>
             <p className="text-[11px] text-spotify-muted mt-1">1 USD = ฿{rate.toFixed(2)} THB</p>
           </div>
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">แพลตฟอร์มที่เชื่อมต่อ</span>
             <p className="text-2xl font-black mt-2 text-white tabular-nums">3 แพลตฟอร์ม</p>
             <p className="text-[11px] text-spotify-muted mt-1">Dime · Bybit · Binance TH</p>
@@ -988,19 +987,19 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
       const totalIncome = incomeTx.reduce((sum, t) => sum + Number(t.amount_thb), 0)
       return (
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">รายรับสะสมทั้งหมด</span>
             <p className="text-2xl font-black mt-2 text-primary tabular-nums">+{money(totalIncome)}</p>
             <p className="text-[11px] text-spotify-muted mt-1">{incomeTx.length} รายการรับ</p>
           </div>
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">เฉลี่ยต่อรายการ</span>
             <p className="text-2xl font-black mt-2 text-white tabular-nums">
               {money(incomeTx.length > 0 ? totalIncome / incomeTx.length : 0)}
             </p>
             <p className="text-[11px] text-spotify-muted mt-1">ยอดเงินเฉลี่ย</p>
           </div>
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">หมวดหมู่รายรับ</span>
             <p className="text-2xl font-black mt-2 text-white tabular-nums">
               {categories.filter((c) => c.type === "income" && c.is_active).length} หมวด
@@ -1019,21 +1018,21 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
       const totalPending = pendingList.reduce((sum, t) => sum + Number(t.amount_thb), 0)
       return (
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">จ่ายแล้ว (Paid Expenses)</span>
             <p className="text-2xl font-black mt-2 text-white tabular-nums">-{money(totalPaid)}</p>
             <p className="text-[11px] text-spotify-muted mt-1">{paid.length} รายการที่ชำระเรียบร้อย</p>
           </div>
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">รอจ่าย (Pending Expenses)</span>
             <p className={`text-2xl font-black mt-2 tabular-nums ${totalPending > 0 ? "text-amber-400" : "text-white"}`}>
               {money(totalPending)}
             </p>
             <p className="text-[11px] text-spotify-muted mt-1">{pendingList.length} บิลที่ต้องชำระ</p>
           </div>
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">ยอดรวมค่าใช้จ่ายทั้งหมด</span>
-            <p className="text-2xl font-black mt-2 text-[#f3727f] tabular-nums">-{money(totalPaid + totalPending)}</p>
+            <p className="text-2xl font-black mt-2 text-destructive tabular-nums">-{money(totalPaid + totalPending)}</p>
             <p className="text-[11px] text-spotify-muted mt-1">{expenseTx.length} รายการทั้งหมด</p>
           </div>
         </div>
@@ -1046,17 +1045,17 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
       const inactive = categories.filter((c) => !c.is_active).length
       return (
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">หมวดหมู่รายรับ</span>
             <p className="text-2xl font-black mt-2 text-primary tabular-nums">{activeIncome} หมวด</p>
             <p className="text-[11px] text-spotify-muted mt-1">เปิดใช้งาน</p>
           </div>
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">หมวดหมู่รายจ่าย</span>
             <p className="text-2xl font-black mt-2 text-white tabular-nums">{activeExpense} หมวด</p>
             <p className="text-[11px] text-spotify-muted mt-1">เปิดใช้งาน</p>
           </div>
-          <div className="card-spotify p-5 border border-white/5 bg-[#181818]/60">
+          <div className="card-spotify p-5 border border-white/5 bg-card/60">
             <span className="text-spotify-label">ปิดใช้งาน (Archived)</span>
             <p className="text-2xl font-black mt-2 text-spotify-muted tabular-nums">{inactive} หมวด</p>
             <p className="text-[11px] text-spotify-muted mt-1">สามารถเปิดกลับมาได้</p>
@@ -1069,7 +1068,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
   }, [section, investments, transactions, categories, usdThbRate, displayCurrency, formatMoney])
 
   const fieldClass =
-    "h-9 rounded-lg border border-white/10 bg-[#181818] px-3 text-xs text-white shadow-inner outline-none transition placeholder:text-white/35 hover:border-white/20 focus:border-primary focus:ring-1 focus:ring-primary/20"
+    "h-9 rounded-lg border border-white/10 bg-card px-3 text-xs text-white shadow-inner outline-none transition placeholder:text-white/35 hover:border-white/20 focus:border-primary focus:ring-1 focus:ring-primary/20"
 
   return (
     <div className="space-y-6">
@@ -1081,7 +1080,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           <div className="flex flex-wrap items-center justify-end gap-3">
             <WealthApiStatus showRate={section === "investments"} />
             {section === "investments" && (
-              <div className="flex items-center rounded-xl border border-white/10 bg-[#121212]/90 p-1 shadow-sm">
+              <div className="flex items-center rounded-xl border border-white/10 bg-background/90 p-1 shadow-sm">
                 <button
                   type="button"
                   onClick={() => setDisplayCurrency("THB")}
@@ -1111,7 +1110,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
       {kpiSection}
 
       {/* Search & Filter Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/5 bg-[#181818]/50 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/5 bg-card/50 p-3">
         {/* Search Input */}
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-spotify-muted" />
@@ -1141,10 +1140,10 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           {section === "investments" && (
             <>
               <Select value={filterPlatform} onValueChange={setFilterPlatform}>
-                <SelectTrigger className="h-9 w-28 bg-[#1f1f1f] border-white/10 text-xs text-white">
+                <SelectTrigger className="h-9 w-28 bg-secondary border-white/10 text-xs text-white">
                   <SelectValue placeholder="แพลตฟอร์ม" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                <SelectContent className="bg-secondary border-white/10 text-white">
                   <SelectItem value="all">ทุกแพลตฟอร์ม</SelectItem>
                   <SelectItem value="dime">Dime</SelectItem>
                   <SelectItem value="bybit">Bybit</SelectItem>
@@ -1153,10 +1152,10 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
               </Select>
 
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-9 w-28 bg-[#1f1f1f] border-white/10 text-xs text-white">
+                <SelectTrigger className="h-9 w-28 bg-secondary border-white/10 text-xs text-white">
                   <SelectValue placeholder="สถานะ" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                <SelectContent className="bg-secondary border-white/10 text-white">
                   <SelectItem value="all">ทุกสถานะ</SelectItem>
                   <SelectItem value="open">Active</SelectItem>
                   <SelectItem value="closed">Closed</SelectItem>
@@ -1169,10 +1168,10 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           {/* Expenses Filters */}
           {section === "expenses" && (
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="h-9 w-28 bg-[#1f1f1f] border-white/10 text-xs text-white">
+              <SelectTrigger className="h-9 w-28 bg-secondary border-white/10 text-xs text-white">
                 <SelectValue placeholder="สถานะ" />
               </SelectTrigger>
-              <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+              <SelectContent className="bg-secondary border-white/10 text-white">
                 <SelectItem value="all">ทุกสถานะ</SelectItem>
                 <SelectItem value="paid">จ่ายแล้ว</SelectItem>
                 <SelectItem value="pending">รอจ่าย</SelectItem>
@@ -1183,10 +1182,10 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           {/* Category Filter for Income / Expenses */}
           {(section === "income" || section === "expenses") && (
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="h-9 w-32 bg-[#1f1f1f] border-white/10 text-xs text-white">
+              <SelectTrigger className="h-9 w-32 bg-secondary border-white/10 text-xs text-white">
                 <SelectValue placeholder="หมวดหมู่" />
               </SelectTrigger>
-              <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+              <SelectContent className="bg-secondary border-white/10 text-white">
                 <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
                 {categories
                   .filter((c) => c.type === (section === "income" ? "income" : "expense"))
@@ -1203,20 +1202,20 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           {section === "categories" && (
             <>
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="h-9 w-28 bg-[#1f1f1f] border-white/10 text-xs text-white">
+                <SelectTrigger className="h-9 w-28 bg-secondary border-white/10 text-xs text-white">
                   <SelectValue placeholder="ประเภท" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                <SelectContent className="bg-secondary border-white/10 text-white">
                   <SelectItem value="all">ทุกประเภท</SelectItem>
                   <SelectItem value="income">รายรับ</SelectItem>
                   <SelectItem value="expense">รายจ่าย</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-9 w-28 bg-[#1f1f1f] border-white/10 text-xs text-white">
+                <SelectTrigger className="h-9 w-28 bg-secondary border-white/10 text-xs text-white">
                   <SelectValue placeholder="สถานะ" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                <SelectContent className="bg-secondary border-white/10 text-white">
                   <SelectItem value="all">ทุกสถานะ</SelectItem>
                   <SelectItem value="active">เปิดใช้งาน</SelectItem>
                   <SelectItem value="inactive">ปิดใช้งาน</SelectItem>
@@ -1284,7 +1283,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
 
       {/* MODAL: Edit Transaction */}
       <Dialog open={!!editTx} onOpenChange={(open) => !open && setEditTx(null)}>
-        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto p-6 bg-[#121212] border border-white/10 text-white">
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto p-6 bg-background border border-white/10 text-white">
           <DialogHeader className="border-b border-white/10 pb-4">
             <DialogTitle className="text-xl font-bold">
               แก้ไข{editTx?.type === "income" ? "รายรับ" : "รายจ่าย"}
@@ -1309,7 +1308,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                   <SelectTrigger className={fieldClass}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                  <SelectContent className="bg-secondary border-white/10 text-white">
                     {categories
                       .filter((c) => c.type === editTx.type)
                       .map((c) => (
@@ -1337,7 +1336,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                     <SelectTrigger className={fieldClass}>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                    <SelectContent className="bg-secondary border-white/10 text-white">
                       <SelectItem value="paid">จ่ายแล้ว (Paid)</SelectItem>
                       <SelectItem value="pending">รอจ่าย (Pending)</SelectItem>
                     </SelectContent>
@@ -1352,7 +1351,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                 <Button type="button" variant="ghost" onClick={() => setEditTx(null)}>
                   ยกเลิก
                 </Button>
-                <Button type="submit" className="btn-pill-primary" disabled={pending}>
+                <Button type="submit" variant="pill" className="" disabled={pending}>
                   {pending ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
                 </Button>
               </DialogFooter>
@@ -1363,7 +1362,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
 
       {/* MODAL: Close Investment Deal */}
       <Dialog open={!!closeInv} onOpenChange={(open) => !open && setCloseInv(null)}>
-        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto p-6 bg-[#121212] border border-white/10 text-white">
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto p-6 bg-background border border-white/10 text-white">
           <DialogHeader className="border-b border-white/10 pb-4">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -1454,7 +1453,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                   <Button type="button" variant="ghost" onClick={() => setCloseInv(null)}>
                     ยกเลิก
                   </Button>
-                  <Button type="submit" className="btn-pill-primary" disabled={pending}>
+                  <Button type="submit" variant="pill" className="" disabled={pending}>
                     {pending ? "กำลังบันทึก..." : "ยืนยันการปิดดีล"}
                   </Button>
                 </DialogFooter>
@@ -1466,7 +1465,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
 
       {/* MODAL: Edit Investment */}
       <Dialog open={!!editInv} onOpenChange={(open) => !open && setEditInv(null)}>
-        <DialogContent className="max-h-[88vh] max-w-lg overflow-hidden p-0 bg-[#121212] border border-white/10 text-white flex flex-col">
+        <DialogContent className="max-h-[88vh] max-w-lg overflow-hidden p-0 bg-background border border-white/10 text-white flex flex-col">
           <DialogHeader className="p-5 pb-3 border-b border-white/10 shrink-0">
             <DialogTitle className="text-lg font-bold">แก้ไขการลงทุน · {editInv?.asset_symbol}</DialogTitle>
             <DialogDescription className="text-spotify-muted text-xs">
@@ -1495,7 +1494,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                         <SelectTrigger className={fieldClass}>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                        <SelectContent className="bg-secondary border-white/10 text-white">
                           <SelectItem value="dime">Dime</SelectItem>
                           <SelectItem value="bybit">Bybit</SelectItem>
                           <SelectItem value="binance_th">Binance TH</SelectItem>
@@ -1508,7 +1507,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                         <SelectTrigger className={fieldClass}>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                        <SelectContent className="bg-secondary border-white/10 text-white">
                           <SelectItem value="thai_stock">Thai Stock</SelectItem>
                           <SelectItem value="foreign_stock">Global Stock</SelectItem>
                           <SelectItem value="spot_trade">Spot Trade</SelectItem>
@@ -1528,7 +1527,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                         <SelectTrigger className={fieldClass}>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                        <SelectContent className="bg-secondary border-white/10 text-white">
                           <SelectItem value="THB">THB</SelectItem>
                           <SelectItem value="USD">USD</SelectItem>
                         </SelectContent>
@@ -1560,11 +1559,11 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                     </div>
                   </div>
                 </div>
-                <DialogFooter className="p-3.5 border-t border-white/10 bg-[#181818]/90 shrink-0 flex items-center justify-end gap-2">
+                <DialogFooter className="p-3.5 border-t border-white/10 bg-card/90 shrink-0 flex items-center justify-end gap-2">
                   <Button type="button" variant="ghost" onClick={() => setEditInv(null)}>
                     ยกเลิก
                   </Button>
-                  <Button type="submit" className="btn-pill-primary" disabled={pending}>
+                  <Button type="submit" variant="pill" className="" disabled={pending}>
                     {pending ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
                   </Button>
                 </DialogFooter>
@@ -1576,7 +1575,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
 
       {/* MODAL: Edit Category */}
       <Dialog open={!!editCat} onOpenChange={(open) => !open && setEditCat(null)}>
-        <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto p-6 bg-[#121212] border border-white/10 text-white">
+        <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto p-6 bg-background border border-white/10 text-white">
           <DialogHeader className="border-b border-white/10 pb-4">
             <DialogTitle className="text-xl font-bold">แก้ไขหมวดหมู่</DialogTitle>
             <DialogDescription className="text-spotify-muted text-xs">
@@ -1595,7 +1594,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                   <SelectTrigger className={fieldClass}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1f1f1f] border-white/10 text-white">
+                  <SelectContent className="bg-secondary border-white/10 text-white">
                     <SelectItem value="true">เปิดใช้งาน (Active)</SelectItem>
                     <SelectItem value="false">ปิดใช้งาน (Archived)</SelectItem>
                   </SelectContent>
@@ -1626,7 +1625,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                 <Button type="button" variant="ghost" onClick={() => setEditCat(null)}>
                   ยกเลิก
                 </Button>
-                <Button type="submit" className="btn-pill-primary" disabled={pending}>
+                <Button type="submit" variant="pill" className="" disabled={pending}>
                   {pending ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
                 </Button>
               </DialogFooter>
@@ -1637,7 +1636,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
 
       {/* CONFIRM: Delete Transaction Dialog */}
       <Dialog open={!!deleteTxId} onOpenChange={(open) => !open && setDeleteTxId(null)}>
-        <DialogContent className="sm:max-w-sm bg-[#121212] border border-white/10 text-white">
+        <DialogContent className="sm:max-w-sm bg-background border border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>ลบรายการนี้?</DialogTitle>
             <DialogDescription className="text-spotify-muted">
@@ -1657,7 +1656,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
 
       {/* CONFIRM: Delete Investment Dialog */}
       <Dialog open={!!deleteInvId} onOpenChange={(open) => !open && setDeleteInvId(null)}>
-        <DialogContent className="sm:max-w-sm bg-[#121212] border border-white/10 text-white">
+        <DialogContent className="sm:max-w-sm bg-background border border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>ลบรายการลงทุนนี้?</DialogTitle>
             <DialogDescription className="text-spotify-muted">
@@ -1677,7 +1676,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
 
       {/* CONFIRM: Delete Category Dialog */}
       <Dialog open={!!deleteCatId} onOpenChange={(open) => !open && setDeleteCatId(null)}>
-        <DialogContent className="sm:max-w-sm bg-[#121212] border border-white/10 text-white">
+        <DialogContent className="sm:max-w-sm bg-background border border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>ลบหมวดหมู่นี้?</DialogTitle>
             <DialogDescription className="text-spotify-muted">

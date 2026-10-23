@@ -372,7 +372,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
             <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-0">
               <div className="bg-card rounded-lg border border-border p-5 space-y-4 shadow-sm">
                 <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
-                  <span className="w-2 h-2 rounded-full bg-[#39FF14] shadow-[0_0_8px_#39FF14]"></span>
+                  <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_#39FF14]"></span>
                   ตั้งค่าการเทรด
                 </h3>
 
@@ -388,7 +388,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                           <Input
                             placeholder="เช่น BTC/USD"
                             {...field}
-                            className="font-semibold bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background"
+                            className="font-semibold bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 !bg-background"
                           />
                         </FormControl>
                         <FormMessage />
@@ -406,7 +406,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                           <Input
                             type="datetime-local"
                             {...field}
-                            className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background"
+                            className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 !bg-background"
                           />
                         </FormControl>
                         <FormMessage />
@@ -424,7 +424,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                         <FormLabel className="text-xs font-medium text-muted-foreground">ตลาด</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20">
+                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
@@ -446,7 +446,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                         <FormLabel className="text-xs font-medium text-muted-foreground">ทิศทาง</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20">
+                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
@@ -472,7 +472,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                         <FormLabel className="text-xs font-medium text-muted-foreground">TF</FormLabel>
                         <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
                           <FormControl>
-                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20">
+                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
@@ -495,7 +495,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                         <FormLabel className="text-xs font-medium text-muted-foreground">สถานะ</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20">
+                            <SelectTrigger className="h-9 bg-background border-border text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
@@ -520,7 +520,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                         <FormItem>
                           <FormLabel className="text-xs font-medium text-muted-foreground">Leverage</FormLabel>
                           <FormControl>
-                            <Input type="number" step="1" placeholder="10" {...field} className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background" />
+                            <Input type="number" step="1" placeholder="10" {...field} className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 !bg-background" />
                           </FormControl>
                         </FormItem>
                       )}
@@ -563,7 +563,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                           <FormItem>
                             <FormLabel className="text-sm font-medium">ราคาเข้า</FormLabel>
                             <FormControl>
-                              <Input type="number" step="any" placeholder="0.00" {...field} className="font-mono bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background" />
+                              <Input type="number" step="any" placeholder="0.00" {...field} className="font-mono bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 !bg-background" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -576,7 +576,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                           <FormItem>
                             <FormLabel className="text-sm font-medium">จำนวนเงินลงทุน</FormLabel>
                             <FormControl>
-                              <Input type="number" step="any" placeholder="1000.00" {...field} className="font-mono bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background" />
+                              <Input type="number" step="any" placeholder="1000.00" {...field} className="font-mono bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 !bg-background" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -592,7 +592,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                           <FormLabel className="text-sm font-medium">อารมณ์ตอนเข้า</FormLabel>
                           <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
                             <FormControl>
-                              <SelectTrigger className="bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20">
+                              <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20">
                                 <SelectValue placeholder="เลือกอารมณ์..." />
                               </SelectTrigger>
                             </FormControl>
@@ -616,7 +616,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                           <FormControl>
                             <Textarea
                               placeholder="วิเคราะห์กราฟ, ข่าว, หรือสัญญาณที่ทำให้ตัดสินใจเดิมพัน..."
-                              className="min-h-[150px] bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 resize-none leading-relaxed !bg-background"
+                              className="min-h-[150px] bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none leading-relaxed !bg-background"
                               {...field}
                             />
                           </FormControl>
@@ -637,7 +637,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                           <FormItem>
                             <FormLabel className="text-sm font-medium">ราคาที่ปิด</FormLabel>
                             <FormControl>
-                              <Input type="number" step="any" placeholder="0.00" {...field} className="font-mono bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background" />
+                              <Input type="number" step="any" placeholder="0.00" {...field} className="font-mono bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 !bg-background" />
                             </FormControl>
                           </FormItem>
                         )}
@@ -649,7 +649,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                           <FormItem>
                             <FormLabel className="text-sm font-medium">เวลาปิด</FormLabel>
                             <FormControl>
-                              <Input type="datetime-local" {...field} className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 !bg-background" />
+                              <Input type="datetime-local" {...field} className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 !bg-background" />
                             </FormControl>
                           </FormItem>
                         )}
@@ -664,7 +664,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                           <FormLabel className="text-sm font-medium">อารมณ์ตอนปิด</FormLabel>
                           <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
                             <FormControl>
-                              <SelectTrigger className="bg-background border-border text-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20"><SelectValue placeholder="เลือก..." /></SelectTrigger>
+                              <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"><SelectValue placeholder="เลือก..." /></SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="none">ไม่ระบุ</SelectItem>
@@ -682,7 +682,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                         <FormItem>
                           <FormLabel className="text-sm font-medium">เหตุผลการปิดออเดอร์</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="ทำไมถึงปิด? ถึงเป้า? ชน SL? หรือเปลี่ยนใจ..." className="min-h-[120px] bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 resize-none !bg-background" {...field} />
+                            <Textarea placeholder="ทำไมถึงปิด? ถึงเป้า? ชน SL? หรือเปลี่ยนใจ..." className="min-h-[120px] bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none !bg-background" {...field} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -694,7 +694,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                   {/* Learning Note */}
                   <div className="bg-card rounded-lg border border-border p-5 space-y-4">
                     <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#39FF14] shadow-[0_0_8px_#39FF14]"></span>
+                      <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_#39FF14]"></span>
                       สิ่งที่ได้เรียนรู้
                     </h3>
 
@@ -706,7 +706,7 @@ export function TradeFormNew({ onTradeCreated, onTradeUpdated, onCancel, tradeId
                           <FormControl>
                             <Textarea
                               placeholder="บันทึกสิ่งที่คุณได้เรียนรู้จากการเทรดครั้งนี้...&#10;&#10;🎯 อะไรที่ทำได้ดี?&#10;❌ อะไรที่ควรปรับปรุง?&#10;📚 บทเรียนที่ได้รับ?"
-                              className="min-h-[200px] bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#39FF14] focus:ring-2 focus:ring-[#39FF14]/20 resize-none p-4 leading-relaxed !bg-background"
+                              className="min-h-[200px] bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none p-4 leading-relaxed !bg-background"
                               {...field}
                             />
                           </FormControl>
