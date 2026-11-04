@@ -41,6 +41,14 @@ export const investmentSchema = z.object({
   apr_percent: z.coerce.number().min(0).optional(),
   term_days: z.coerce.number().int().positive().optional(),
   settlement_date: z.string().optional(),
+  exit_price: z.union([z.coerce.number().positive(), z.null()]).optional(),
+  closed_amount_thb: z.union([z.coerce.number().positive(), z.null()]).optional(),
+  closed_at: z.union([z.string().min(1), z.null()]).optional(),
+  exit_fee_thb: z.union([z.coerce.number().min(0), z.null()]).optional(),
+  settlement_asset: z.union([z.string().trim(), z.null()]).optional(),
+  settlement_amount: z.union([z.coerce.number(), z.null()]).optional(),
+  interest_amount: z.union([z.coerce.number(), z.null()]).optional(),
+  status: z.enum(["open", "closed", "cancelled"]).optional(),
 })
 
 export type CategoryInput = z.infer<typeof categorySchema>

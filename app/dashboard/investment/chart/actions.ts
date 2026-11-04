@@ -2,16 +2,42 @@
 
 import { createClient } from "@/utils/supabase/server"
 
+export interface CustomPriceLine {
+  id: string
+  price: number
+  title?: string
+  color?: string
+}
+
+export interface CustomTrendline {
+  id: string
+  startTime: number
+  startPrice: number
+  endTime: number
+  endPrice: number
+  color?: string
+}
+
 export interface ChartSettings {
   symbol?: string
   interval?: string
+  chartType?: "candles" | "line" | "area" | "bars"
+  scaleMode?: "normal" | "log" | "percent"
   indicators?: {
     ema9?: boolean
     ema21?: boolean
     ema50?: boolean
     ema200?: boolean
+    sma20?: boolean
     bb?: boolean
+    rsi?: boolean
+    volume?: boolean
   }
+  watchlist?: string[]
+  watchlistGroups?: Record<string, string[]>
+  activeWatchlistGroup?: string
+  priceLines?: Record<string, CustomPriceLine[]>
+  trendlines?: Record<string, CustomTrendline[]>
 }
 
 /**

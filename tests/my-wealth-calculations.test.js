@@ -167,3 +167,30 @@ test('cash-only closed records without a historical USD basis show recorded THB 
   }, 40)
   assert.deepEqual(result, { pnlNative: null, pnlThb: 272, pnlPct: 8 })
 })
+
+test('net cash proceeds with auto-calculated exit fee matches net PnL', () => {
+  // Buy 10 units at 100 THB = 1000 THB gross capital
+  // Sell 10 units at 150 THB = 1500 THB gross proceeds
+  // Net cash received in account = 1480 THB (exit fee was 20 THB)
+  const qty = 10
+  const entryPrice = 100
+  const exitPrice = 150
+  const closedAmount = 1480
+  const exitFee = (qty * exitPrice) - closedAmount
+
+  const result = calculateClosedInvestmentPnl({
+    quote_asset: 'THB',
+    quantity: qty,
+    entry_price: entryPrice,
+    exit_price: exitPrice,
+    opened_amount_thb: qty * entryPrice,
+    closed_amount_thb: closedAmount,
+    entry_fee_thb: 0,
+    exit_fee_thb: exitFee,
+  })
+
+  // Net PnL should be 1480 - 1000 = 480 THB
+  assert.equal(result.pnlNative, 480)
+  assert.equal(result.pnlThb, 480)
+  assert.equal(result.pnlPct, 48)
+})

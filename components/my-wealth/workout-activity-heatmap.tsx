@@ -196,12 +196,12 @@ export function WorkoutActivityHeatmap({
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/5 bg-[#141414] p-5 flex flex-col justify-between transition-all hover:border-white/10",
+        "rounded-xl border border-white/5 bg-[#141414] p-4 sm:p-4.5 flex flex-col justify-between transition-all hover:border-white/10",
         className
       )}
     >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-white/5 pb-2.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-white/5 pb-2">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-bold text-white tracking-wide">
             Activity — last {fitWeeks} weeks · by time trained
@@ -219,10 +219,10 @@ export function WorkoutActivityHeatmap({
       </div>
 
       {/* Grid Container auto-fitted to width with zero horizontal scroll */}
-      <div ref={containerRef} className="py-2.5 flex items-center justify-center overflow-hidden">
+      <div ref={containerRef} className="py-2 flex items-center justify-center overflow-hidden">
         <div className="w-fit mx-auto">
           {/* Month labels */}
-          <div className="flex text-xs text-spotify-muted font-medium mb-1.5 pl-5">
+          <div className="flex text-xs text-spotify-muted font-medium mb-1 pl-5">
             {weeks.map((_, colIdx) => {
               const label = monthLabels.find((m) => m.weekIndex === colIdx)
               return (

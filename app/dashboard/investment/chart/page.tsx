@@ -1,11 +1,24 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import TradingViewWidget from "@/components/crypto/TradingViewWidget"
-import { InteractiveTradingChart } from "@/components/charts/InteractiveTradingChart"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
-import { Activity, Layers } from "lucide-react"
+import { Activity, Layers, Loader2 } from "lucide-react"
+
+const InteractiveTradingChart = dynamic(
+  () => import("@/components/charts/InteractiveTradingChart").then((m) => m.InteractiveTradingChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[680px] w-full rounded-xl bg-[#131722] border border-[#2a2e39] flex flex-col items-center justify-center text-zinc-400 gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-[#2962ff]" />
+        <span className="text-xs font-mono text-zinc-400">Loading Lightweight Pro Engine...</span>
+      </div>
+    ),
+  }
+)
 
 export default function InvestmentChartPage() {
   const [chartMode, setChartMode] = useState<"lightweight" | "tradingview">("lightweight")

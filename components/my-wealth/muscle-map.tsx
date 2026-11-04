@@ -105,7 +105,7 @@ function AthleteFigure({ side, setsMap, viewMode, timeRange }: {
   return (
     <figure className="relative flex min-w-0 flex-col items-center">
       <svg viewBox="0 0 220 440" role="img" aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`}
-        className="relative w-full max-w-[210px] overflow-visible">
+        className="relative w-full max-w-[175px] sm:max-w-[190px] overflow-visible">
         <title id={`${id}-title`}>{`${label} muscle map`}</title>
         <desc id={`${id}-description`}>{`${summary}. Completed sets, ${timeRange}, ${viewMode} view.`}</desc>
         <defs>
@@ -172,7 +172,7 @@ function AthleteFigure({ side, setsMap, viewMode, timeRange }: {
           {side === "back" && <path d="M98 54Q110 59 122 54M110 86V104" fill="none" stroke="#a2b5af" strokeOpacity=".15" strokeWidth="1" />}
         </g>
       </svg>
-      <figcaption className="mt-2 flex w-full max-w-36 items-center gap-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+      <figcaption className="mt-1.5 flex w-full max-w-32 items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
         <span className="h-px flex-1 bg-border" />{label}<span className="h-px flex-1 bg-border" />
       </figcaption>
     </figure>
@@ -190,15 +190,15 @@ export function MuscleMap({ workouts, className = "" }: MuscleMapProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("week")
   const setsMap: MuscleSetsMap = calculateMuscleSets(workouts, timeRange)
   const totalSetsInRange = Object.values(setsMap).reduce((a, b) => a + b, 0)
-  const controlClass = "rounded-md px-3 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card motion-reduce:transition-none"
+  const controlClass = "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card motion-reduce:transition-none"
 
   return (
-    <div className={cn("@container/muscles flex min-w-0 flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-card sm:p-6", className)}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className={cn("@container/muscles flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:p-5 shadow-card", className)}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <Activity className="h-4 w-4 text-primary" aria-hidden="true" />Muscle map
         </h2>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold tabular-nums text-primary">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-primary">
           <Flame className="h-3.5 w-3.5" aria-hidden="true" />{totalSetsInRange} sets
         </span>
       </div>
@@ -212,26 +212,26 @@ export function MuscleMap({ workouts, className = "" }: MuscleMapProps) {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">{VIEW_MODES.find((mode) => mode.value === viewMode)?.description}</p>
         <div className="inline-flex flex-wrap gap-1" role="group" aria-label="Muscle map time range">
           {(["week", "30d", "90d", "all"] as TimeRange[]).map((range) => (
             <button key={range} type="button" aria-pressed={timeRange === range} onClick={() => setTimeRange(range)}
-              className={cn(controlClass, "px-2.5 py-1.5", timeRange === range ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground")}>
+              className={cn(controlClass, "px-2.5 py-1 text-xs", timeRange === range ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground")}>
               {range === "week" ? "Week" : range === "all" ? "All" : range}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="relative isolate flex flex-1 flex-col justify-center overflow-hidden rounded-lg border border-border/60 bg-background/50 px-2 pb-4 pt-5 sm:px-4">
+      <div className="relative isolate flex flex-1 flex-col justify-center overflow-hidden rounded-lg border border-border/60 bg-background/50 px-2 py-3 sm:px-4">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_35%,color-mix(in_srgb,var(--primary)_5%,transparent),transparent_70%)]" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-6 left-1/2 -z-10 w-px bg-gradient-to-b from-transparent via-border to-transparent" />
         <div className="grid grid-cols-2 items-end gap-2 sm:gap-6">
           <AthleteFigure side="front" setsMap={setsMap} viewMode={viewMode} timeRange={timeRange} />
           <AthleteFigure side="back" setsMap={setsMap} viewMode={viewMode} timeRange={timeRange} />
         </div>
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
           {viewMode === "fatigue" ? (
             <><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />1–5<span className="ml-2 h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />6–11<span className="ml-2 h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />12+ sets</>
           ) : (
@@ -242,9 +242,9 @@ export function MuscleMap({ workouts, className = "" }: MuscleMapProps) {
 
       <dl className="grid grid-cols-3 gap-2 @min-[480px]/muscles:grid-cols-6">
         {(Object.keys(MUSCLE_LABELS) as MuscleGroup[]).map((group) => (
-          <div key={group} className="min-w-0 rounded-lg border border-border bg-background/50 px-1 py-3 text-center">
+          <div key={group} className="min-w-0 rounded-lg border border-border bg-background/50 px-1 py-2 text-center">
             <dt className="text-xs text-muted-foreground">{MUSCLE_LABELS[group]}</dt>
-            <dd className="mt-1 text-sm font-semibold tabular-nums text-foreground">{setsMap[group]} <span className="text-xs font-normal text-muted-foreground">sets</span></dd>
+            <dd className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">{setsMap[group]} <span className="text-xs font-normal text-muted-foreground">sets</span></dd>
           </div>
         ))}
       </dl>

@@ -199,8 +199,9 @@ test("isWorkoutCompleted and preset routine defaults prevent uncompleted workout
   assert.equal(zeroStreak, 0)
 
   // 5. When a set is ticked as completed, isWorkoutCompleted becomes true
+  const todayStr = new Date().toISOString().split("T")[0]
   const partiallyCompletedWorkout = {
-    workout_date: "2026-10-20",
+    workout_date: todayStr,
     exercises: [
       {
         name: "Push-ups",

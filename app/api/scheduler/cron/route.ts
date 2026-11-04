@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAndRunDueSchedules } from '@/lib/api-scheduler'
+import { checkActivePriceAlerts } from '@/lib/alert-checker'
 
 export const dynamic = 'force-dynamic' // Ensure this is not cached
 
@@ -10,12 +11,17 @@ export async function GET(req: NextRequest) {
             return new NextResponse('Unauthorized', { status: 401 })
         }
 
-        const result = await checkAndRunDueSchedules()
+        const [scheduleResult, alertResult] = await Promise.all([
+            checkAndRunDueSchedules(),
+            checkActivePriceAlerts(),
+        ])
 
         return NextResponse.json({
             success: true,
             timestamp: new Date().toISOString(),
-            ...result
+            ...scheduleResult,
+            schedules: scheduleResult,
+            priceAlerts: alertResult,
         })
     } catch (error) {
         console.error('Cron job failed:', error)

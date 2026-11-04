@@ -8,7 +8,7 @@ export default async function MyWealthLayout({ children }: { children: React.Rea
 
   return (
     <WealthProvider initialData={data}>
-      <div className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 space-y-4">
         {children}
       </div>
     </WealthProvider>

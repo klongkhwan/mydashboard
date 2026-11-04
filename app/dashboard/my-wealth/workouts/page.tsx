@@ -127,7 +127,7 @@ export default function WorkoutsPage() {
   const volume30d = calculate30dVolume(completedWorkouts)
 
   return (
-    <div className="space-y-4 max-w-[1500px] mx-auto pb-4">
+    <div className="space-y-4 max-w-[1500px] mx-auto">
       {/* Header Bar matching reference screenshot */}
       <div className="flex items-center justify-between pb-2 border-b border-white/5">
         <div>
@@ -163,19 +163,19 @@ export default function WorkoutsPage() {
 
       {/* TAB CONTENT (No extra top menu tabs) */}
       {activeTab === "stats" ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
           {/* LEFT COLUMN (6 cols): 2x2 Stats Cards + Activity Heatmap */}
-          <div className="lg:col-span-6 flex flex-col gap-4">
+          <div className="lg:col-span-6 flex flex-col gap-3.5">
             {/* 2x2 Stats Cards (matching openGym style - Scaled Up) */}
-            <div className="grid grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-2 gap-3">
               {/* Card 1: Workouts */}
-              <div className="rounded-xl border border-white/5 bg-[#141414] p-5 sm:p-6 flex flex-col justify-between transition-all hover:border-white/10">
+              <div className="rounded-xl border border-white/5 bg-[#141414] p-4 sm:p-4.5 flex flex-col justify-between transition-all hover:border-white/10">
                 <div className="flex items-center gap-2 text-spotify-muted text-xs sm:text-sm font-semibold">
                   <Dumbbell className="h-4 w-4 text-primary" />
                   <span>Workouts</span>
                 </div>
-                <div className="mt-3">
-                  <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight tabular-nums">
+                <div className="mt-2">
+                  <div className="text-3xl sm:text-4xl font-black text-white tracking-tight tabular-nums">
                     {totalWorkouts}
                   </div>
                   <span className="text-[11px] font-medium text-spotify-muted/80">เซสชันทั้งหมด</span>
@@ -183,13 +183,13 @@ export default function WorkoutsPage() {
               </div>
 
               {/* Card 2: This month */}
-              <div className="rounded-xl border border-white/5 bg-[#141414] p-5 sm:p-6 flex flex-col justify-between transition-all hover:border-white/10">
+              <div className="rounded-xl border border-white/5 bg-[#141414] p-4 sm:p-4.5 flex flex-col justify-between transition-all hover:border-white/10">
                 <div className="flex items-center gap-2 text-spotify-muted text-xs sm:text-sm font-semibold">
                   <Calendar className="h-4 w-4 text-blue-400" />
                   <span>This month</span>
                 </div>
-                <div className="mt-3">
-                  <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight tabular-nums">
+                <div className="mt-2">
+                  <div className="text-3xl sm:text-4xl font-black text-white tracking-tight tabular-nums">
                     {thisMonthWorkouts}
                   </div>
                   <span className="text-[11px] font-medium text-spotify-muted/80">เซสชันเดือนนี้</span>
@@ -197,13 +197,13 @@ export default function WorkoutsPage() {
               </div>
 
               {/* Card 3: Week streak */}
-              <div className="rounded-xl border border-white/5 bg-[#141414] p-5 sm:p-6 flex flex-col justify-between transition-all hover:border-white/10">
+              <div className="rounded-xl border border-white/5 bg-[#141414] p-4 sm:p-4.5 flex flex-col justify-between transition-all hover:border-white/10">
                 <div className="flex items-center gap-2 text-spotify-muted text-xs sm:text-sm font-semibold">
                   <Flame className="h-4 w-4 text-amber-400" />
                   <span>Week streak</span>
                 </div>
-                <div className="mt-3">
-                  <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight tabular-nums">
+                <div className="mt-2">
+                  <div className="text-3xl sm:text-4xl font-black text-white tracking-tight tabular-nums">
                     {weekStreak}
                   </div>
                   <span className="text-[11px] font-medium text-spotify-muted/80">สัปดาห์ต่อเนื่อง</span>
@@ -211,13 +211,13 @@ export default function WorkoutsPage() {
               </div>
 
               {/* Card 4: Volume 30d */}
-              <div className="rounded-xl border border-white/5 bg-[#141414] p-5 sm:p-6 flex flex-col justify-between transition-all hover:border-white/10">
+              <div className="rounded-xl border border-white/5 bg-[#141414] p-4 sm:p-4.5 flex flex-col justify-between transition-all hover:border-white/10">
                 <div className="flex items-center gap-2 text-spotify-muted text-xs sm:text-sm font-semibold">
                   <Scale className="h-4 w-4 text-[#22c55e]" />
                   <span>Volume 30d</span>
                 </div>
-                <div className="mt-3">
-                  <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#22c55e] tracking-tight tabular-nums truncate">
+                <div className="mt-2">
+                  <div className="text-3xl sm:text-4xl font-black text-[#22c55e] tracking-tight tabular-nums truncate">
                     {volume30d > 0 ? `+${(volume30d / 1000).toFixed(1)}k` : "0"}{" "}
                     <span className="text-xs sm:text-sm font-bold text-spotify-muted">kg</span>
                   </div>

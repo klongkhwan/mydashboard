@@ -15,7 +15,9 @@ import {
   TrendingUp,
   XCircle,
   Sparkles,
+  CalendarDays,
 } from "lucide-react"
+import { InvestmentPnlHeatmapModal } from "@/components/my-wealth/investment-pnl-heatmap-modal"
 import { ColumnDef } from "@tanstack/react-table"
 import { PageHeader } from "@/components/ui/page-header"
 import { ReusableDataTable } from "@/components/ui/reusable-data-table"
@@ -181,6 +183,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
   const [filterType, setFilterType] = useState("all")
 
   // Modals state
+  const [showHeatmapModal, setShowHeatmapModal] = useState(false)
   const [editTx, setEditTx] = useState<WealthTransaction | null>(null)
   const [deleteTxId, setDeleteTxId] = useState<string | null>(null)
 
@@ -244,13 +247,47 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
   // Handlers for Investments
   const handleSaveInvestment = async (formData: FormData) => {
     if (!editInv) return
-    const quote = String(formData.get("quote_asset") || "THB")
+    const quote = String(formData.get("quote_asset") || editInv.quote_asset || "THB")
     const isUsd = quote === "USD" || quote === "USDT"
     const rate = usdThbRate > 0 ? usdThbRate : 34.0
     const rawOpened = Number(formData.get("opened_amount") || formData.get("opened_amount_thb") || 0)
-    const rawFee = Number(formData.get("entry_fee") || formData.get("entry_fee_thb") || 0)
+    let rawFee = Number(formData.get("entry_fee") || formData.get("entry_fee_thb") || 0)
+
+    const q = formData.get("quantity") ? Number(formData.get("quantity")) : Number(editInv.quantity || 0)
+    const rawEntryPrice = formData.get("entry_price") ? Number(formData.get("entry_price")) : Number(editInv.entry_price || 0)
+
+    // Auto-calculate entry fee if not provided or 0, when opened_amount > (quantity * entry_price)
+    if (rawFee <= 0 && q > 0 && rawEntryPrice > 0 && rawOpened > (q * rawEntryPrice)) {
+      rawFee = Math.round((rawOpened - (q * rawEntryPrice)) * 10000) / 10000
+    }
+
     const opened_amount_thb = isUsd ? Math.round(rawOpened * rate * 100) / 100 : rawOpened
     const entry_fee_thb = isUsd ? Math.round(rawFee * rate * 100) / 100 : rawFee
+
+    const rawExitPrice = formData.get("exit_price") ? Number(formData.get("exit_price")) : undefined
+    const rawClosedAmount = formData.get("closed_amount") ? Number(formData.get("closed_amount")) : undefined
+    let rawExitFee = formData.get("exit_fee") !== null && formData.get("exit_fee") !== "" ? Number(formData.get("exit_fee")) : 0
+
+    // Auto-calculate exit fee if not provided or 0, when (quantity * exit_price) > closed_amount
+    if (rawExitFee <= 0 && q > 0 && rawExitPrice && rawExitPrice > 0 && rawClosedAmount && rawClosedAmount > 0) {
+      const grossExit = q * rawExitPrice
+      if (grossExit > rawClosedAmount) {
+        rawExitFee = Math.round((grossExit - rawClosedAmount) * 10000) / 10000
+      }
+    }
+
+    const exit_fee_thb = rawExitFee > 0 ? (isUsd ? Math.round(rawExitFee * rate * 100) / 100 : rawExitFee) : (editInv.exit_fee_thb !== null && editInv.exit_fee_thb !== undefined ? Number(editInv.exit_fee_thb) : 0)
+    const closed_at = formData.get("closed_at") ? String(formData.get("closed_at")) : undefined
+
+    let closed_amount_thb: number | undefined = undefined
+    if (rawClosedAmount !== undefined && rawClosedAmount > 0) {
+      closed_amount_thb = isUsd ? Math.round(rawClosedAmount * rate * 100) / 100 : rawClosedAmount
+    } else if (editInv.status === "closed" && rawExitPrice !== undefined && rawExitPrice > 0) {
+      if (q > 0) {
+        const calcClosed = (q * rawExitPrice) - (rawExitFee > 0 ? rawExitFee : 0)
+        closed_amount_thb = isUsd ? Math.round(calcClosed * rate * 100) / 100 : calcClosed
+      }
+    }
 
     startTransition(async () => {
       try {
@@ -264,6 +301,10 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           quantity: formData.get("quantity") || undefined,
           entry_price: formData.get("entry_price") || undefined,
           entry_fee_thb,
+          exit_price: rawExitPrice,
+          exit_fee_thb,
+          closed_amount_thb: closed_amount_thb ?? (editInv.status === "closed" ? (editInv.closed_amount_thb !== null && editInv.closed_amount_thb !== undefined ? Number(editInv.closed_amount_thb) : undefined) : undefined),
+          closed_at: closed_at ?? (editInv.status === "closed" ? (editInv.closed_at || undefined) : undefined),
           deposit_amount: isUsd ? rawOpened : (formData.get("deposit_amount") || undefined),
           note: formData.get("note") || undefined,
           dual_strategy: formData.get("dual_strategy") || undefined,
@@ -287,7 +328,18 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
     const isUsd = closeInv.quote_asset === "USD" || closeInv.quote_asset === "USDT"
     const rate = usdThbRate > 0 ? usdThbRate : 34.0
     const rawClosed = Number(formData.get("closed_amount") || formData.get("closed_amount_thb") || 0)
-    const rawExitFee = Number(formData.get("exit_fee") || formData.get("exit_fee_thb") || 0)
+    let rawExitFee = Number(formData.get("exit_fee") || formData.get("exit_fee_thb") || 0)
+    const exitPrice = formData.get("exit_price") ? Number(formData.get("exit_price")) : undefined
+    const qty = Number(closeInv.quantity || 0)
+
+    // Auto-calculate exit fee if not provided (0) and gross exit > net received
+    if (rawExitFee <= 0 && qty > 0 && exitPrice && exitPrice > 0 && rawClosed > 0) {
+      const grossExit = qty * exitPrice
+      if (grossExit > rawClosed) {
+        rawExitFee = Math.round((grossExit - rawClosed) * 10000) / 10000
+      }
+    }
+
     const closed_amount_thb = isUsd ? Math.round(rawClosed * rate * 100) / 100 : rawClosed
     const exit_fee_thb = isUsd ? Math.round(rawExitFee * rate * 100) / 100 : rawExitFee
 
@@ -298,7 +350,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           closed_amount_thb,
           closed_at: String(formData.get("closed_at")),
           exit_fee_thb,
-          exit_price: formData.get("exit_price") ? Number(formData.get("exit_price")) : undefined,
+          exit_price: exitPrice,
           settlement_asset: formData.get("settlement_asset") ? String(formData.get("settlement_asset")) : undefined,
           settlement_amount: formData.get("settlement_amount") ? Number(formData.get("settlement_amount")) : undefined,
           interest_amount: formData.get("interest_amount") ? Number(formData.get("interest_amount")) : undefined,
@@ -655,35 +707,35 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
         return (
           <div className="flex items-center justify-end gap-1 pl-6">
             {item.status === "open" && (
-              <>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10 font-bold"
-                  onClick={() => setCloseInv(item)}
-                  title="ปิดดีล / รับเงินกลับ"
-                >
-                  <CheckCircle className="h-3.5 w-3.5 mr-1" /> ปิดดีล
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 text-spotify-muted hover:text-white"
-                  onClick={() => setEditInv(item)}
-                  title="แก้ไขข้อมูล"
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 text-spotify-muted hover:text-amber-400"
-                  onClick={() => handleCancelInvestment(item.id)}
-                  title="ยกเลิกรายการ"
-                >
-                  <XCircle className="h-4 w-4" />
-                </Button>
-              </>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10 font-bold"
+                onClick={() => setCloseInv(item)}
+                title="ปิดดีล / รับเงินกลับ"
+              >
+                <CheckCircle className="h-3.5 w-3.5 mr-1" /> ปิดดีล
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-spotify-muted hover:text-white"
+              onClick={() => setEditInv(item)}
+              title="แก้ไขข้อมูล"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            {item.status === "open" && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-spotify-muted hover:text-amber-400"
+                onClick={() => handleCancelInvestment(item.id)}
+                title="ยกเลิกรายการ"
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
             )}
             <Button
               size="sm"
@@ -1080,26 +1132,38 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           <div className="flex flex-wrap items-center justify-end gap-3">
             <WealthApiStatus showRate={section === "investments"} />
             {section === "investments" && (
-              <div className="flex items-center rounded-xl border border-white/10 bg-background/90 p-1 shadow-sm">
-                <button
-                  type="button"
-                  onClick={() => setDisplayCurrency("THB")}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-black transition-all ${
-                    displayCurrency === "THB" ? "bg-primary text-black shadow-play" : "text-spotify-muted hover:text-white"
-                  }`}
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowHeatmapModal(true)}
+                  className="h-8 gap-1.5 border-white/10 bg-card/60 text-xs font-bold text-white hover:bg-white/10 hover:text-white"
+                  title="ดู Heatmap กำไร/ขาดทุนรายวัน"
                 >
-                  THB
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDisplayCurrency("USD")}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-black transition-all ${
-                    displayCurrency === "USD" ? "bg-primary text-black shadow-play" : "text-spotify-muted hover:text-white"
-                  }`}
-                >
-                  USD
-                </button>
-              </div>
+                  <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                  <span>PnL Heatmap</span>
+                </Button>
+                <div className="flex items-center rounded-xl border border-white/10 bg-background/90 p-1 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setDisplayCurrency("THB")}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-black transition-all ${
+                      displayCurrency === "THB" ? "bg-primary text-black shadow-play" : "text-spotify-muted hover:text-white"
+                    }`}
+                  >
+                    THB
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDisplayCurrency("USD")}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-black transition-all ${
+                      displayCurrency === "USD" ? "bg-primary text-black shadow-play" : "text-spotify-muted hover:text-white"
+                    }`}
+                  >
+                    USD
+                  </button>
+                </div>
+              </>
             )}
             <MyWealthQuickActions allowedModes={[config.mode]} />
           </div>
@@ -1401,15 +1465,25 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                   </p>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-spotify-muted font-bold">ยอดเงินรับกลับ ({currencyCode}) *</label>
+                  <label className="text-xs text-spotify-muted font-bold">ยอดเงินรับกลับสุทธิ ({currencyCode}) *</label>
                   <input
                     type="number"
                     name="closed_amount"
+                    id="close-deal-amount"
                     required
                     min="0.01"
                     step="any"
                     placeholder={`${currencySymbol} 0.00`}
                     className={fieldClass}
+                    onChange={(e) => {
+                      const closed = Number(e.target.value)
+                      const exitPriceEl = document.getElementById("close-deal-exit-price") as HTMLInputElement
+                      const feeEl = document.getElementById("close-deal-fee") as HTMLInputElement
+                      const p = exitPriceEl ? Number(exitPriceEl.value) : 0
+                      if (qty > 0 && p > 0 && closed > 0 && (qty * p) > closed && feeEl && !feeEl.dataset.manual) {
+                        feeEl.value = String(Math.round(((qty * p) - closed) * 10000) / 10000)
+                      }
+                    }}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -1423,12 +1497,42 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-spotify-muted font-bold">ค่าธรรมเนียมปิด ({currencyCode})</label>
-                    <input type="number" name="exit_fee" min="0" step="any" defaultValue="0" className={fieldClass} />
+                    <label className="text-xs text-spotify-muted font-bold">ราคาออก ({currencyCode})</label>
+                    <input
+                      type="number"
+                      name="exit_price"
+                      id="close-deal-exit-price"
+                      min="0"
+                      step="any"
+                      placeholder="ราคาขาย"
+                      className={fieldClass}
+                      onChange={(e) => {
+                        const p = Number(e.target.value)
+                        const closedEl = document.getElementById("close-deal-amount") as HTMLInputElement
+                        const feeEl = document.getElementById("close-deal-fee") as HTMLInputElement
+                        const closed = closedEl ? Number(closedEl.value) : 0
+                        if (qty > 0 && p > 0 && closed > 0 && (qty * p) > closed && feeEl && !feeEl.dataset.manual) {
+                          feeEl.value = String(Math.round(((qty * p) - closed) * 10000) / 10000)
+                        }
+                      }}
+                    />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-spotify-muted font-bold">ราคาออก ({currencyCode})</label>
-                    <input type="number" name="exit_price" min="0" step="any" placeholder="ราคาขาย" className={fieldClass} />
+                    <label className="text-xs text-spotify-muted font-bold">ค่าธรรมเนียมปิด ({currencyCode})</label>
+                    <input
+                      type="number"
+                      name="exit_fee"
+                      id="close-deal-fee"
+                      min="0"
+                      step="any"
+                      defaultValue="0"
+                      placeholder="คำนวณอัตโนมัติ"
+                      className={fieldClass}
+                      onChange={(e) => {
+                        e.currentTarget.dataset.manual = "true"
+                      }}
+                    />
+                    <span className="text-[10px] text-spotify-muted">คำนวณอัตโนมัติ: (จำนวน x ราคาออก) - เงินสุทธิ</span>
                   </div>
                 </div>
 
@@ -1474,6 +1578,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           </DialogHeader>
           {editInv && (() => {
             const isUsd = editInv.quote_asset === "USD" || editInv.quote_asset === "USDT"
+            const rate = usdThbRate > 0 ? usdThbRate : 34.0
             const qty = Number(editInv.quantity || 0)
             const price = Number(editInv.entry_price || 0)
             const calculatedUsd = qty > 0 && price > 0 ? qty * price : 0
@@ -1483,6 +1588,16 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
               ? (deposit > 0 ? deposit : (calculatedUsd > 0 && rawOpened <= calculatedUsd * 1.5) ? calculatedUsd : (rawOpened > 0 ? rawOpened : calculatedUsd))
               : rawOpened
             const curr = isUsd ? "USD" : "THB"
+
+            const exitPriceVal = editInv.exit_price !== undefined && editInv.exit_price !== null ? String(editInv.exit_price) : ""
+            const rawClosedThb = Number(editInv.closed_amount_thb || 0)
+            const closedVal = isUsd
+              ? (editInv.exit_price && qty > 0 ? Number(editInv.exit_price) * qty : (rawClosedThb > 0 ? Math.round((rawClosedThb / rate) * 100) / 100 : 0))
+              : rawClosedThb
+            const rawExitFeeThb = Number(editInv.exit_fee_thb || 0)
+            const exitFeeVal = isUsd
+              ? (rawExitFeeThb > 0 ? Math.round((rawExitFeeThb / rate) * 100) / 100 : 0)
+              : rawExitFeeThb
 
             return (
               <form action={handleSaveInvestment} className="flex flex-col flex-1 overflow-hidden">
@@ -1535,7 +1650,27 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                     </div>
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] text-spotify-muted font-bold">เงินลงทุน ({curr})</label>
-                      <input type="number" name="opened_amount" required min="0.01" step="any" defaultValue={String(editVal)} className={fieldClass} />
+                      <input
+                        type="number"
+                        name="opened_amount"
+                        id="edit-opened-amount"
+                        required
+                        min="0.01"
+                        step="any"
+                        defaultValue={String(editVal)}
+                        className={fieldClass}
+                        onChange={(e) => {
+                          const opened = Number(e.target.value)
+                          const qEl = document.getElementById("edit-quantity") as HTMLInputElement
+                          const pEl = document.getElementById("edit-entry-price") as HTMLInputElement
+                          const feeEl = document.getElementById("edit-entry-fee") as HTMLInputElement
+                          const q = qEl ? Number(qEl.value) : qty
+                          const p = pEl ? Number(pEl.value) : price
+                          if (q > 0 && p > 0 && opened > (q * p) && feeEl && !feeEl.dataset.manual) {
+                            feeEl.value = String(Math.round((opened - (q * p)) * 10000) / 10000)
+                          }
+                        }}
+                      />
                     </div>
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] text-spotify-muted font-bold">วันที่เปิด</label>
@@ -1543,17 +1678,142 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                     </div>
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] text-spotify-muted font-bold">จำนวน</label>
-                      <input type="number" name="quantity" step="any" defaultValue={String(editInv.quantity || "")} className={fieldClass} />
+                      <input
+                        type="number"
+                        name="quantity"
+                        id="edit-quantity"
+                        step="any"
+                        defaultValue={String(editInv.quantity || "")}
+                        className={fieldClass}
+                        onChange={(e) => {
+                          const q = Number(e.target.value)
+                          const pIn = document.getElementById("edit-entry-price") as HTMLInputElement
+                          const oIn = document.getElementById("edit-opened-amount") as HTMLInputElement
+                          const feeIn = document.getElementById("edit-entry-fee") as HTMLInputElement
+                          const p = pIn ? Number(pIn.value) : 0
+                          const opened = oIn ? Number(oIn.value) : 0
+                          if (q > 0 && p > 0 && opened > (q * p) && feeIn && !feeIn.dataset.manual) {
+                            feeIn.value = String(Math.round((opened - (q * p)) * 10000) / 10000)
+                          }
+                          const epIn = document.getElementById("edit-exit-price") as HTMLInputElement
+                          const cIn = document.getElementById("edit-closed-amount") as HTMLInputElement
+                          const eFeeIn = document.getElementById("edit-exit-fee") as HTMLInputElement
+                          const ep = epIn ? Number(epIn.value) : 0
+                          const closed = cIn ? Number(cIn.value) : 0
+                          if (q > 0 && ep > 0 && closed > 0 && (q * ep) > closed && eFeeIn && !eFeeIn.dataset.manual) {
+                            eFeeIn.value = String(Math.round(((q * ep) - closed) * 10000) / 10000)
+                          }
+                        }}
+                      />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-spotify-muted font-bold">ราคาเข้า</label>
-                      <input type="number" name="entry_price" step="any" defaultValue={String(editInv.entry_price || "")} className={fieldClass} />
+                      <label className="text-[11px] text-spotify-muted font-bold">ราคาเข้า ({curr})</label>
+                      <input
+                        type="number"
+                        name="entry_price"
+                        id="edit-entry-price"
+                        step="any"
+                        defaultValue={String(editInv.entry_price || "")}
+                        placeholder="ราคาซื้อ"
+                        className={fieldClass}
+                        onChange={(e) => {
+                          const p = Number(e.target.value)
+                          const qEl = document.getElementById("edit-quantity") as HTMLInputElement
+                          const oEl = document.getElementById("edit-opened-amount") as HTMLInputElement
+                          const feeEl = document.getElementById("edit-entry-fee") as HTMLInputElement
+                          const q = qEl ? Number(qEl.value) : qty
+                          const opened = oEl ? Number(oEl.value) : editVal
+                          if (q > 0 && p > 0 && opened > (q * p) && feeEl && !feeEl.dataset.manual) {
+                            feeEl.value = String(Math.round((opened - (q * p)) * 10000) / 10000)
+                          }
+                        }}
+                      />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-spotify-muted font-bold">ค่าธรรมเนียม ({curr})</label>
-                      <input type="number" name="entry_fee" min="0" step="any" defaultValue={String(editInv.entry_fee_thb || 0)} className={fieldClass} />
+                      <label className="text-[11px] text-spotify-muted font-bold">ราคาออก ({curr})</label>
+                      <input
+                        type="number"
+                        name="exit_price"
+                        id="edit-exit-price"
+                        step="any"
+                        defaultValue={exitPriceVal}
+                        placeholder="ราคาขาย"
+                        className={fieldClass}
+                        onChange={(e) => {
+                          const ep = Number(e.target.value)
+                          const qEl = document.getElementById("edit-quantity") as HTMLInputElement
+                          const cEl = document.getElementById("edit-closed-amount") as HTMLInputElement
+                          const feeEl = document.getElementById("edit-exit-fee") as HTMLInputElement
+                          const q = qEl ? Number(qEl.value) : qty
+                          const closed = cEl ? Number(cEl.value) : 0
+                          if (q > 0 && ep > 0 && closed > 0 && (q * ep) > closed && feeEl && !feeEl.dataset.manual) {
+                            feeEl.value = String(Math.round(((q * ep) - closed) * 10000) / 10000)
+                          }
+                        }}
+                      />
                     </div>
                     <div className="flex flex-col gap-1">
+                      <label className="text-[11px] text-spotify-muted font-bold">ค่าธรรมเนียมเข้า ({curr})</label>
+                      <input
+                        type="number"
+                        name="entry_fee"
+                        id="edit-entry-fee"
+                        min="0"
+                        step="any"
+                        defaultValue={String(isUsd ? Math.round((Number(editInv.entry_fee_thb || 0) / rate) * 100) / 100 : (editInv.entry_fee_thb || 0))}
+                        placeholder="คำนวณอัตโนมัติ"
+                        className={fieldClass}
+                        onChange={(e) => { e.currentTarget.dataset.manual = "true" }}
+                      />
+                      <span className="text-[10px] text-spotify-muted">คำนวณอัตโนมัติ: เงินลงทุน - (จำนวน x ราคาเข้า)</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] text-spotify-muted font-bold">ค่าธรรมเนียมออก ({curr})</label>
+                      <input
+                        type="number"
+                        name="exit_fee"
+                        id="edit-exit-fee"
+                        min="0"
+                        step="any"
+                        defaultValue={String(exitFeeVal)}
+                        placeholder="คำนวณอัตโนมัติ"
+                        className={fieldClass}
+                        onChange={(e) => { e.currentTarget.dataset.manual = "true" }}
+                      />
+                      <span className="text-[10px] text-spotify-muted">คำนวณอัตโนมัติ: (จำนวน x ราคาออก) - เงินสุทธิ</span>
+                    </div>
+                    {editInv.status === "closed" && (
+                      <>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] text-spotify-muted font-bold">วันที่ปิดดีล</label>
+                          <DatePicker name="closed_at" defaultValue={editInv.closed_at || undefined} className={fieldClass} />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] text-spotify-muted font-bold">ยอดเงินรับกลับสุทธิ ({curr})</label>
+                          <input
+                            type="number"
+                            name="closed_amount"
+                            id="edit-closed-amount"
+                            step="any"
+                            defaultValue={closedVal > 0 ? String(closedVal) : ""}
+                            placeholder={`${curr === "USD" ? "$" : "฿"} 0.00`}
+                            className={fieldClass}
+                            onChange={(e) => {
+                              const closed = Number(e.target.value)
+                              const qEl = document.getElementById("edit-quantity") as HTMLInputElement
+                              const epEl = document.getElementById("edit-exit-price") as HTMLInputElement
+                              const feeEl = document.getElementById("edit-exit-fee") as HTMLInputElement
+                              const q = qEl ? Number(qEl.value) : qty
+                              const ep = epEl ? Number(epEl.value) : Number(exitPriceVal || 0)
+                              if (q > 0 && ep > 0 && closed > 0 && (q * ep) > closed && feeEl && !feeEl.dataset.manual) {
+                                feeEl.value = String(Math.round(((q * ep) - closed) * 10000) / 10000)
+                              }
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+                    <div className="flex flex-col gap-1 md:col-span-2">
                       <label className="text-[11px] text-spotify-muted font-bold">บันทึก</label>
                       <input name="note" defaultValue={editInv.note || ""} className={fieldClass} />
                     </div>
@@ -1693,6 +1953,17 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* MODAL: PnL Heatmap */}
+      {section === "investments" && (
+        <InvestmentPnlHeatmapModal
+          open={showHeatmapModal}
+          onOpenChange={setShowHeatmapModal}
+          investments={investments}
+          displayCurrency={displayCurrency}
+          usdThbRate={usdThbRate}
+          formatMoney={formatMoney}
+        />
+      )}
     </div>
   )
 }
