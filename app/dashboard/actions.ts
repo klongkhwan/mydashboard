@@ -12,7 +12,6 @@ import { getUsdThbRate } from "@/lib/market-quotes"
 
 export interface DashboardDataResult {
   userName: string
-  generatedAt: string
   summary: DashboardSummary
   errors: {
     wealth?: string
@@ -159,18 +158,8 @@ export async function getDashboardData(): Promise<DashboardDataResult> {
     today,
   })
 
-  // Format generatedAt in Thai locale (time only, no date)
-  const now = new Date()
-  const generatedAt = now.toLocaleTimeString("th-TH", {
-    timeZone: "Asia/Bangkok",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  })
-
   return {
     userName,
-    generatedAt,
     summary,
     errors,
     usdThbRate: rate,

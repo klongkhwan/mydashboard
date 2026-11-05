@@ -68,8 +68,6 @@ interface WealthContextType {
   investments: WealthInvestment[]
   quotes: Record<string, { symbol: string; price: number; source: string }>
   usdThbRate: number
-  quotesLoading: boolean
-  lastUpdated: string
   displayCurrency: "THB" | "USD"
   setDisplayCurrency: (currency: "THB" | "USD") => void
   formatMoney: (amountThb: number) => string
@@ -100,21 +98,7 @@ export function WealthProvider({
   const [investments, setInvestments] = useState<WealthInvestment[]>(initialData.investments)
   const [quotes, setQuotes] = useState<Record<string, { symbol: string; price: number; source: string }>>({})
   const [usdThbRate, setUsdThbRate] = useState<number>(34.0)
-  const [quotesLoading, setQuotesLoading] = useState<boolean>(true)
-  const [lastUpdated, setLastUpdated] = useState<string>("")
   const [displayCurrency, setDisplayCurrencyState] = useState<"THB" | "USD">("THB")
-
-  const getBangkokTime = () => {
-    return new Date().toLocaleTimeString("th-TH", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    })
-  }
-
-  useEffect(() => {
-    setLastUpdated(getBangkokTime())
-  }, [])
 
   useEffect(() => {
     try {
@@ -163,7 +147,6 @@ export function WealthProvider({
     setCategories(initialData.categories)
     setTransactions(initialData.transactions)
     setInvestments(initialData.investments)
-    setLastUpdated(getBangkokTime())
   }, [initialData])
 
   // Non-blocking fetch for live quotes & exchange rate
@@ -173,22 +156,14 @@ export function WealthProvider({
       .filter((inv) => inv.status === "open")
       .map((inv) => ({ symbol: inv.asset_symbol, investmentType: inv.investment_type }))
 
-    setQuotesLoading(true)
     fetchLiveInvestmentQuotes(openSymbols)
       .then((res) => {
         if (mounted) {
           if (res.quotes) setQuotes(res.quotes)
           if (res.usdThbRate) setUsdThbRate(res.usdThbRate)
-          setLastUpdated(getBangkokTime())
-          setQuotesLoading(false)
         }
       })
-      .catch(() => {
-        if (mounted) {
-          setLastUpdated(getBangkokTime())
-          setQuotesLoading(false)
-        }
-      })
+      .catch(() => {})
 
     return () => {
       mounted = false
@@ -221,7 +196,6 @@ export function WealthProvider({
   const refreshData = useCallback(() => {
     startTransition(() => {
       router.refresh()
-      setLastUpdated(getBangkokTime())
     })
   }, [router])
 
@@ -233,8 +207,6 @@ export function WealthProvider({
         investments,
         quotes: effectiveQuotes,
         usdThbRate,
-        quotesLoading,
-        lastUpdated,
         displayCurrency,
         setDisplayCurrency,
         formatMoney,

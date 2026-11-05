@@ -23,18 +23,18 @@ const MUSCLE_LABELS = {
 }
 type MuscleGroup = keyof typeof MUSCLE_LABELS
 
-const COLOR_STEPS = ["#485253", "#0e4429", "#006d32", "#26a641", "#39d353"]
+const COLOR_STEPS = ["#485253", "#3a5a4b", "#2d7d52", "#23aa59", "#1ed760"]
 
 function getMuscleColor(sets: number, mode: ViewMode): string {
   if (mode === "fatigue") {
-    if (sets >= 12) return "#f59e0b"
-    if (sets >= 6) return "#22c55e"
-    if (sets > 0) return "#10b981"
+    if (sets >= 16) return "#f59e0b"
+    if (sets >= 8) return "#22c55e"
+    if (sets > 0) return COLOR_STEPS[1]
     return COLOR_STEPS[0]
   }
-  if (sets >= 15) return COLOR_STEPS[4]
-  if (sets >= 10) return COLOR_STEPS[3]
-  if (sets >= 5) return COLOR_STEPS[2]
+  if (sets >= 20) return COLOR_STEPS[4]
+  if (sets >= 12) return COLOR_STEPS[3]
+  if (sets >= 6) return COLOR_STEPS[2]
   if (sets >= 1) return COLOR_STEPS[1]
   return COLOR_STEPS[0]
 }
@@ -233,7 +233,7 @@ export function MuscleMap({ workouts, className = "" }: MuscleMapProps) {
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
           {viewMode === "fatigue" ? (
-            <><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />1–5<span className="ml-2 h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />6–11<span className="ml-2 h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />12+ sets</>
+            <><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />1–7<span className="ml-2 h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />8–15<span className="ml-2 h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />16+ sets</>
           ) : (
             <><span>Fewer sets</span><span className="flex gap-1" aria-hidden="true">{COLOR_STEPS.map((color) => <span key={color} className="h-2 w-3 rounded-sm" style={{ backgroundColor: color }} />)}</span><span>More sets</span></>
           )}

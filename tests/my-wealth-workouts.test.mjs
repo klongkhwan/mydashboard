@@ -240,6 +240,64 @@ test("Workout dates format to DD/MM/YYYY for UI display (preventing year-first d
   assert.equal(formatDateDDMMYYYY(null), "-")
 })
 
+test("copyWorkoutExercises creates fresh routine copy with completed sets reset to false", async () => {
+  const { copyWorkoutExercises, isWorkoutCompleted } = await import("../lib/workout-presets.ts")
+
+  const previousWorkout = {
+    workout_date: "2026-11-04",
+    title: "Chest & Triceps",
+    duration_minutes: 45,
+    exercises: [
+      {
+        name: "Bench Press",
+        muscle_group: "chest",
+        sets: [
+          { set_number: 1, weight_kg: 60, reps: 10, completed: true },
+          { set_number: 2, weight_kg: 65, reps: 8, completed: true },
+        ],
+      },
+      {
+        name: "Triceps Pushdown",
+        muscle_group: "arms",
+        sets: [
+          { set_number: 1, weight_kg: 25, reps: 12, completed: true },
+        ],
+      },
+    ],
+  }
+
+  // Pre-condition: original workout is completed
+  assert.equal(isWorkoutCompleted(previousWorkout), true)
+
+  // Copy exercises for the new day
+  const copiedExercises = copyWorkoutExercises(previousWorkout.exercises)
+
+  // Check structure & immutability
+  assert.equal(copiedExercises.length, 2)
+  assert.notEqual(copiedExercises, previousWorkout.exercises)
+  assert.notEqual(copiedExercises[0].sets, previousWorkout.exercises[0].sets)
+
+  // Weights & reps preserved
+  assert.equal(copiedExercises[0].sets[0].weight_kg, 60)
+  assert.equal(copiedExercises[0].sets[0].reps, 10)
+  assert.equal(copiedExercises[0].sets[1].weight_kg, 65)
+  assert.equal(copiedExercises[0].sets[1].reps, 8)
+
+  // Completed status strictly reset to false so new day starts uncompleted
+  assert.equal(copiedExercises[0].sets[0].completed, false)
+  assert.equal(copiedExercises[0].sets[1].completed, false)
+  assert.equal(copiedExercises[1].sets[0].completed, false)
+
+  // A copied workout session before ticking sets must not count as completed
+  const freshWorkoutSession = {
+    workout_date: "2026-11-05",
+    title: previousWorkout.title,
+    duration_minutes: 0,
+    exercises: copiedExercises,
+  }
+  assert.equal(isWorkoutCompleted(freshWorkoutSession), false)
+})
+
 
 
 

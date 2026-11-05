@@ -3,7 +3,6 @@
 import { useMemo, useTransition, useState } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { MyWealthCashFlowChart } from "@/components/my-wealth/cash-flow-chart"
-import { WealthApiStatus } from "@/components/my-wealth/wealth-status"
 import { useWealth } from "@/components/my-wealth/wealth-context"
 import { markWealthExpensePaid } from "@/app/dashboard/my-wealth/actions"
 import { formatDateDDMMYYYY, money as lockedMoney } from "@/components/dashboard/format"
@@ -200,8 +199,6 @@ export default function MyWealthOverviewPage() {
         description="ภาพรวมกระแสเงินสด รายรับ รายจ่าย และพอร์ตการลงทุนของคุณ"
         action={
           <div className="flex flex-wrap items-center justify-end gap-2.5">
-            <WealthApiStatus showRate />
-
             {/* Currency Switcher */}
             <div className="flex items-center rounded-xl border border-white/10 bg-background/90 p-1 shadow-sm">
               <button

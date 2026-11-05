@@ -153,7 +153,6 @@ test('a closed investment row stays fixed when market prices and exchange rates 
         refreshData() {}, setDisplayCurrency() {},
       }) },
       '@/components/my-wealth/quick-actions': { MyWealthQuickActions: () => null },
-      '@/components/my-wealth/wealth-status': { WealthApiStatus: () => null },
       './actions': {},
     })
     const html = renderToStaticMarkup(React.createElement(MyWealthSectionPage, { section: 'investments' }))

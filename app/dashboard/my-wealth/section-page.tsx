@@ -16,12 +16,12 @@ import {
   XCircle,
   Sparkles,
   CalendarDays,
+  Copy,
 } from "lucide-react"
 import { InvestmentPnlHeatmapModal } from "@/components/my-wealth/investment-pnl-heatmap-modal"
 import { ColumnDef } from "@tanstack/react-table"
 import { PageHeader } from "@/components/ui/page-header"
 import { ReusableDataTable } from "@/components/ui/reusable-data-table"
-import { WealthApiStatus } from "@/components/my-wealth/wealth-status"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -189,6 +189,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
 
   const [editInv, setEditInv] = useState<WealthInvestment | null>(null)
   const [closeInv, setCloseInv] = useState<WealthInvestment | null>(null)
+  const [copyInv, setCopyInv] = useState<WealthInvestment | null>(null)
   const [deleteInvId, setDeleteInvId] = useState<string | null>(null)
 
   const [editCat, setEditCat] = useState<WealthCategory | null>(null)
@@ -262,7 +263,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
     }
 
     const opened_amount_thb = isUsd ? Math.round(rawOpened * rate * 100) / 100 : rawOpened
-    const entry_fee_thb = isUsd ? Math.round(rawFee * rate * 100) / 100 : rawFee
+    const entry_fee_thb = isUsd ? Math.round(rawFee * rate * 10000) / 10000 : rawFee
 
     const rawExitPrice = formData.get("exit_price") ? Number(formData.get("exit_price")) : undefined
     const rawClosedAmount = formData.get("closed_amount") ? Number(formData.get("closed_amount")) : undefined
@@ -276,7 +277,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
       }
     }
 
-    const exit_fee_thb = rawExitFee > 0 ? (isUsd ? Math.round(rawExitFee * rate * 100) / 100 : rawExitFee) : (editInv.exit_fee_thb !== null && editInv.exit_fee_thb !== undefined ? Number(editInv.exit_fee_thb) : 0)
+    const exit_fee_thb = rawExitFee > 0 ? (isUsd ? Math.round(rawExitFee * rate * 10000) / 10000 : rawExitFee) : (editInv.exit_fee_thb !== null && editInv.exit_fee_thb !== undefined ? Number(editInv.exit_fee_thb) : 0)
     const closed_at = formData.get("closed_at") ? String(formData.get("closed_at")) : undefined
 
     let closed_amount_thb: number | undefined = undefined
@@ -341,7 +342,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
     }
 
     const closed_amount_thb = isUsd ? Math.round(rawClosed * rate * 100) / 100 : rawClosed
-    const exit_fee_thb = isUsd ? Math.round(rawExitFee * rate * 100) / 100 : rawExitFee
+    const exit_fee_thb = isUsd ? Math.round(rawExitFee * rate * 10000) / 10000 : rawExitFee
 
     startTransition(async () => {
       try {
@@ -726,6 +727,17 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
             >
               <Edit className="h-4 w-4" />
             </Button>
+            {item.status === "closed" && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-spotify-muted hover:text-white"
+                onClick={() => setCopyInv(item)}
+                title="คัดลอกเป็นรายการใหม่"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            )}
             {item.status === "open" && (
               <Button
                 size="sm"
@@ -1130,7 +1142,6 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
         description={config.description}
         action={
           <div className="flex flex-wrap items-center justify-end gap-3">
-            <WealthApiStatus showRate={section === "investments"} />
             {section === "investments" && (
               <>
                 <Button
@@ -1165,7 +1176,11 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                 </div>
               </>
             )}
-            <MyWealthQuickActions allowedModes={[config.mode]} />
+            <MyWealthQuickActions
+              allowedModes={[config.mode]}
+              copyFrom={copyInv}
+              onCopyHandled={() => setCopyInv(null)}
+            />
           </div>
         }
       />
@@ -1524,7 +1539,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                       name="exit_fee"
                       id="close-deal-fee"
                       min="0"
-                      step="any"
+                      step="0.0001"
                       defaultValue="0"
                       placeholder="คำนวณอัตโนมัติ"
                       className={fieldClass}
@@ -1596,7 +1611,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
               : rawClosedThb
             const rawExitFeeThb = Number(editInv.exit_fee_thb || 0)
             const exitFeeVal = isUsd
-              ? (rawExitFeeThb > 0 ? Math.round((rawExitFeeThb / rate) * 100) / 100 : 0)
+              ? (rawExitFeeThb > 0 ? Math.round((rawExitFeeThb / rate) * 10000) / 10000 : 0)
               : rawExitFeeThb
 
             return (
@@ -1759,8 +1774,8 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                         name="entry_fee"
                         id="edit-entry-fee"
                         min="0"
-                        step="any"
-                        defaultValue={String(isUsd ? Math.round((Number(editInv.entry_fee_thb || 0) / rate) * 100) / 100 : (editInv.entry_fee_thb || 0))}
+                        step="0.0001"
+                        defaultValue={String(isUsd ? Math.round((Number(editInv.entry_fee_thb || 0) / rate) * 10000) / 10000 : (editInv.entry_fee_thb || 0))}
                         placeholder="คำนวณอัตโนมัติ"
                         className={fieldClass}
                         onChange={(e) => { e.currentTarget.dataset.manual = "true" }}
@@ -1774,7 +1789,7 @@ export function MyWealthSectionPage({ section }: { section: Section }) {
                         name="exit_fee"
                         id="edit-exit-fee"
                         min="0"
-                        step="any"
+                        step="0.0001"
                         defaultValue={String(exitFeeVal)}
                         placeholder="คำนวณอัตโนมัติ"
                         className={fieldClass}

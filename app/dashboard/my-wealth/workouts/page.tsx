@@ -18,6 +18,7 @@ import {
   Edit3,
   History,
   Scale,
+  Copy,
 } from "lucide-react"
 import { WorkoutDialog, WorkoutRecord } from "@/components/my-wealth/workout-dialog"
 import { WorkoutActivityHeatmap } from "@/components/my-wealth/workout-activity-heatmap"
@@ -50,11 +51,13 @@ export default function WorkoutsPage() {
   const [activeTab, setActiveTab] = useState<"stats" | "history">("stats")
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>("home_fullbody")
   const [workoutToEdit, setWorkoutToEdit] = useState<WorkoutRecord | null>(null)
+  const [workoutToCopy, setWorkoutToCopy] = useState<WorkoutRecord | null>(null)
   const [initialDate, setInitialDate] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   const handleOpenPreset = (presetId: string) => {
     setWorkoutToEdit(null)
+    setWorkoutToCopy(null)
     setInitialDate(null)
     setSelectedPresetId(presetId)
     setDialogOpen(true)
@@ -63,6 +66,7 @@ export default function WorkoutsPage() {
   const handleOpenCreate = (dateStr?: string) => {
     const targetDate = dateStr || new Date().toLocaleDateString("en-CA")
     setWorkoutToEdit(null)
+    setWorkoutToCopy(null)
     setInitialDate(targetDate)
     setSelectedPresetId("home_fullbody")
     setDialogOpen(true)
@@ -70,6 +74,14 @@ export default function WorkoutsPage() {
 
   const handleOpenEdit = (workout: WorkoutRecord) => {
     setWorkoutToEdit(workout)
+    setWorkoutToCopy(null)
+    setInitialDate(null)
+    setDialogOpen(true)
+  }
+
+  const handleOpenCopy = (workout: WorkoutRecord) => {
+    setWorkoutToEdit(null)
+    setWorkoutToCopy(workout)
     setInitialDate(null)
     setDialogOpen(true)
   }
@@ -303,6 +315,17 @@ export default function WorkoutsPage() {
                         <Flame className="h-3.5 w-3.5" />
                         <span>{Number(workout.total_volume_kg).toLocaleString()} kg</span>
                       </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleOpenCopy(workout)
+                        }}
+                        className="h-6 w-6 rounded flex items-center justify-center text-white/40 hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="คัดลอก Routine ไปวันนี้"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
                       <span className="h-6 w-6 rounded flex items-center justify-center text-white/30 group-hover:text-primary transition-colors">
                         <Edit3 className="h-3.5 w-3.5" />
                       </span>
@@ -364,12 +387,15 @@ export default function WorkoutsPage() {
           setDialogOpen(isOpen)
           if (!isOpen) {
             setWorkoutToEdit(null)
+            setWorkoutToCopy(null)
             setInitialDate(null)
           }
         }}
         initialPresetId={selectedPresetId}
         initialDate={initialDate}
         workoutToEdit={workoutToEdit}
+        workoutToCopy={workoutToCopy}
+        onCopy={handleOpenCopy}
         onSuccess={loadData}
         onDeleteSuccess={(deletedId) => {
           setWorkouts((prev) => prev.filter((w) => w.id !== deletedId))

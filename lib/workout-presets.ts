@@ -753,6 +753,16 @@ export function calculateMuscleSets(
   return result
 }
 
+export function copyWorkoutExercises<T extends { sets: Array<{ completed: boolean; weight_kg: number; reps: number; set_number: number }> }>(
+  exercises: T[]
+): T[] {
+  // Fresh copy for a new day: same exercises/weights/reps, nothing ticked yet
+  return exercises.map((ex) => ({
+    ...ex,
+    sets: ex.sets.map((s) => ({ ...s, completed: false })),
+  }))
+}
+
 export function isWorkoutCompleted(w: {
   workout_date?: string
   exercises?: any[]

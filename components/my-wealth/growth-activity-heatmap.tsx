@@ -13,9 +13,18 @@ interface GrowthActivityHeatmapProps {
   className?: string
 }
 
-const LEVEL_COLORS = ["bg-muted", "bg-primary/25", "bg-primary/45", "bg-primary/70", "bg-primary"]
+const LEVEL_COLORS = ["bg-muted", "bg-primary/15", "bg-primary/35", "bg-primary/65", "bg-primary"]
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const LEVEL_LABELS = ["0", "1", "2–3", "4–5", "6+"]
+
+function getActivityLevel(count: number): number {
+  if (count >= 6) return 4
+  if (count >= 4) return 3
+  if (count >= 2) return 2
+  if (count >= 1) return 1
+  return 0
+}
 
 export function GrowthActivityHeatmap({ logs, today, onSelectDate, className }: GrowthActivityHeatmapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -84,6 +93,7 @@ export function GrowthActivityHeatmap({ logs, today, onSelectDate, className }: 
                     const count = counts.get(date) ?? 0
                     const isFuture = date > today
                     const description = `${formatDateDDMMYYYY(date)}: ${isFuture ? "ยังมาไม่ถึง" : `${count} activities${count ? " · View Activities" : " · Log Activity"}`}`
+                    const level = getActivityLevel(count)
                     return (
                       <button
                         key={date}
@@ -95,7 +105,7 @@ export function GrowthActivityHeatmap({ logs, today, onSelectDate, className }: 
                         title={description}
                         className={cn(
                           "aspect-square w-full min-w-0 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-                          isFuture ? "bg-muted/40 disabled:cursor-default" : `${LEVEL_COLORS[Math.min(count, 4)]} hover:ring-1 hover:ring-ring`,
+                          isFuture ? "bg-muted/40 disabled:cursor-default" : `${LEVEL_COLORS[level]} hover:ring-1 hover:ring-ring`,
                           date === today && "ring-1 ring-ring ring-offset-1 ring-offset-card",
                         )}
                       />
@@ -110,10 +120,10 @@ export function GrowthActivityHeatmap({ logs, today, onSelectDate, className }: 
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4 text-xs text-muted-foreground">
         <p>เลือกวันเพื่อดูหรือบันทึกกิจกรรม</p>
-        <div className="flex items-center gap-1.5" aria-label="Activity levels: 0, 1, 2, 3 and 4 or more activities">
+        <div className="flex items-center gap-1.5" aria-label="Activity levels: 0, 1, 2-3, 4-5 and 6 or more activities">
           <span>0</span>
-          {LEVEL_COLORS.map((color, index) => <span key={color} title={`${index === 4 ? "4+" : index} activities`} className={cn("inline-block h-3 w-3 rounded-sm", color)} />)}
-          <span>4+ activities</span>
+          {LEVEL_COLORS.map((color, index) => <span key={color} title={`${LEVEL_LABELS[index]} activities`} className={cn("inline-block h-3 w-3 rounded-sm", color)} />)}
+          <span>6+ activities</span>
         </div>
       </div>
     </Card>

@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
-import { Plus, Trash2, Dumbbell, Flame, Check, Home, Sparkles, Edit3, ChevronDown } from "lucide-react"
+import { Plus, Trash2, Dumbbell, Flame, Check, Home, Sparkles, Edit3, ChevronDown, Copy } from "lucide-react"
 import { createWealthWorkout, updateWealthWorkout, deleteWealthWorkout } from "@/app/dashboard/my-wealth/actions"
 import { DatePicker } from "@/components/ui/date-picker"
 import { formatDateDDMMYYYY } from "@/components/dashboard/format"
@@ -21,6 +21,7 @@ import {
   EXERCISES_BY_CATEGORY,
   ROUTINE_PRESETS,
   PresetRoutine,
+  copyWorkoutExercises,
 } from "@/lib/workout-presets"
 
 export interface ExerciseSet {
@@ -53,8 +54,10 @@ interface WorkoutDialogProps {
   initialPresetId?: string | null
   initialDate?: string | null
   workoutToEdit?: WorkoutRecord | null
+  workoutToCopy?: WorkoutRecord | null
   onSuccess?: () => void
   onDeleteSuccess?: (id: string) => void
+  onCopy?: (workout: WorkoutRecord) => void
 }
 
 export function WorkoutDialog({
@@ -63,8 +66,10 @@ export function WorkoutDialog({
   initialPresetId,
   initialDate,
   workoutToEdit,
+  workoutToCopy,
   onSuccess,
   onDeleteSuccess,
+  onCopy,
 }: WorkoutDialogProps) {
   const { toast } = useToast()
   const [pending, startTransition] = useTransition()
@@ -128,6 +133,17 @@ export function WorkoutDialog({
             : [{ name: "Push-ups (วิดพื้น)", muscle_group: "chest", sets: [{ set_number: 1, weight_kg: 0, reps: 10, completed: false }] }]
         )
         setSelectedPresetId(null)
+      } else if (workoutToCopy) {
+        setTitle(workoutToCopy.title)
+        setDate(new Date().toLocaleDateString("en-CA"))
+        setDuration(workoutToCopy.duration_minutes || 0)
+        setNotes("")
+        setExercises(
+          Array.isArray(workoutToCopy.exercises) && workoutToCopy.exercises.length > 0
+            ? copyWorkoutExercises(workoutToCopy.exercises)
+            : [{ name: "Push-ups (วิดพื้น)", muscle_group: "chest", sets: [{ set_number: 1, weight_kg: 0, reps: 10, completed: false }] }]
+        )
+        setSelectedPresetId(null)
       } else {
         if (initialDate) setDate(initialDate)
         const targetId = initialPresetId || "home_fullbody"
@@ -139,7 +155,7 @@ export function WorkoutDialog({
     } else {
       isSubmittingRef.current = false
     }
-  }, [open, workoutToEdit, initialDate, initialPresetId])
+  }, [open, workoutToEdit, workoutToCopy, initialDate, initialPresetId])
 
   // Live total volume calculation
   const totalVolume = exercises.reduce((acc, ex) => {
@@ -321,15 +337,21 @@ export function WorkoutDialog({
         <DialogHeader className="p-4 pb-3 border-b border-white/10 shrink-0 pr-10">
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-primary/20 p-1.5 text-primary">
-              {workoutToEdit ? <Edit3 className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
+              {workoutToEdit ? <Edit3 className="h-4 w-4" /> : workoutToCopy ? <Copy className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
             </div>
             <div>
               <DialogTitle className="text-sm font-bold text-white">
-                {workoutToEdit ? `แก้ไขเซสชัน: ${workoutToEdit.title}` : "บันทึกการออกกำลังกาย"}
+                {workoutToEdit
+                  ? `แก้ไขเซสชัน: ${workoutToEdit.title}`
+                  : workoutToCopy
+                  ? `คัดลอก Routine: ${workoutToCopy.title}`
+                  : "บันทึกการออกกำลังกาย"}
               </DialogTitle>
               <DialogDescription className="text-[11px] text-spotify-muted">
                 {workoutToEdit
                   ? `วันที่ ${formatDateDDMMYYYY(workoutToEdit.workout_date)} · แก้ไขท่า น้ำหนัก และจำนวนครั้ง`
+                  : workoutToCopy
+                  ? `คัดลอกจากเซสชันวันที่ ${formatDateDDMMYYYY(workoutToCopy.workout_date)} (ตั้งเป็นวันที่วันนี้และรีเซ็ตการติ๊กสำเร็จ)`
                   : "เลือกพรีเซ็ตไร้อุปกรณ์หรือกำหนดท่าตามกลุ่มกล้ามเนื้อ"}
               </DialogDescription>
             </div>
@@ -339,8 +361,8 @@ export function WorkoutDialog({
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Scrollable Body: Presets, Session Info, Exercises List & Notes */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin">
-            {/* Routine Presets Dropdown (Hide when editing existing workout) */}
-            {!workoutToEdit && (
+            {/* Routine Presets Dropdown (Hide when editing or copying existing workout) */}
+            {!workoutToEdit && !workoutToCopy && (
             <div className="rounded-lg border border-white/10 bg-background/80 p-2.5 space-y-2">
               <div className="flex items-center justify-between">
                 <label
@@ -720,6 +742,18 @@ export function WorkoutDialog({
             </div>
 
             <div className="flex items-center gap-2">
+              {workoutToEdit && onCopy && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => onCopy(workoutToEdit)}
+                  className="text-xs border-primary/30 text-primary hover:bg-primary/10 h-8 px-2.5"
+                >
+                  <Copy className="h-3.5 w-3.5 mr-1" /> Copy to Today
+                </Button>
+              )}
               {workoutToEdit && (
                 <Button
                   type="button"

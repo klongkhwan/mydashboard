@@ -7,6 +7,7 @@ const {
   resolveQuotePrice,
   calculateOpenPositionCapitalThb,
   calculateClosedInvestmentPnl,
+  buildInvestmentCopyDefaults,
 } = require('../lib/my-wealth-calculations.js')
 
 test('buildDailyCashFlow excludes pending expenses from net cash movement', () => {
@@ -193,4 +194,34 @@ test('net cash proceeds with auto-calculated exit fee matches net PnL', () => {
   assert.equal(result.pnlNative, 480)
   assert.equal(result.pnlThb, 480)
   assert.equal(result.pnlPct, 48)
+})
+
+test('buildInvestmentCopyDefaults computes copy defaults for USD dual deal with term_days', () => {
+  const item = {
+    quote_asset: 'USDT',
+    deposit_amount: 1500,
+    term_days: 3,
+  }
+  const defaults = buildInvestmentCopyDefaults(item, '2026-11-30')
+  assert.deepEqual(defaults, {
+    quoteAsset: 'USD',
+    foreignAmount: '1500',
+    openedAt: '2026-11-30',
+    settlementDate: '2026-12-03',
+  })
+})
+
+test('buildInvestmentCopyDefaults computes copy defaults for THB stock deal', () => {
+  const item = {
+    quote_asset: 'THB',
+    quantity: 100,
+    entry_price: 35,
+  }
+  const defaults = buildInvestmentCopyDefaults(item, '2026-11-05')
+  assert.deepEqual(defaults, {
+    quoteAsset: 'THB',
+    foreignAmount: '',
+    openedAt: '2026-11-05',
+    settlementDate: '',
+  })
 })

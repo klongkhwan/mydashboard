@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { formatDateDDMMYYYY } from '../components/dashboard/format.ts'
+import { formatDateDDMMYYYY, compactMoney } from '../components/dashboard/format.ts'
 
 describe('formatDateDDMMYYYY', () => {
   it('formats YYYY-MM-DD string to DD/MM/YYYY', () => {
@@ -24,3 +24,15 @@ describe('formatDateDDMMYYYY', () => {
     assert.equal(formatDateDDMMYYYY('   '), '-')
   })
 })
+
+describe('compactMoney', () => {
+  it('formats compact THB and USD amounts correctly', () => {
+    assert.equal(compactMoney(0, 'THB'), '0')
+    assert.equal(compactMoney(500, 'THB'), '500')
+    assert.equal(compactMoney(15000, 'THB'), '15K')
+    assert.equal(compactMoney(1200000, 'THB'), '1.2M')
+    assert.equal(compactMoney(3400, 'USD', 34), '100')
+    assert.equal(compactMoney(null, 'THB'), '0')
+  })
+})
+

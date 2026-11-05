@@ -36,17 +36,36 @@ test('growth character describes progress and keeps cumulative days after the la
 
 test('heatmap shows all activities per date, five intensity levels, and disables future days', () => {
   const html = render(GrowthActivityHeatmap, {
-    logs: [...Array(5)].map((_, index) => ({ id: String(index), activity_date: '2026-10-23' })),
+    logs: [...Array(7)].map((_, index) => ({ id: String(index), activity_date: '2026-10-23' })),
     today: '2026-10-23', onSelectDate() {},
   })
   const today = html.match(/<button[^>]*aria-current="date"[^>]*>/)[0]
-  assert.match(today, /5 activities · View Activities/)
+  assert.match(today, /7 activities · View Activities/)
   assert.match(today, /bg-primary /)
   assert.doesNotMatch(today, /disabled/)
   assert.match(html, /disabled=""[^>]*aria-label="24\/10\/2026: ยังมาไม่ถึง"/)
   assert.match(html, /0 activities · Log Activity/)
-  assert.match(html, /Activity levels: 0, 1, 2, 3 and 4 or more activities/)
+  assert.match(html, /Activity levels: 0, 1, 2-3, 4-5 and 6 or more activities/)
   assert.equal((html.match(/<button/g) || []).length, 84)
+
+  // Verify widened intensity thresholds
+  const level1 = render(GrowthActivityHeatmap, {
+    logs: [{ id: '1', activity_date: '2026-10-23' }],
+    today: '2026-10-23', onSelectDate() {},
+  })
+  assert.match(level1.match(/<button[^>]*aria-current="date"[^>]*>/)[0], /bg-primary\/15/)
+
+  const level2 = render(GrowthActivityHeatmap, {
+    logs: [{ id: '1', activity_date: '2026-10-23' }, { id: '2', activity_date: '2026-10-23' }],
+    today: '2026-10-23', onSelectDate() {},
+  })
+  assert.match(level2.match(/<button[^>]*aria-current="date"[^>]*>/)[0], /bg-primary\/35/)
+
+  const level3 = render(GrowthActivityHeatmap, {
+    logs: [...Array(4)].map((_, i) => ({ id: String(i), activity_date: '2026-10-23' })),
+    today: '2026-10-23', onSelectDate() {},
+  })
+  assert.match(level3.match(/<button[^>]*aria-current="date"[^>]*>/)[0], /bg-primary\/65/)
 })
 
 test('heatmap omits a short leading month label before the next month', () => {

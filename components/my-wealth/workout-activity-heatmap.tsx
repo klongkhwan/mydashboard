@@ -39,13 +39,13 @@ interface WorkoutActivityHeatmapProps {
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-// Color levels matching the user reference image (Spotify / GitHub Dark aesthetic)
+// Color levels: subtle transparent green when low to rich primary green when high
 const LEVEL_COLORS: Record<number, string> = {
   0: "bg-[#232323] hover:bg-[#2e2e2e]",
-  1: "bg-[#0e4429] hover:bg-[#15603a]", // 1-20 min
-  2: "bg-[#006d32] hover:bg-[#00873e]", // 21-40 min
-  3: "bg-[#26a641] hover:bg-[#2fc44d]", // 41-60 min
-  4: "bg-[#39d353] hover:bg-[#4df26b]", // >60 min
+  1: "bg-primary/15 hover:bg-primary/25", // 1-29 min
+  2: "bg-primary/35 hover:bg-primary/45", // 30-59 min
+  3: "bg-primary/65 hover:bg-primary/75", // 60-89 min
+  4: "bg-primary hover:bg-primary/90",    // >=90 min
 }
 
 const formatYmd = (d: Date) => {
@@ -139,12 +139,12 @@ export function WorkoutActivityHeatmap({
         sessionCountYear += completedDayWorkouts.length
       }
 
-      // Determine activity level (0-4) strictly from completed workouts
+      // Determine activity level (0-4) strictly from completed workouts with widened ranges
       let level: 0 | 1 | 2 | 3 | 4 = 0
       if (completedDayWorkouts.length > 0) {
-        if (dayMinutes >= 60) level = 4
-        else if (dayMinutes >= 40) level = 3
-        else if (dayMinutes >= 20) level = 2
+        if (dayMinutes >= 90) level = 4
+        else if (dayMinutes >= 60) level = 3
+        else if (dayMinutes >= 30) level = 2
         else level = 1
       }
 
@@ -299,11 +299,11 @@ export function WorkoutActivityHeatmap({
         <div className="flex items-center gap-1.5">
           <span>Less time</span>
           <div className="flex items-center gap-1">
-            <span className="h-2.5 w-2.5 rounded-[2px] bg-[#232323] inline-block" />
-            <span className="h-2.5 w-2.5 rounded-[2px] bg-[#0e4429] inline-block" />
-            <span className="h-2.5 w-2.5 rounded-[2px] bg-[#006d32] inline-block" />
-            <span className="h-2.5 w-2.5 rounded-[2px] bg-[#26a641] inline-block" />
-            <span className="h-2.5 w-2.5 rounded-[2px] bg-[#39d353] inline-block" />
+            <span title="0m" className="h-2.5 w-2.5 rounded-[2px] bg-[#232323] inline-block" />
+            <span title="1–29m" className="h-2.5 w-2.5 rounded-[2px] bg-primary/15 inline-block" />
+            <span title="30–59m" className="h-2.5 w-2.5 rounded-[2px] bg-primary/35 inline-block" />
+            <span title="60–89m" className="h-2.5 w-2.5 rounded-[2px] bg-primary/65 inline-block" />
+            <span title="90m+" className="h-2.5 w-2.5 rounded-[2px] bg-primary inline-block" />
           </div>
           <span>More time</span>
         </div>

@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils"
 
 interface DashboardViewProps {
   userName: string
-  generatedAt: string
   summary: DashboardSummary
   errors: {
     wealth?: string
@@ -24,7 +23,6 @@ interface DashboardViewProps {
 
 export function DashboardView({
   userName,
-  generatedAt,
   summary,
   errors,
   usdThbRate,
@@ -58,11 +56,8 @@ export function DashboardView({
           <p className="text-xs text-spotify-muted mt-1">ภาพรวมกระแสเงินสด ค่าบริการ และเหตุการณ์สำคัญของวันนี้</p>
         </div>
 
-        {/* Global Currency Switcher & Info */}
+        {/* Global Currency Switcher */}
         <div className="flex items-center gap-3">
-          <span className="text-[11px] text-spotify-muted hidden md:inline tabular-nums">
-            1 USD ≈ ฿{usdThbRate.toFixed(2)}
-          </span>
           <div className="flex items-center rounded-xl border border-white/10 bg-background/90 p-1 shadow-sm">
             <button
               type="button"
@@ -89,9 +84,6 @@ export function DashboardView({
               USD
             </button>
           </div>
-          <span className="text-xs text-muted-foreground hidden lg:inline tabular-nums">
-            อัปเดตล่าสุด {generatedAt} น.
-          </span>
         </div>
       </div>
 

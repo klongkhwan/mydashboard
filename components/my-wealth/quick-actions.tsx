@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { createWealthCategory, createWealthInvestment, createWealthTransaction } from "@/app/dashboard/my-wealth/actions"
-import { useWealth } from "./wealth-context"
+import { useWealth, WealthInvestment } from "./wealth-context"
+import { buildInvestmentCopyDefaults } from "@/lib/my-wealth-calculations"
 
 const CATEGORY_COLORS = [
   "#1ed760", // Green
@@ -26,10 +27,14 @@ export function MyWealthQuickActions({
   categories: propCategories,
   allowedModes = ["income", "expense", "investment", "category"],
   defaultMode,
+  copyFrom,
+  onCopyHandled,
 }: {
   categories?: any[]
   allowedModes?: Array<"income" | "expense" | "investment" | "category">
   defaultMode?: "income" | "expense" | "investment" | "category"
+  copyFrom?: WealthInvestment | null
+  onCopyHandled?: () => void
 }) {
   const { categories: contextCategories, usdThbRate, refreshData } = useWealth()
   const categories = propCategories || contextCategories
@@ -51,6 +56,30 @@ export function MyWealthQuickActions({
 
   const rate = usdThbRate || 34.0
   const activeCategories = categories.filter((category) => category.is_active)
+  const today = new Date().toLocaleDateString("en-CA")
+
+  const [prevCopyFrom, setPrevCopyFrom] = useState(copyFrom)
+  if (copyFrom && copyFrom !== prevCopyFrom) {
+    setPrevCopyFrom(copyFrom)
+    const defaults = buildInvestmentCopyDefaults(copyFrom, today)
+    if (defaults) {
+      setInvestmentType(copyFrom.investment_type)
+      setQuoteAsset(defaults.quoteAsset)
+      if (defaults.quoteAsset === "USD") {
+        setForeignAmount(defaults.foreignAmount)
+        const num = parseFloat(defaults.foreignAmount)
+        if (!isNaN(num) && num > 0) {
+          setThbAmount((Math.round(num * rate * 100) / 100).toFixed(2))
+        } else {
+          setThbAmount("")
+        }
+      } else {
+        setForeignAmount("")
+        setThbAmount("")
+      }
+      setMode("investment")
+    }
+  }
 
   const handleTypeChange = (type: string) => {
     setInvestmentType(type)
@@ -140,9 +169,7 @@ export function MyWealthQuickActions({
           term_days: formData.get("term_days") || undefined,
           settlement_date: formData.get("settlement_date") || undefined,
         })
-        setMode(null)
-        setForeignAmount("")
-        setThbAmount("")
+        handleCloseModal()
         refreshData()
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Failed to record investment")
@@ -150,7 +177,14 @@ export function MyWealthQuickActions({
     })
   }
 
-  const today = new Date().toISOString().slice(0, 10)
+  const handleCloseModal = () => {
+    setMode(null)
+    setForeignAmount("")
+    setThbAmount("")
+    onCopyHandled?.()
+  }
+
+  const copySettlementDate = copyFrom ? buildInvestmentCopyDefaults(copyFrom, today)?.settlementDate : undefined
 
   function submitCategory(formData: FormData) {
     setMessage(null)
@@ -161,7 +195,7 @@ export function MyWealthQuickActions({
           type: formData.get("type"),
           color: selectedColor,
         })
-        setMode(null)
+        handleCloseModal()
         refreshData()
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Failed to create category")
@@ -172,7 +206,9 @@ export function MyWealthQuickActions({
   const categoryType = mode === "income" ? "income" : "expense"
 
   const dialogTitle =
-    mode === "income"
+    copyFrom
+      ? "คัดลอกการลงทุน (Copy Investment)"
+      : mode === "income"
       ? "บันทึกรายรับ (Add Income)"
       : mode === "expense"
       ? "บันทึกรายจ่าย (Add Expense)"
@@ -181,7 +217,9 @@ export function MyWealthQuickActions({
       : "สร้างหมวดหมู่ใหม่ (Add Category)"
 
   const dialogDescription =
-    mode === "income"
+    copyFrom
+      ? `คัดลอกจากรายการ ${copyFrom.asset_symbol} สำหรับเปิดรอบใหม่`
+      : mode === "income"
       ? "บันทึกเงินเดือน รายได้จากการขาย หรือรายรับอื่นๆ"
       : mode === "expense"
       ? "บันทึกค่าใช้จ่าย ทั้งที่ชำระแล้วและรายการรอจ่าย"
@@ -233,7 +271,7 @@ export function MyWealthQuickActions({
       </div>
       {message && <p className="text-xs text-rose-400">{message}</p>}
 
-      <Dialog open={mode !== null} onOpenChange={(open) => !open && setMode(null)}>
+      <Dialog open={mode !== null} onOpenChange={(open) => !open && handleCloseModal()}>
         <DialogContent className="max-h-[90vh] max-w-xl overflow-hidden p-0 bg-background border border-white/10 text-white shadow-heavy flex flex-col">
           <DialogHeader className="p-5 pb-3 border-b border-white/10 shrink-0">
             <DialogTitle className="text-lg font-bold">{dialogTitle}</DialogTitle>
@@ -490,12 +528,12 @@ export function MyWealthQuickActions({
           )}
 
           {mode === "investment" && (
-            <form action={submitInvestment} className="flex flex-col flex-1 overflow-hidden">
+            <form key={copyFrom ? `copy-${copyFrom.id}` : "new"} action={submitInvestment} className="flex flex-col flex-1 overflow-hidden">
               <div className="overflow-y-auto px-5 py-3.5 flex-1">
                 <div className="grid gap-2.5 md:grid-cols-2">
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] text-spotify-muted font-bold">แพลตฟอร์ม</label>
-                    <Select name="platform" defaultValue="dime">
+                    <Select name="platform" defaultValue={copyFrom?.platform || "dime"}>
                       <SelectTrigger className={fieldClass}>
                         <SelectValue />
                       </SelectTrigger>
@@ -526,7 +564,7 @@ export function MyWealthQuickActions({
                   {/* Symbol & Currency Switcher side-by-side */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] text-spotify-muted font-bold">สัญลักษณ์</label>
-                    <input name="asset_symbol" required placeholder="เช่น PTT, AAPL, NVDA, BTC, ETH" className={fieldClass} />
+                    <input name="asset_symbol" required defaultValue={copyFrom?.asset_symbol || ""} placeholder="เช่น PTT, AAPL, NVDA, BTC, ETH" className={fieldClass} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] text-spotify-muted font-bold">สกุลเงิน (Currency)</label>
@@ -584,7 +622,7 @@ export function MyWealthQuickActions({
                     <>
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] text-spotify-muted font-bold">ยอดเงินลงทุน (บาท)</label>
-                        <input type="number" name="opened_amount_thb" required min="0.01" step="0.01" placeholder="฿ 0.00" className={fieldClass} />
+                        <input type="number" name="opened_amount_thb" required min="0.01" step="0.01" defaultValue={quoteAsset === "THB" ? (copyFrom?.opened_amount_thb !== undefined && copyFrom?.opened_amount_thb !== null ? String(copyFrom.opened_amount_thb) : "") : ""} placeholder="฿ 0.00" className={fieldClass} />
                       </div>
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] text-spotify-muted font-bold">วันที่เปิดรายการ</label>
@@ -596,21 +634,21 @@ export function MyWealthQuickActions({
                   {/* Quantity & Entry Price */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] text-spotify-muted font-bold">จำนวนที่ซื้อ (ถ้ามี)</label>
-                    <input type="number" name="quantity" min="0" step="any" placeholder="เช่น 10 หุ้น หรือ 0.05 BTC" className={fieldClass} />
+                    <input type="number" name="quantity" min="0" step="any" defaultValue={copyFrom?.quantity !== undefined && copyFrom?.quantity !== null ? String(copyFrom.quantity) : ""} placeholder="เช่น 10 หุ้น หรือ 0.05 BTC" className={fieldClass} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] text-spotify-muted font-bold">ราคาเข้าต่อหน่วย ({quoteAsset})</label>
-                    <input type="number" name="entry_price" min="0" step="any" placeholder="ราคาเข้า" className={fieldClass} />
+                    <input type="number" name="entry_price" min="0" step="any" defaultValue={copyFrom?.entry_price !== undefined && copyFrom?.entry_price !== null ? String(copyFrom.entry_price) : ""} placeholder="ราคาเข้า" className={fieldClass} />
                   </div>
 
                   {/* Entry Fee & Note */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] text-spotify-muted font-bold">ค่าธรรมเนียมเข้า (บาท)</label>
-                    <input type="number" name="entry_fee_thb" min="0" step="0.01" defaultValue="0" placeholder="฿ 0.00" className={fieldClass} />
+                    <input type="number" name="entry_fee_thb" min="0" step="0.0001" defaultValue={copyFrom?.entry_fee_thb !== undefined && copyFrom?.entry_fee_thb !== null ? String(copyFrom.entry_fee_thb) : "0"} placeholder="฿ 0.0000" className={fieldClass} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] text-spotify-muted font-bold">บันทึกช่วยจำ (Optional)</label>
-                    <input name="note" placeholder="หมายเหตุเพิ่มเติม" className={fieldClass} />
+                    <input name="note" defaultValue={copyFrom?.note || ""} placeholder="หมายเหตุเพิ่มเติม" className={fieldClass} />
                   </div>
 
                   {/* Dual Asset Specific Fields */}
@@ -618,7 +656,7 @@ export function MyWealthQuickActions({
                     <>
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] text-spotify-muted font-bold">กลยุทธ์ Dual Investment</label>
-                        <Select name="dual_strategy" defaultValue="buy_low">
+                        <Select name="dual_strategy" defaultValue={copyFrom?.dual_strategy || "buy_low"}>
                           <SelectTrigger className={fieldClass}>
                             <SelectValue />
                           </SelectTrigger>
@@ -630,27 +668,27 @@ export function MyWealthQuickActions({
                       </div>
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] text-spotify-muted font-bold">เหรียญที่ฝาก</label>
-                        <input name="deposit_asset" required placeholder="เช่น USDT, BTC" className={fieldClass} />
+                        <input name="deposit_asset" required defaultValue={copyFrom?.deposit_asset || ""} placeholder="เช่น USDT, BTC" className={fieldClass} />
                       </div>
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] text-spotify-muted font-bold">จำนวนที่ฝาก</label>
-                        <input type="number" name="deposit_amount" required min="0.00000001" step="any" placeholder="0.00" className={fieldClass} />
+                        <input type="number" name="deposit_amount" required min="0.00000001" step="any" defaultValue={copyFrom?.deposit_amount !== undefined && copyFrom?.deposit_amount !== null ? String(copyFrom.deposit_amount) : ""} placeholder="0.00" className={fieldClass} />
                       </div>
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] text-spotify-muted font-bold">ราคาเป้าหมาย</label>
-                        <input type="number" name="target_price" required min="0.00000001" step="any" placeholder="Target Price" className={fieldClass} />
+                        <input type="number" name="target_price" required min="0.00000001" step="any" defaultValue={copyFrom?.target_price !== undefined && copyFrom?.target_price !== null ? String(copyFrom.target_price) : ""} placeholder="Target Price" className={fieldClass} />
                       </div>
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] text-spotify-muted font-bold">ผลตอบแทน APR %</label>
-                        <input type="number" name="apr_percent" required min="0" step="0.0001" placeholder="APR %" className={fieldClass} />
+                        <input type="number" name="apr_percent" required min="0" step="0.0001" defaultValue={copyFrom?.apr_percent !== undefined && copyFrom?.apr_percent !== null ? String(copyFrom.apr_percent) : ""} placeholder="APR %" className={fieldClass} />
                       </div>
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] text-spotify-muted font-bold">ระยะเวลา (วัน)</label>
-                        <input type="number" name="term_days" required min="1" step="1" placeholder="จำนวนวัน" className={fieldClass} />
+                        <input type="number" name="term_days" required min="1" step="1" defaultValue={copyFrom?.term_days !== undefined && copyFrom?.term_days !== null ? String(copyFrom.term_days) : ""} placeholder="จำนวนวัน" className={fieldClass} />
                       </div>
                       <div className="flex flex-col gap-1 md:col-span-2">
                         <label className="text-[11px] text-spotify-muted font-bold">วันครบกำหนด</label>
-                        <DatePicker name="settlement_date" required className={fieldClass} />
+                        <DatePicker name="settlement_date" required defaultValue={copySettlementDate} className={fieldClass} />
                       </div>
                     </>
                   )}
@@ -658,11 +696,11 @@ export function MyWealthQuickActions({
               </div>
 
               <DialogFooter className={footerClass}>
-                <Button type="button" variant="pill-secondary" className="text-spotify-muted hover:text-white" onClick={() => setMode(null)}>
+                <Button type="button" variant="pill-secondary" className="text-spotify-muted hover:text-white" onClick={handleCloseModal}>
                   Cancel
                 </Button>
                 <Button type="submit" variant="pill" className="" disabled={pending}>
-                  {pending ? "Saving..." : "Add Investment"}
+                  {pending ? "Saving..." : copyFrom ? "Save as New" : "Add Investment"}
                 </Button>
               </DialogFooter>
             </form>
